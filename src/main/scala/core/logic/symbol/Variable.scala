@@ -9,7 +9,7 @@ import scala.reflect.ClassTag
  * @tparam K The type associated with this variable.
  * @param id The unique identifier for this variable within its type.
  */
-case class Variable[K](id: Int)
+case class Variable[K] private(id: Int)
 
 /** Companion object for creating unique variables. */
 case object Variable:
