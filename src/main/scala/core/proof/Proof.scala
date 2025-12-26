@@ -1,5 +1,5 @@
 package proofPlayground
-package core.system.natural
+package core.proof
 
 /** Representation of a proof in natural deduction.
  *
@@ -7,8 +7,8 @@ package core.system.natural
  * as nodes. A proof is considered valid if each level in each branch
  * of the tree is justified by an inference rule.
  *
- * @tparam F the type of formulas used in the proof.
+ * @tparam J the type of judgements used in the proof.
  * @param root      the conclusion of this proof step.
- * @param subproofs the set of sub-derivations leading to the conclusion.
+ * @param subproofs the recursive sub-derivations leading to the conclusion.
  */
-case class Proof[F](root: Judgement[Seq, F], subproofs: Set[Proof[F]])
+case class Proof[J](root: J, subproofs: Set[J])
