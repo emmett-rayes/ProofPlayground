@@ -1,7 +1,7 @@
 package proofPlayground
 package core.system.natural
 
-import core.logic.symbol.Conjunction
+import core.logic.symbol.{Conjunction, Disjunction}
 import core.system.meta.{Inference, Pattern}
 
 /** An inference rule for natural deduction judgements.
@@ -57,4 +57,51 @@ case object InferenceRules:
     Inference(
       Set(Judgement(gamma, Pattern.Formula.Concrete(Conjunction(a, b)))),
       Judgement(gamma, b)
+    )
+
+  /** Disjunction introduction 1 (∨I₁).
+   *
+   * If Γ ⊢ A, then Γ ⊢ A ∨ B.
+   */
+  val DisjunctionIntroduction1: InferenceRule =
+    val gamma = Pattern.Seq.Meta("Gamma")
+    val a = Pattern.Formula.Meta("A")
+    val b = Pattern.Formula.Meta("B")
+
+    Inference(
+      Set(Judgement(gamma, a)),
+      Judgement(gamma, Pattern.Formula.Concrete(Disjunction(a, b)))
+    )
+
+  /** Disjunction introduction 2 (∨I₂).
+   *
+   * If Γ ⊢ B, then Γ ⊢ A ∨ B.
+   */
+  val DisjunctionIntroduction2: InferenceRule =
+    val gamma = Pattern.Seq.Meta("Gamma")
+    val a = Pattern.Formula.Meta("A")
+    val b = Pattern.Formula.Meta("B")
+
+    Inference(
+      Set(Judgement(gamma, b)),
+      Judgement(gamma, Pattern.Formula.Concrete(Disjunction(a, b)))
+    )
+
+  /** Disjunction elimination (∨E).
+   *
+   * If Γ ⊢ A ∨ B, Γ,A ⊢ C and Γ,B ⊢ C, then Γ ⊢ C.
+   */
+  val DisjunctionElimination: InferenceRule =
+    val gamma = Pattern.Seq.Meta("Gamma")
+    val a = Pattern.Formula.Meta("A")
+    val b = Pattern.Formula.Meta("B")
+    val c = Pattern.Formula.Meta("C")
+
+    Inference(
+      Set(
+        Judgement(gamma, Pattern.Formula.Concrete(Disjunction(a, b))),
+        Judgement(Pattern.Seq.Concrete(scala.Seq(gamma, a)), c),
+        Judgement(Pattern.Seq.Concrete(scala.Seq(gamma, b)), c)
+      ),
+      Judgement(gamma, c)
     )
