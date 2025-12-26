@@ -14,6 +14,7 @@ type InferenceRule = Inference[Judgement[Pattern.Seq, Pattern.Formula]]
  *
  * Provides standard logical inference rules used in natural deduction proofs.
  */
+//noinspection DuplicatedCode
 case object InferenceRules:
 
   /** Conjunction introduction (∧I).
@@ -28,4 +29,32 @@ case object InferenceRules:
     Inference(
       Set(Judgement(gamma, a), Judgement(gamma, b)),
       Judgement(gamma, Pattern.Formula.Concrete(Conjunction(a, b)))
+    )
+
+  /** Conjunction elimination 1 (∧E₁).
+   *
+   * If Γ ⊢ A ∧ B, then Γ ⊢ A.
+   */
+  val ConjunctionElimination1: InferenceRule =
+    val gamma = Pattern.Seq.Meta("Gamma")
+    val a = Pattern.Formula.Meta("A")
+    val b = Pattern.Formula.Meta("B")
+
+    Inference(
+      Set(Judgement(gamma, Pattern.Formula.Concrete(Conjunction(a, b)))),
+      Judgement(gamma, a)
+    )
+
+  /** Conjunction elimination 2 (∧E₂).
+   *
+   * If Γ ⊢ A ∧ B, then Γ ⊢ B.
+   */
+  val ConjunctionElimination2: InferenceRule =
+    val gamma = Pattern.Seq.Meta("Gamma")
+    val a = Pattern.Formula.Meta("A")
+    val b = Pattern.Formula.Meta("B")
+
+    Inference(
+      Set(Judgement(gamma, Pattern.Formula.Concrete(Conjunction(a, b)))),
+      Judgement(gamma, b)
     )
