@@ -1,7 +1,7 @@
 package proofPlayground
 package core.system.natural
 
-import core.logic.symbol.{Conjunction, Disjunction}
+import core.logic.symbol.{Conjunction, Disjunction, Implication}
 import core.system.meta.{Inference, Pattern}
 
 /** An inference rule for natural deduction judgements.
@@ -104,4 +104,35 @@ case object InferenceRules:
         Judgement(Pattern.Seq.Concrete(scala.Seq(gamma, b)), c)
       ),
       Judgement(gamma, c)
+    )
+
+  /** Implication introduction (→I).
+   *
+   * If Γ,A ⊢ B, then Γ ⊢ A → B.
+   */
+  val ImplicationIntroduction: InferenceRule =
+    val gamma = Pattern.Seq.Meta("Gamma")
+    val a = Pattern.Formula.Meta("A")
+    val b = Pattern.Formula.Meta("B")
+
+    Inference(
+      Set(Judgement(Pattern.Seq.Concrete(scala.Seq(gamma, a)), b)),
+      Judgement(gamma, Pattern.Formula.Concrete(Implication(a, b)))
+    )
+
+  /** Implication elimination (→E).
+   *
+   * If Γ ⊢ A → B and Γ ⊢ A, then Γ ⊢ B.
+   */
+  val ImplicationElimination: InferenceRule =
+    val gamma = Pattern.Seq.Meta("Gamma")
+    val a = Pattern.Formula.Meta("A")
+    val b = Pattern.Formula.Meta("B")
+
+    Inference(
+      Set(
+        Judgement(gamma, Pattern.Formula.Concrete(Implication(a, b))),
+        Judgement(gamma, a)
+      ),
+      Judgement(gamma, b)
     )
