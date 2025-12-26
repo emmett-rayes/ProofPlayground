@@ -2,7 +2,7 @@ package proofPlayground
 package core.system.natural
 
 import core.logic.symbol.*
-import core.system.meta.{Inference, Pattern}
+import core.meta.{Inference, Pattern}
 
 /** An inference rule for natural deduction judgements.
  *

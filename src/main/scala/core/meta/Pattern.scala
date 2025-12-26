@@ -1,5 +1,5 @@
 package proofPlayground
-package core.system.meta
+package core.meta
 
 /** Base trait for patterns appearing mostly in rules of inference.
  *

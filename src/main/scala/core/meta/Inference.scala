@@ -1,5 +1,5 @@
 package proofPlayground
-package core.system.meta
+package core.meta
 
 /** General representation of a syntactical inference line.
  *
