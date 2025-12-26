@@ -3,8 +3,11 @@ package core.logic.symbol
 
 import org.scalatest.funsuite.AnyFunSuite
 
+/** Tests for the [[Variable]] class and its companion object. */
 final class TestVariable extends AnyFunSuite:
-  sealed trait DummyKind
+
+  /** A dummy kind used for testing variables. */
+  private sealed trait DummyKind
 
   test("a variable is equal to its copy") {
     val v1 = Variable[DummyKind]()
