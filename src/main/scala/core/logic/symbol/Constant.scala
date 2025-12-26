@@ -30,7 +30,7 @@ case class Conjunction[F](lhs: F, rhs: F)
  */
 case class Disjunction[F](lhs: F, rhs: F)
 
-/** Implication (->)
+/** Implication (→)
  *
  * @tparam F The type of formulas being combined
  * @param lhs Left-hand side formula (antecedent)

@@ -1,26 +1,23 @@
 package proofPlayground
 package core.logic.propositional
 
-import core.logic.symbol.{Conjunction as SymConjunction, Difference as SymDifference, Disjunction as SymDisjunction, False as SymFalse, Implication as SymImplication, Negation as SymNegation, True as SymTrue, Variable as SymVariable}
-
+import core.logic.symbol
 /** Marker trait for propositional logic variables */
 sealed trait Propositional
 
 /** Represents propositional logic formulas */
 enum Formula:
   /** A propositional variable */
-  case Variable(variable: SymVariable[Propositional])
+  case Variable(variable: symbol.Variable[Propositional])
   /** The true constant */
-  case True(tru: SymTrue)
+  case True(tru: symbol.True)
   /** The false constant */
-  case False(fls: SymFalse)
+  case False(fls: symbol.False)
   /** The negation of a formula */
-  case Negation(negation: SymNegation[Formula])
+  case Negation(negation: symbol.Negation[Formula])
   /** The conjunction of two formulas */
-  case Conjunction(conjunction: SymConjunction[Formula])
+  case Conjunction(conjunction: symbol.Conjunction[Formula])
   /** The disjunction of two formulas */
-  case Disjunction(disjunction: SymDisjunction[Formula])
+  case Disjunction(disjunction: symbol.Disjunction[Formula])
   /** The implication from a formula to a formula */
-  case Implication(implication: SymImplication[Formula])
-  /** The difference of a formula from a formula */
-  case Difference(difference: SymDifference[Formula])
+  case Implication(implication: symbol.Implication[Formula])
