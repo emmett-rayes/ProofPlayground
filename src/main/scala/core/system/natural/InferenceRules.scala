@@ -165,3 +165,32 @@ case object InferenceRules:
       ),
       Judgement(gamma, Pattern.Formula.Concrete(False()))
     )
+
+  /** True introduction (⊤I).
+   *
+   * Principle of implosion (ex quodlibet verum)
+   *
+   * Γ ⊢ ⊤.
+   */
+  val TrueIntroduction: InferenceRule =
+    val gamma = Pattern.Seq.Meta("Gamma")
+
+    Inference(
+      Set(),
+      Judgement(gamma, Pattern.Formula.Concrete(True()))
+    )
+
+  /** False elimination (⊥E).
+   *
+   * Principle of explosion (ex falso quodlibet)
+   *
+   * If Γ ⊢ ⊥, then Γ ⊢ A.
+   */
+  val FalseElimination: InferenceRule =
+    val gamma = Pattern.Seq.Meta("Gamma")
+    val a = Pattern.Formula.Meta("A")
+
+    Inference(
+      Set(Judgement(gamma, Pattern.Formula.Concrete(False()))),
+      Judgement(gamma, a)
+    )
