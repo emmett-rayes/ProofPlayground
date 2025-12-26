@@ -168,7 +168,7 @@ case object InferenceRules:
 
   /** True introduction (⊤I).
    *
-   * Principle of implosion (ex quodlibet verum)
+   * Principle of implosion (ex quodlibet verum).
    *
    * Γ ⊢ ⊤.
    */
@@ -182,7 +182,7 @@ case object InferenceRules:
 
   /** False elimination (⊥E).
    *
-   * Principle of explosion (ex falso quodlibet)
+   * Principle of explosion (ex falso quodlibet).
    *
    * If Γ ⊢ ⊥, then Γ ⊢ A.
    */
