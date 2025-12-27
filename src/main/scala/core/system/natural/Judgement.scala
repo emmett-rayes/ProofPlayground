@@ -12,3 +12,12 @@ package core.system.natural
  * @param assertion   the formula that is asserted.
  */
 case class Judgement[S[_], F](assumptions: S[F], assertion: F)
+
+case object Judgement:
+
+  /** Extension methods for judgements.
+   *
+   * Provides DSL for constructing judgements.
+   */
+  extension [S[_], F](assumptions: S[F])
+    def |-(assertion: F) = Judgement(assumptions, assertion) 

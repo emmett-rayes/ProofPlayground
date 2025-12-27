@@ -53,3 +53,12 @@ case object Pattern:
      * @param seq the sequence of patterns to match.
      */
     case Concrete(seq: scala.Seq[Pattern]) extends Seq[Pattern]
+
+  case object Seq:
+
+    /** Extension methods for sequence patterns.
+     *
+     * Provides DSL for constructing sequence patterns.
+     */
+    extension [S](seq: Seq[S])
+      def ::(pattern: Pattern) = Concrete(scala.Seq(seq, pattern))

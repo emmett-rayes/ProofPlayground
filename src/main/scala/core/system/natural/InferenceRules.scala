@@ -14,6 +14,10 @@ type InferenceRule[F[_]] = Inference[Judgement[Pattern.Seq, Pattern.Formula[F]]]
  */
 case object InferenceRules:
 
+  import FormulaF.*
+  import Judgement.*
+  import Pattern.Seq.*
+
   /** Inference rules for intuitionistic propositional logic.
    */
   //noinspection DuplicatedCode
@@ -30,10 +34,10 @@ case object InferenceRules:
 
       Inference(
         Set(
-          Judgement(gamma, a),
-          Judgement(gamma, b),
+          gamma |- a,
+          gamma |- b,
         ),
-        Judgement(gamma, a /\ b),
+        gamma |- a /\ b,
       )
 
     /** Conjunction elimination 1 (∧E₁).
@@ -46,8 +50,10 @@ case object InferenceRules:
       val b = MetaVariable("B")
 
       Inference(
-        Set(Judgement(gamma, a /\ b)),
-        Judgement(gamma, a),
+        Set(
+          gamma |- a /\ b,
+        ),
+        gamma |- a,
       )
 
     /** Conjunction elimination 2 (∧E₂).
@@ -60,8 +66,10 @@ case object InferenceRules:
       val b = MetaVariable("B")
 
       Inference(
-        Set(Judgement(gamma, a /\ b)),
-        Judgement(gamma, b),
+        Set(
+          gamma |- a /\ b,
+        ),
+        gamma |- b,
       )
 
     /** Disjunction introduction 1 (∨I₁).
@@ -74,8 +82,10 @@ case object InferenceRules:
       val b = MetaVariable("B")
 
       Inference(
-        Set(Judgement(gamma, a)),
-        Judgement(gamma, a \/ b),
+        Set(
+          gamma |- a,
+        ),
+        gamma |- a \/ b,
       )
 
     /** Disjunction introduction 2 (∨I₂).
@@ -88,8 +98,10 @@ case object InferenceRules:
       val b = MetaVariable("B")
 
       Inference(
-        Set(Judgement(gamma, b)),
-        Judgement(gamma, a \/ b),
+        Set(
+          gamma |- b,
+        ),
+        gamma |- a \/ b,
       )
 
     /** Disjunction elimination (∨E).
@@ -104,11 +116,11 @@ case object InferenceRules:
 
       Inference(
         Set(
-          Judgement(gamma, a \/ b),
-          Judgement(Pattern.Seq.Concrete(Seq(gamma, a)), c),
-          Judgement(Pattern.Seq.Concrete(Seq(gamma, b)), c),
+          gamma |- a \/ b,
+          gamma :: a |- c,
+          gamma :: b |- c,
         ),
-        Judgement(gamma, c)
+        gamma |- c,
       )
 
     /** Implication introduction (→I).
@@ -121,8 +133,10 @@ case object InferenceRules:
       val b = MetaVariable("B")
 
       Inference(
-        Set(Judgement(Pattern.Seq.Concrete(scala.Seq(gamma, a)), b)),
-        Judgement(gamma, a --> b),
+        Set(
+          gamma :: a |- b,
+        ),
+        gamma |- a --> b,
       )
 
     /** Implication elimination (→E).
@@ -136,10 +150,10 @@ case object InferenceRules:
 
       Inference(
         Set(
-          Judgement(gamma, a --> b),
-          Judgement(gamma, a),
+          gamma |- a --> b,
+          gamma |- a,
         ),
-        Judgement(gamma, b)
+        gamma |- b,
       )
 
     /** Negation introduction (¬I).
@@ -151,8 +165,10 @@ case object InferenceRules:
       val a = MetaVariable("A")
 
       Inference(
-        Set(Judgement(Pattern.Seq.Concrete(scala.Seq(gamma, a)), FormulaF.fls)),
-        Judgement(gamma, ~a),
+        Set(
+          gamma :: a |- fls,
+        ),
+        gamma |- ~a,
       )
 
     /** Negation elimination (¬E).
@@ -165,10 +181,10 @@ case object InferenceRules:
 
       Inference(
         Set(
-          Judgement(gamma, ~a),
-          Judgement(gamma, a),
+          gamma |- ~a,
+          gamma |- a,
         ),
-        Judgement(gamma, FormulaF.fls),
+        gamma |- fls,
       )
 
     /** True introduction (⊤I).
@@ -182,7 +198,7 @@ case object InferenceRules:
 
       Inference(
         Set(),
-        Judgement(gamma, FormulaF.tru),
+        gamma |- tru,
       )
 
     /** False elimination (⊥E).
@@ -196,8 +212,10 @@ case object InferenceRules:
       val a = MetaVariable("A")
 
       Inference(
-        Set(Judgement(gamma, FormulaF.fls)),
-        Judgement(gamma, a),
+        Set(
+          gamma |- fls
+        ),
+        gamma |- a,
       )
 
     private object MetaVariable:
