@@ -1,196 +1,208 @@
+//noinspection DuplicatedCode
 package proofPlayground
 package core.system.natural
 
-import core.logic.symbol.*
+import core.logic.propositional.FormulaF
+import core.logic.symbol
+import core.meta.Pattern.Formula
 import core.meta.{Inference, Pattern}
 
 /** An inference rule for natural deduction judgements.
  *
  * Inference rules contain patterns of judgements.
  */
-type InferenceRule = Inference[Judgement[Pattern.Seq, Pattern.Formula]]
+type InferenceRule[F[_]] = Inference[Judgement[Pattern.Seq, Pattern.Formula[F]]]
 
 /** Collection of inference rules for natural deduction.
- *
- * Provides standard logical inference rules used in natural deduction proofs.
  */
-//noinspection DuplicatedCode
 case object InferenceRules:
 
-  /** Conjunction introduction (∧I).
-   *
-   * If Γ ⊢ A and Γ ⊢ B, then Γ ⊢ A ∧ B.
+  /** Inference rules for intuitionistic propositional logic.
    */
-  val ConjunctionIntroduction: InferenceRule =
-    val gamma = Pattern.Seq.Meta("Gamma")
-    val a = Pattern.Formula.Meta("A")
-    val b = Pattern.Formula.Meta("B")
+  case object IntuitionisticPropositional:
 
-    Inference(
-      Set(Judgement(gamma, a), Judgement(gamma, b)),
-      Judgement(gamma, Pattern.Formula.Concrete(Conjunction(a, b)))
-    )
+    /** Conjunction introduction (∧I).
+     *
+     * If Γ ⊢ A and Γ ⊢ B, then Γ ⊢ A ∧ B.
+     */
+    val ConjunctionIntroduction: InferenceRule[FormulaF] =
+      val gamma = Pattern.Seq.Meta("Gamma")
+      val a = MetaVariable("A")
+      val b = MetaVariable("B")
 
-  /** Conjunction elimination 1 (∧E₁).
-   *
-   * If Γ ⊢ A ∧ B, then Γ ⊢ A.
-   */
-  val ConjunctionElimination1: InferenceRule =
-    val gamma = Pattern.Seq.Meta("Gamma")
-    val a = Pattern.Formula.Meta("A")
-    val b = Pattern.Formula.Meta("B")
+      Inference(
+        Set(Judgement(gamma, a), Judgement(gamma, b)),
+        Judgement(gamma, Pattern.Formula.Concrete(FormulaF.Conjunction(symbol.Conjunction(a, b)))),
+      )
 
-    Inference(
-      Set(Judgement(gamma, Pattern.Formula.Concrete(Conjunction(a, b)))),
-      Judgement(gamma, a)
-    )
+    /** Conjunction elimination 1 (∧E₁).
+     *
+     * If Γ ⊢ A ∧ B, then Γ ⊢ A.
+     */
+    val ConjunctionElimination1: InferenceRule[FormulaF] =
+      val gamma = Pattern.Seq.Meta("Gamma")
+      val a = MetaVariable("A")
+      val b = MetaVariable("B")
 
-  /** Conjunction elimination 2 (∧E₂).
-   *
-   * If Γ ⊢ A ∧ B, then Γ ⊢ B.
-   */
-  val ConjunctionElimination2: InferenceRule =
-    val gamma = Pattern.Seq.Meta("Gamma")
-    val a = Pattern.Formula.Meta("A")
-    val b = Pattern.Formula.Meta("B")
+      Inference(
+        Set(Judgement(gamma, Pattern.Formula.Concrete(FormulaF.Conjunction(symbol.Conjunction(a, b))))),
+        Judgement(gamma, a),
+      )
 
-    Inference(
-      Set(Judgement(gamma, Pattern.Formula.Concrete(Conjunction(a, b)))),
-      Judgement(gamma, b)
-    )
+    /** Conjunction elimination 2 (∧E₂).
+     *
+     * If Γ ⊢ A ∧ B, then Γ ⊢ B.
+     */
+    val ConjunctionElimination2: InferenceRule[FormulaF] =
+      val gamma = Pattern.Seq.Meta("Gamma")
+      val a = MetaVariable("A")
+      val b = MetaVariable("B")
 
-  /** Disjunction introduction 1 (∨I₁).
-   *
-   * If Γ ⊢ A, then Γ ⊢ A ∨ B.
-   */
-  val DisjunctionIntroduction1: InferenceRule =
-    val gamma = Pattern.Seq.Meta("Gamma")
-    val a = Pattern.Formula.Meta("A")
-    val b = Pattern.Formula.Meta("B")
+      Inference(
+        Set(Judgement(gamma, Pattern.Formula.Concrete(FormulaF.Conjunction(symbol.Conjunction(a, b))))),
+        Judgement(gamma, b),
+      )
 
-    Inference(
-      Set(Judgement(gamma, a)),
-      Judgement(gamma, Pattern.Formula.Concrete(Disjunction(a, b)))
-    )
+    /** Disjunction introduction 1 (∨I₁).
+     *
+     * If Γ ⊢ A, then Γ ⊢ A ∨ B.
+     */
+    val DisjunctionIntroduction1: InferenceRule[FormulaF] =
+      val gamma = Pattern.Seq.Meta("Gamma")
+      val a = MetaVariable("A")
+      val b = MetaVariable("B")
 
-  /** Disjunction introduction 2 (∨I₂).
-   *
-   * If Γ ⊢ B, then Γ ⊢ A ∨ B.
-   */
-  val DisjunctionIntroduction2: InferenceRule =
-    val gamma = Pattern.Seq.Meta("Gamma")
-    val a = Pattern.Formula.Meta("A")
-    val b = Pattern.Formula.Meta("B")
+      Inference(
+        Set(Judgement(gamma, a)),
+        Judgement(gamma, Pattern.Formula.Concrete(FormulaF.Disjunction(symbol.Disjunction(a, b)))),
+      )
 
-    Inference(
-      Set(Judgement(gamma, b)),
-      Judgement(gamma, Pattern.Formula.Concrete(Disjunction(a, b)))
-    )
+    /** Disjunction introduction 2 (∨I₂).
+     *
+     * If Γ ⊢ B, then Γ ⊢ A ∨ B.
+     */
+    val DisjunctionIntroduction2: InferenceRule[FormulaF] =
+      val gamma = Pattern.Seq.Meta("Gamma")
+      val a = MetaVariable("A")
+      val b = MetaVariable("B")
 
-  /** Disjunction elimination (∨E).
-   *
-   * If Γ ⊢ A ∨ B, Γ,A ⊢ C and Γ,B ⊢ C, then Γ ⊢ C.
-   */
-  val DisjunctionElimination: InferenceRule =
-    val gamma = Pattern.Seq.Meta("Gamma")
-    val a = Pattern.Formula.Meta("A")
-    val b = Pattern.Formula.Meta("B")
-    val c = Pattern.Formula.Meta("C")
+      Inference(
+        Set(Judgement(gamma, b)),
+        Judgement(gamma, Pattern.Formula.Concrete(FormulaF.Disjunction(symbol.Disjunction(a, b)))),
+      )
 
-    Inference(
-      Set(
-        Judgement(gamma, Pattern.Formula.Concrete(Disjunction(a, b))),
-        Judgement(Pattern.Seq.Concrete(scala.Seq(gamma, a)), c),
-        Judgement(Pattern.Seq.Concrete(scala.Seq(gamma, b)), c)
-      ),
-      Judgement(gamma, c)
-    )
+    /** Disjunction elimination (∨E).
+     *
+     * If Γ ⊢ A ∨ B, Γ,A ⊢ C and Γ,B ⊢ C, then Γ ⊢ C.
+     */
+    val DisjunctionElimination: InferenceRule[FormulaF] =
+      val gamma = Pattern.Seq.Meta("Gamma")
+      val a = MetaVariable("A")
+      val b = MetaVariable("B")
+      val c = MetaVariable("C")
 
-  /** Implication introduction (→I).
-   *
-   * If Γ,A ⊢ B, then Γ ⊢ A → B.
-   */
-  val ImplicationIntroduction: InferenceRule =
-    val gamma = Pattern.Seq.Meta("Gamma")
-    val a = Pattern.Formula.Meta("A")
-    val b = Pattern.Formula.Meta("B")
+      Inference(
+        Set(
+          Judgement(gamma, Pattern.Formula.Concrete(FormulaF.Disjunction(symbol.Disjunction(a, b)))),
+          Judgement(Pattern.Seq.Concrete(scala.Seq(gamma, a)), c),
+          Judgement(Pattern.Seq.Concrete(scala.Seq(gamma, b)), c),
+        ),
+        Judgement(gamma, c)
+      )
 
-    Inference(
-      Set(Judgement(Pattern.Seq.Concrete(scala.Seq(gamma, a)), b)),
-      Judgement(gamma, Pattern.Formula.Concrete(Implication(a, b)))
-    )
+    /** Implication introduction (→I).
+     *
+     * If Γ,A ⊢ B, then Γ ⊢ A → B.
+     */
+    val ImplicationIntroduction: InferenceRule[FormulaF] =
+      val gamma = Pattern.Seq.Meta("Gamma")
+      val a = MetaVariable("A")
+      val b = MetaVariable("B")
 
-  /** Implication elimination (→E).
-   *
-   * If Γ ⊢ A → B and Γ ⊢ A, then Γ ⊢ B.
-   */
-  val ImplicationElimination: InferenceRule =
-    val gamma = Pattern.Seq.Meta("Gamma")
-    val a = Pattern.Formula.Meta("A")
-    val b = Pattern.Formula.Meta("B")
+      Inference(
+        Set(Judgement(Pattern.Seq.Concrete(scala.Seq(gamma, a)), b)),
+        Judgement(gamma, Pattern.Formula.Concrete(FormulaF.Implication(symbol.Implication(a, b)))),
+      )
 
-    Inference(
-      Set(
-        Judgement(gamma, Pattern.Formula.Concrete(Implication(a, b))),
-        Judgement(gamma, a)
-      ),
-      Judgement(gamma, b)
-    )
+    /** Implication elimination (→E).
+     *
+     * If Γ ⊢ A → B and Γ ⊢ A, then Γ ⊢ B.
+     */
+    val ImplicationElimination: InferenceRule[FormulaF] =
+      val gamma = Pattern.Seq.Meta("Gamma")
+      val a = MetaVariable("A")
+      val b = MetaVariable("B")
 
-  /** Negation introduction (¬I).
-   *
-   * If Γ,A ⊢ ⊥, then Γ ⊢ ¬A.
-   */
-  val NegationIntroduction: InferenceRule =
-    val gamma = Pattern.Seq.Meta("Gamma")
-    val a = Pattern.Formula.Meta("A")
+      Inference(
+        Set(
+          Judgement(gamma, Pattern.Formula.Concrete(FormulaF.Implication(symbol.Implication(a, b)))),
+          Judgement(gamma, a),
+        ),
+        Judgement(gamma, b)
+      )
 
-    Inference(
-      Set(Judgement(Pattern.Seq.Concrete(scala.Seq(gamma, a)), Pattern.Formula.Concrete(False()))),
-      Judgement(gamma, Pattern.Formula.Concrete(Negation(a)))
-    )
+    /** Negation introduction (¬I).
+     *
+     * If Γ,A ⊢ ⊥, then Γ ⊢ ¬A.
+     */
+    val NegationIntroduction: InferenceRule[FormulaF] =
+      val gamma = Pattern.Seq.Meta("Gamma")
+      val a = MetaVariable("A")
 
-  /** Negation elimination (¬E).
-   *
-   * If Γ ⊢ ¬A and Γ ⊢ A, then Γ ⊢ ⊥.
-   */
-  val NegationElimination: InferenceRule =
-    val gamma = Pattern.Seq.Meta("Gamma")
-    val a = Pattern.Formula.Meta("A")
+      Inference(
+        Set(Judgement(Pattern.Seq.Concrete(scala.Seq(gamma, a)), Pattern.Formula.Concrete(FormulaF.False(symbol.False())))),
+        Judgement(gamma, Pattern.Formula.Concrete(FormulaF.Negation(symbol.Negation(a)))),
+      )
 
-    Inference(
-      Set(
-        Judgement(gamma, Pattern.Formula.Concrete(Negation(a))),
-        Judgement(gamma, a)
-      ),
-      Judgement(gamma, Pattern.Formula.Concrete(False()))
-    )
+    /** Negation elimination (¬E).
+     *
+     * If Γ ⊢ ¬A and Γ ⊢ A, then Γ ⊢ ⊥.
+     */
+    val NegationElimination: InferenceRule[FormulaF] =
+      val gamma = Pattern.Seq.Meta("Gamma")
+      val a = MetaVariable("A")
 
-  /** True introduction (⊤I).
-   *
-   * Principle of implosion (ex quodlibet verum).
-   *
-   * Γ ⊢ ⊤.
-   */
-  val TrueIntroduction: InferenceRule =
-    val gamma = Pattern.Seq.Meta("Gamma")
+      Inference(
+        Set(
+          Judgement(gamma, Pattern.Formula.Concrete(FormulaF.Negation(symbol.Negation(a)))),
+          Judgement(gamma, a),
+        ),
+        Judgement(gamma, Pattern.Formula.Concrete(FormulaF.False(symbol.False()))),
+      )
 
-    Inference(
-      Set(),
-      Judgement(gamma, Pattern.Formula.Concrete(True()))
-    )
+    /** True introduction (⊤I).
+     *
+     * Principle of implosion (ex quodlibet verum).
+     *
+     * Γ ⊢ ⊤.
+     */
+    val TrueIntroduction: InferenceRule[FormulaF] =
+      val gamma = Pattern.Seq.Meta("Gamma")
 
-  /** False elimination (⊥E).
-   *
-   * Principle of explosion (ex falso quodlibet).
-   *
-   * If Γ ⊢ ⊥, then Γ ⊢ A.
-   */
-  val FalseElimination: InferenceRule =
-    val gamma = Pattern.Seq.Meta("Gamma")
-    val a = Pattern.Formula.Meta("A")
+      Inference(
+        Set(),
+        Judgement(gamma, Pattern.Formula.Concrete(FormulaF.True(symbol.True()))),
+      )
 
-    Inference(
-      Set(Judgement(gamma, Pattern.Formula.Concrete(False()))),
-      Judgement(gamma, a)
-    )
+    /** False elimination (⊥E).
+     *
+     * Principle of explosion (ex falso quodlibet).
+     *
+     * If Γ ⊢ ⊥, then Γ ⊢ A.
+     */
+    val FalseElimination: InferenceRule[FormulaF] =
+      val gamma = Pattern.Seq.Meta("Gamma")
+      val a = MetaVariable("A")
+
+      Inference(
+        Set(Judgement(gamma, Pattern.Formula.Concrete(FormulaF.False(symbol.False())))),
+        Judgement(gamma, a),
+      )
+
+    private object MetaVariable:
+      /** Helper for creating formula meta-variables.
+       *
+       * @param str The meta-variable name.
+       * @return A `Pattern.Formula.Meta[FormulaF]` instance.
+       */
+      def apply(str: String) = Pattern.Formula.Meta[FormulaF](str)

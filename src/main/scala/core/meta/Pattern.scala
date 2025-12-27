@@ -13,22 +13,22 @@ case object Pattern:
   /** Pattern for matching formulas in proof structures.
    *
    * A Formula pattern can be either a meta-variable that matches
-   * any formula or a concrete formula value.
+   * any formula or a concrete formula.
    */
-  enum Formula extends Pattern:
+  enum Formula[X[_]] extends Pattern:
 
     /** A meta-variable pattern that matches any formula.
      *
      * @param name the identifier for this meta-variable.
      */
-    case Meta(name: String)
+    case Meta[F[_]](name: String) extends Formula[F]
 
     /** A concrete formula pattern that matches a specific formula.
      *
+     * @tparam F the formula functor of the concrete formula.
      * @param formula the specific formula to match.
-     * @tparam F the type of the formula.
      */
-    case Concrete[F](formula: F)
+    case Concrete[F[_]](formula: F[Formula[F]]) extends Formula[F]
 
   /** Pattern for matching sequences in proof structures.
    *
