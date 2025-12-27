@@ -30,6 +30,9 @@ case object Pattern:
      */
     case Concrete[F[_]](formula: F[Formula[F]]) extends Formula[F]
 
+  case object Formula:
+    given [F[_]]: Conversion[F[Formula[F]], Concrete[F]] = Concrete(_)
+
   /** Pattern for matching sequences in proof structures.
    *
    * A Seq pattern can be either a meta-variable that matches any sequence
