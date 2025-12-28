@@ -3,7 +3,10 @@ package core.logic.propositional
 
 import core.logic.symbol
 
-/** Representation of a propositional formula. */
+/** Representation of a propositional formula.
+ *
+ * A formula is defined as a fixed point over the functor FormulaF
+ */
 case class Formula(formula: FormulaF[Formula])
 
 /** Representation of the structure of a propositional logic formula.
