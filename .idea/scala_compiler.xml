@@ -2,6 +2,9 @@
 <project version="4">
   <component name="ScalaCompilerConfiguration">
     <option name="separateProdTestSources" value="true" />
-    <profile name="sbt 1" modules="ProofPlayground,ProofPlayground.main,ProofPlayground.test" />
+    <profile name="sbt 1" modules="ProofPlayground" />
+    <profile name="sbt 3" modules="ProofPlayground.main,ProofPlayground.test">
+      <option name="featureWarnings" value="true" />
+    </profile>
   </component>
 </project>
