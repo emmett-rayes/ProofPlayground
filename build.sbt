@@ -8,6 +8,10 @@ lazy val root = (project in file("."))
     idePackagePrefix := Some("proofPlayground")
   )
 
+scalacOptions ++= Seq(
+  "-feature",
+)
+
 libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.2.19" % Test
 )
