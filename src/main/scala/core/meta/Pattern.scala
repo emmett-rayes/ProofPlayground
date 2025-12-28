@@ -31,6 +31,7 @@ case object Pattern:
     case Concrete[F[_]](formula: F[Formula[F]]) extends Formula[F]
 
   case object Formula:
+    given [F[_]]: Conversion[String, Meta[F]] = Meta(_)
     given [F[_]]: Conversion[F[Formula[F]], Concrete[F]] = Concrete(_)
 
   /** Pattern for matching sequences in proof structures.
@@ -55,6 +56,7 @@ case object Pattern:
     case Concrete(seq: scala.Seq[Pattern]) extends Seq[Pattern]
 
   case object Seq:
+    given Conversion[String, Meta] = Meta(_)
 
     /** Extension methods for sequence patterns.
      *
