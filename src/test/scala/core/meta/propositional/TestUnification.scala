@@ -3,6 +3,7 @@ package core.meta.propositional
 
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
+import core.logic.symbol
 import core.meta.Pattern
 import core.meta.propositional.PatternUtil.asPattern
 import core.meta.propositional.Unification
@@ -29,6 +30,23 @@ class TestUnification extends AnyFunSuite:
 
     assert(result.isDefined)
     assert(result.get === Map(metavariable -> formula))
+  }
+
+  test("variable pattern unifies same variable formula") {
+    val variableSymbol = symbol.Variable[FormulaF.Propositional]()
+    val formula = Formula(FormulaF.Variable(variableSymbol))
+    val pattern = Pattern.Formula.Concrete(FormulaF.Variable(variableSymbol))
+    val result = Unification.unify(pattern, formula)
+
+    assert(result.isDefined)
+  }
+
+  test("variable pattern does not unify different variable formulas") {
+    val formula = Formula(variable())
+    val pattern = Pattern.Formula.Concrete(variable())
+    val result = Unification.unify(pattern, formula)
+
+    assert(result.isEmpty)
   }
 
   test("true pattern unifies true formula") {
