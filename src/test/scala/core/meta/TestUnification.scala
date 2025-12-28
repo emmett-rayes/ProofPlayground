@@ -113,6 +113,17 @@ class TestUnification extends AnyFunSuite:
     assert(result.isEmpty)
   }
 
+  test("unification fails when conflicting metavariables occur") {
+    val metavariable = Pattern.Formula.Meta[FormulaF]("phi")
+    val pattern = Pattern.Formula.Concrete[FormulaF](metavariable /\ metavariable)
+    val leftFormula = arbitraryGen.arbitrary.sample.get
+    val rightFormula = arbitraryGen.arbitrary.filter(f => f != leftFormula).sample.get
+    val formula = Formula(leftFormula /\ rightFormula)
+    val result = Unification.unify(pattern, formula)
+
+    assert(result.isEmpty)
+  }
+
 
 object TestUnification:
 
