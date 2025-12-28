@@ -4,7 +4,7 @@ package core.meta
 import core.logic.propositional.FormulaF.{fls, tru, variable}
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
-import core.meta.TestUnification.asPattern
+import core.meta.TestUnification.{arbitraryGen, asPattern}
 
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.funsuite.AnyFunSuite
@@ -21,7 +21,6 @@ class TestUnification extends AnyFunSuite:
   }
 
   test("meta-variables unify any propositional formula") {
-
     val metavariable = Pattern.Formula.Meta[FormulaF]("phi")
     val pattern = metavariable
     val formula = TestUnification.arbitraryGen.arbitrary.sample.get
@@ -29,6 +28,38 @@ class TestUnification extends AnyFunSuite:
 
     assert(result.isDefined)
     assert(result.get === Map(metavariable -> formula))
+  }
+
+  test("true pattern unifies true formula") {
+    val pattern = Pattern.Formula.Concrete(tru)
+    val formula = Formula(tru)
+    val result = Unification.unify(pattern, formula)
+
+    assert(result.isDefined)
+  }
+
+  test("true pattern does not unifies anything that is not true formula") {
+    val pattern = Pattern.Formula.Concrete(tru)
+    val formula = arbitraryGen.arbitrary.filter(f => f != Formula(tru)).sample.get
+    val result = Unification.unify(pattern, formula)
+
+    assert(result.isEmpty)
+  }
+
+  test("false pattern unifies false formula") {
+    val pattern = Pattern.Formula.Concrete(fls)
+    val formula = Formula(fls)
+    val result = Unification.unify(pattern, formula)
+
+    assert(result.isDefined)
+  }
+
+  test("false pattern does not unifies anything that is not false formula") {
+    val pattern = Pattern.Formula.Concrete(tru)
+    val formula = arbitraryGen.arbitrary.filter(f => f != Formula(fls)).sample.get
+    val result = Unification.unify(pattern, formula)
+
+    assert(result.isEmpty)
   }
 
 
