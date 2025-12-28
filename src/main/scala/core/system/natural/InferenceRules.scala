@@ -29,15 +29,15 @@ case object InferenceRules:
      */
     val ConjunctionIntroduction: InferenceRule[FormulaF] =
       val gamma = Pattern.Seq.Meta("Gamma")
-      val a = MetaVariable("A")
-      val b = MetaVariable("B")
+      val phi = MetaVariable("phi")
+      val psi = MetaVariable("psi")
 
       Inference(
         Set(
-          gamma |- a,
-          gamma |- b,
+          gamma |- phi,
+          gamma |- psi,
         ),
-        gamma |- a /\ b,
+        gamma |- phi /\ psi,
       )
 
     /** Conjunction elimination 1 (∧E₁).
@@ -46,14 +46,14 @@ case object InferenceRules:
      */
     val ConjunctionElimination1: InferenceRule[FormulaF] =
       val gamma = Pattern.Seq.Meta("Gamma")
-      val a = MetaVariable("A")
-      val b = MetaVariable("B")
+      val phi = MetaVariable("phi")
+      val psi = MetaVariable("psi")
 
       Inference(
         Set(
-          gamma |- a /\ b,
+          gamma |- phi /\ psi,
         ),
-        gamma |- a,
+        gamma |- phi,
       )
 
     /** Conjunction elimination 2 (∧E₂).
@@ -62,14 +62,14 @@ case object InferenceRules:
      */
     val ConjunctionElimination2: InferenceRule[FormulaF] =
       val gamma = Pattern.Seq.Meta("Gamma")
-      val a = MetaVariable("A")
-      val b = MetaVariable("B")
+      val phi = MetaVariable("phi")
+      val psi = MetaVariable("psi")
 
       Inference(
         Set(
-          gamma |- a /\ b,
+          gamma |- phi /\ psi,
         ),
-        gamma |- b,
+        gamma |- psi,
       )
 
     /** Disjunction introduction 1 (∨I₁).
@@ -78,14 +78,14 @@ case object InferenceRules:
      */
     val DisjunctionIntroduction1: InferenceRule[FormulaF] =
       val gamma = Pattern.Seq.Meta("Gamma")
-      val a = MetaVariable("A")
-      val b = MetaVariable("B")
+      val phi = MetaVariable("phi")
+      val psi = MetaVariable("psi")
 
       Inference(
         Set(
-          gamma |- a,
+          gamma |- phi,
         ),
-        gamma |- a \/ b,
+        gamma |- phi \/ psi,
       )
 
     /** Disjunction introduction 2 (∨I₂).
@@ -94,14 +94,14 @@ case object InferenceRules:
      */
     val DisjunctionIntroduction2: InferenceRule[FormulaF] =
       val gamma = Pattern.Seq.Meta("Gamma")
-      val a = MetaVariable("A")
-      val b = MetaVariable("B")
+      val phi = MetaVariable("phi")
+      val psi = MetaVariable("psi")
 
       Inference(
         Set(
-          gamma |- b,
+          gamma |- psi,
         ),
-        gamma |- a \/ b,
+        gamma |- phi \/ psi,
       )
 
     /** Disjunction elimination (∨E).
@@ -110,17 +110,17 @@ case object InferenceRules:
      */
     val DisjunctionElimination: InferenceRule[FormulaF] =
       val gamma = Pattern.Seq.Meta("Gamma")
-      val a = MetaVariable("A")
-      val b = MetaVariable("B")
-      val c = MetaVariable("C")
+      val phi = MetaVariable("phi")
+      val psi = MetaVariable("psi")
+      val rho = MetaVariable("rhi")
 
       Inference(
         Set(
-          gamma |- a \/ b,
-          gamma :: a |- c,
-          gamma :: b |- c,
+          gamma |- phi \/ psi,
+          gamma :: phi |- rho,
+          gamma :: psi |- rho,
         ),
-        gamma |- c,
+        gamma |- rho,
       )
 
     /** Implication introduction (→I).
@@ -129,14 +129,14 @@ case object InferenceRules:
      */
     val ImplicationIntroduction: InferenceRule[FormulaF] =
       val gamma = Pattern.Seq.Meta("Gamma")
-      val a = MetaVariable("A")
-      val b = MetaVariable("B")
+      val phi = MetaVariable("phi")
+      val psi = MetaVariable("psi")
 
       Inference(
         Set(
-          gamma :: a |- b,
+          gamma :: phi |- psi,
         ),
-        gamma |- a --> b,
+        gamma |- phi --> psi,
       )
 
     /** Implication elimination (→E).
@@ -145,15 +145,15 @@ case object InferenceRules:
      */
     val ImplicationElimination: InferenceRule[FormulaF] =
       val gamma = Pattern.Seq.Meta("Gamma")
-      val a = MetaVariable("A")
-      val b = MetaVariable("B")
+      val phi = MetaVariable("phi")
+      val psi = MetaVariable("psi")
 
       Inference(
         Set(
-          gamma |- a --> b,
-          gamma |- a,
+          gamma |- phi --> psi,
+          gamma |- phi,
         ),
-        gamma |- b,
+        gamma |- psi,
       )
 
     /** Negation introduction (¬I).
@@ -162,13 +162,13 @@ case object InferenceRules:
      */
     val NegationIntroduction: InferenceRule[FormulaF] =
       val gamma = Pattern.Seq.Meta("Gamma")
-      val a = MetaVariable("A")
+      val phi = MetaVariable("phi")
 
       Inference(
         Set(
-          gamma :: a |- fls,
+          gamma :: phi |- fls,
         ),
-        gamma |- ~a,
+        gamma |- ~phi,
       )
 
     /** Negation elimination (¬E).
@@ -177,12 +177,12 @@ case object InferenceRules:
      */
     val NegationElimination: InferenceRule[FormulaF] =
       val gamma = Pattern.Seq.Meta("Gamma")
-      val a = MetaVariable("A")
+      val phi = MetaVariable("phi")
 
       Inference(
         Set(
-          gamma |- ~a,
-          gamma |- a,
+          gamma |- ~phi,
+          gamma |- phi,
         ),
         gamma |- fls,
       )
@@ -209,13 +209,13 @@ case object InferenceRules:
      */
     val FalseElimination: InferenceRule[FormulaF] =
       val gamma = Pattern.Seq.Meta("Gamma")
-      val a = MetaVariable("A")
+      val phi = MetaVariable("phi")
 
       Inference(
         Set(
           gamma |- fls
         ),
-        gamma |- a,
+        gamma |- phi,
       )
 
     private object MetaVariable:
