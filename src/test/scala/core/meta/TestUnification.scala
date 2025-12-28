@@ -1,7 +1,7 @@
 package proofPlayground
 package core.meta
 
-import core.logic.propositional.FormulaF.{fls, tru, unary_~, variable}
+import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
 import core.meta.TestUnification.{arbitraryGen, asPattern}
@@ -79,6 +79,33 @@ class TestUnification extends AnyFunSuite:
     val formula = arbitraryGen.arbitrary.filter(f =>
       f.formula match
         case FormulaF.Negation(_) => false
+        case _ => true
+    ).sample.get
+    val result = Unification.unify(pattern, formula)
+
+    assert(result.isEmpty)
+  }
+
+  test("conjunction patterns unify conjunction formulas") {
+    val leftPattern = Pattern.Formula.Meta[FormulaF]("phi")
+    val rightPattern = Pattern.Formula.Meta[FormulaF]("psi")
+    val pattern = Pattern.Formula.Concrete[FormulaF](leftPattern /\ rightPattern)
+    val leftFormula = arbitraryGen.arbitrary.sample.get
+    val rightFormula = arbitraryGen.arbitrary.sample.get
+    val formula = Formula(leftFormula /\ rightFormula)
+    val result = Unification.unify(pattern, formula)
+
+    assert(result.isDefined)
+    assert(result.get === Map(leftPattern -> leftFormula, rightPattern -> rightFormula))
+  }
+
+  test("conjunction patterns do not unify non-conjunction formulas") {
+    val leftPattern = Pattern.Formula.Meta[FormulaF]("phi")
+    val rightPattern = Pattern.Formula.Meta[FormulaF]("psi")
+    val pattern = Pattern.Formula.Concrete[FormulaF](leftPattern /\ rightPattern)
+    val formula = arbitraryGen.arbitrary.filter(f =>
+      f.formula match
+        case FormulaF.Conjunction(_) => false
         case _ => true
     ).sample.get
     val result = Unification.unify(pattern, formula)

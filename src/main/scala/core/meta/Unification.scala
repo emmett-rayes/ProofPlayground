@@ -4,10 +4,10 @@ package core.meta
 import core.logic.propositional.{Formula, FormulaF}
 
 object Unification:
-  def unify(
-    pattern: Pattern.Formula[FormulaF],
-    formula: Formula
-  ): Option[Map[Pattern.Formula.Meta[FormulaF], Formula]] =
+  type Unification[F[_], X] = Map[Pattern.Formula.Meta[F], X]
+  type UnificationResult[F[_], X] = Option[Unification[F, X]]
+
+  def unify(pattern: Pattern.Formula[FormulaF], formula: Formula): UnificationResult[FormulaF, Formula] =
     pattern match
       case Pattern.Formula.Meta(name) =>
         Some(Map(Pattern.Formula.Meta(name) -> formula))
@@ -22,9 +22,11 @@ object Unification:
           case (FormulaF.Negation(negationPattern), FormulaF.Negation(negation)) =>
             unify(negationPattern.arg, negation.arg)
           case (FormulaF.Conjunction(conjunctionPattern), FormulaF.Conjunction(conjunction)) =>
-            unify(conjunctionPattern.lhs, conjunction.lhs)
-            unify(conjunctionPattern.rhs, conjunction.rhs)
-            // TODO
+            for
+              lhs <- unify(conjunctionPattern.lhs, conjunction.lhs)
+              rhs <- unify(conjunctionPattern.rhs, conjunction.rhs)
+              merged <- mergeUnification(lhs, rhs)
+            yield merged
           case (FormulaF.Disjunction(disjunctionPattern), FormulaF.Disjunction(disjunction)) =>
             unify(disjunctionPattern.lhs, disjunction.lhs)
             unify(disjunctionPattern.rhs, disjunction.rhs)
@@ -34,3 +36,7 @@ object Unification:
             unify(implicationPattern.rhs, implication.rhs)
           // TODO
           case _ => None
+
+  private def mergeUnification[F[_], X](fst: Unification[F, X], snd: Unification[F, X]): UnificationResult[F, X] =
+    val intersection = fst.keySet.intersect(snd.keySet)
+    if intersection.exists(key => fst(key) != snd(key)) then None else Some(fst ++ snd)
