@@ -14,6 +14,8 @@ case object Pattern:
    *
    * A Formula pattern can be either a meta-variable that matches
    * any formula or a concrete formula.
+   *
+   * @tparam X the formula functor of the referenced formulas.
    */
   enum Formula[X[_]] extends Pattern:
 
