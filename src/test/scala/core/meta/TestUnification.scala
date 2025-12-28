@@ -1,7 +1,7 @@
 package proofPlayground
 package core.meta
 
-import core.logic.propositional.FormulaF.{fls, tru, variable}
+import core.logic.propositional.FormulaF.{fls, tru, unary_~, variable}
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
 import core.meta.TestUnification.{arbitraryGen, asPattern}
@@ -57,6 +57,30 @@ class TestUnification extends AnyFunSuite:
   test("false pattern does not unifies anything that is not false formula") {
     val pattern = Pattern.Formula.Concrete(tru)
     val formula = arbitraryGen.arbitrary.filter(f => f != Formula(fls)).sample.get
+    val result = Unification.unify(pattern, formula)
+
+    assert(result.isEmpty)
+  }
+
+  test("negation patterns unify negation formulas") {
+    val subPattern = Pattern.Formula.Meta[FormulaF]("phi")
+    val pattern = Pattern.Formula.Concrete[FormulaF](~subPattern)
+    val subFormula = arbitraryGen.arbitrary.sample.get
+    val formula = Formula(~subFormula)
+    val result = Unification.unify(pattern, formula)
+
+    assert(result.isDefined)
+    assert(result.get === Map(subPattern -> subFormula))
+  }
+
+  test("negation patterns do not unify non-negation formulas") {
+    val subPattern = Pattern.Formula.Meta[FormulaF]("phi")
+    val pattern = Pattern.Formula.Concrete[FormulaF](~subPattern)
+    val formula = arbitraryGen.arbitrary.filter(f =>
+      f.formula match
+        case FormulaF.Negation(_) => false
+        case _ => true
+    ).sample.get
     val result = Unification.unify(pattern, formula)
 
     assert(result.isEmpty)

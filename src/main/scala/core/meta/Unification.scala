@@ -21,7 +21,6 @@ object Unification:
             Some(Map.empty)
           case (FormulaF.Negation(negationPattern), FormulaF.Negation(negation)) =>
             unify(negationPattern.arg, negation.arg)
-            // TODO
           case (FormulaF.Conjunction(conjunctionPattern), FormulaF.Conjunction(conjunction)) =>
             unify(conjunctionPattern.lhs, conjunction.lhs)
             unify(conjunctionPattern.rhs, conjunction.rhs)
