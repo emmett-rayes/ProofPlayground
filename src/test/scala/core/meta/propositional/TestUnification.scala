@@ -96,7 +96,7 @@ class TestUnification extends AnyFunSuite:
     val subPattern = Pattern.Formula.Meta[FormulaF]("phi")
     val pattern = Pattern.Formula.Concrete[FormulaF](~subPattern)
     val formula = formulaGenerator.arbitrary.retryUntil(f =>
-      f.formula match
+      f.unfix match
         case FormulaF.Negation(_) => false
         case _ => true
     ).sample.get
@@ -123,7 +123,7 @@ class TestUnification extends AnyFunSuite:
     val rightPattern = Pattern.Formula.Meta[FormulaF]("psi")
     val pattern = Pattern.Formula.Concrete[FormulaF](leftPattern /\ rightPattern)
     val formula = formulaGenerator.arbitrary.retryUntil(f =>
-      f.formula match
+      f.unfix match
         case FormulaF.Conjunction(_) => false
         case _ => true
     ).sample.get
@@ -161,7 +161,7 @@ class TestUnification extends AnyFunSuite:
     val rightPattern = Pattern.Formula.Meta[FormulaF]("psi")
     val pattern = Pattern.Formula.Concrete[FormulaF](leftPattern \/ rightPattern)
     val formula = formulaGenerator.arbitrary.retryUntil(f =>
-      f.formula match
+      f.unfix match
         case FormulaF.Disjunction(_) => false
         case _ => true
     ).sample.get
@@ -199,7 +199,7 @@ class TestUnification extends AnyFunSuite:
     val rightPattern = Pattern.Formula.Meta[FormulaF]("psi")
     val pattern = Pattern.Formula.Concrete[FormulaF](leftPattern --> rightPattern)
     val formula = formulaGenerator.arbitrary.retryUntil(f =>
-      f.formula match
+      f.unfix match
         case FormulaF.Implication(_) => false
         case _ => true
     ).sample.get

@@ -41,7 +41,7 @@ object Unification:
       case Pattern.Formula.Meta(name) =>
         Some(Map(Pattern.Formula.Meta(name) -> formula))
       case Pattern.Formula.Concrete(pattern) =>
-        (pattern, formula.formula) match
+        (pattern, formula.unfix) match
           case (FormulaF.Variable(variablePattern), FormulaF.Variable(variable)) if variablePattern == variable =>
             Some(Map.empty)
           case (FormulaF.True(_), FormulaF.True(_)) =>

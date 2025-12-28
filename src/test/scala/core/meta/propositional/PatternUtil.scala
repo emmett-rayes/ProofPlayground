@@ -15,7 +15,7 @@ object PatternUtil:
       *   a `Pattern.Formula.Concrete` wrapping the formula
       */
     def asPattern: Pattern.Formula.Concrete[FormulaF] =
-      formula.formula match
+      formula.unfix match
         case FormulaF.Variable(variable) =>
           FormulaF.Variable(variable)
         case FormulaF.True(tru) =>

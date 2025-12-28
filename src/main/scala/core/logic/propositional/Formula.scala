@@ -2,19 +2,32 @@ package proofPlayground
 package core.logic.propositional
 
 import core.logic.symbol
+import core.{Fix, Functor}
 
 /** Representation of a propositional formula.
  *
- * A formula is defined as a fixed point over the functor FormulaF
+ * A formula is defined as a fixed point over the functor [[FormulaF]].
  */
-case class Formula(formula: FormulaF[Formula])
+type Formula = Fix[FormulaF]
 
-/** Representation of the structure of a propositional logic formula.
+object Formula:
+  /** Implicit conversion from a formula functor to a formula.
+   *
+   * Enables using a [[FormulaF]] directly where a [[Formula]] is expected.
+   *
+   * @return a conversion that constructs a `Formula`.
+   */
+  given Conversion[FormulaF[Formula], Formula] = Formula(_)
+
+  /** Construct a formula from its functor representation. */
+  def apply(f: FormulaF[Formula]): Formula = Fix(f)
+
+
+/** The functor representing the structure of a propositional logic formula.
  *
- * @tparam F the type used for recursive positions.
+ * @tparam T the type used for recursive positions.
  */
-enum FormulaF[F]:
-
+enum FormulaF[T]:
   /** A propositional variable. */
   case Variable(variable: symbol.Variable[FormulaF.Propositional])
 
@@ -25,43 +38,59 @@ enum FormulaF[F]:
   case False(fls: symbol.False)
 
   /** The negation of a formula. */
-  case Negation(negation: symbol.Negation[F])
+  case Negation(negation: symbol.Negation[T])
 
   /** The conjunction of two formulas. */
-  case Conjunction(conjunction: symbol.Conjunction[F])
+  case Conjunction(conjunction: symbol.Conjunction[T])
 
   /** The disjunction of two formulas. */
-  case Disjunction(disjunction: symbol.Disjunction[F])
+  case Disjunction(disjunction: symbol.Disjunction[T])
 
   /** The implication from a formula to a formula. */
-  case Implication(implication: symbol.Implication[F])
+  case Implication(implication: symbol.Implication[T])
 
 case object FormulaF:
   /** Marker trait for propositional logic variables. */
   sealed trait Propositional
 
-  /** Create a propositional variable formula */
-  def variable[F](): FormulaF[F] = FormulaF.Variable(symbol.Variable[Propositional]())
+  /** Create a propositional variable formula using a fresh variable */
+  def variable[T](): FormulaF[T] = Variable(symbol.Variable[Propositional]())
+
+  /** Create a propositional variable formula using the same variable */
+  def variable[T, K](varSymbol: symbol.Variable[Propositional]): FormulaF[T] = Variable(varSymbol)
 
   /** Create a true formula. */
-  def tru[F]: FormulaF[F] = FormulaF.True(symbol.True())
+  def tru[T]: FormulaF[T] = True(symbol.True())
 
   /** Create a false formula. */
-  def fls[F]: FormulaF[F] = FormulaF.False(symbol.False())
+  def fls[T]: FormulaF[T] = False(symbol.False())
 
   /** Extension methods for formulas.
    *
    * Provides DSL for constructing propositional formulas.
    */
-  extension [F](f: F)
+  extension [T](t: T)
     /** Negation operator. */
-    def unary_~ : FormulaF[F] = FormulaF.Negation(symbol.Negation(f))
+    def unary_~ : FormulaF[T] = Negation(symbol.Negation(t))
 
     /** Conjunction operator. */
-    def /\(other: F): FormulaF[F] = FormulaF.Conjunction(symbol.Conjunction(f, other))
+    def /\(other: T): FormulaF[T] = Conjunction(symbol.Conjunction(t, other))
 
     /** Disjunction operator. */
-    def \/(other: F): FormulaF[F] = FormulaF.Disjunction(symbol.Disjunction(f, other))
+    def \/(other: T): FormulaF[T] = Disjunction(symbol.Disjunction(t, other))
 
     /** Implication operator. */
-    def -->(other: F): FormulaF[F] = FormulaF.Implication(symbol.Implication(f, other))
+    def -->(other: T): FormulaF[T] = Implication(symbol.Implication(t, other))
+
+  /** [[Functor]] instance for [[FormulaF]]. */
+  given Functor[FormulaF]:
+    extension [A](fa: FormulaF[A])
+      override def map[B](f: A => B): FormulaF[B] =
+        fa match
+          case Variable(sym) => variable(sym)
+          case True(_) => tru
+          case False(_) => fls
+          case Negation(negation) => ~f(negation.arg)
+          case Conjunction(conjunction) => f(conjunction.lhs) /\ f(conjunction.rhs)
+          case Disjunction(disjunction) => f(disjunction.lhs) \/ f(disjunction.rhs)
+          case Implication(implication) => f(implication.lhs) --> f(implication.rhs)
