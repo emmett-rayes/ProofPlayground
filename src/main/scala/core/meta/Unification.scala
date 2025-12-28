@@ -3,10 +3,38 @@ package core.meta
 
 import core.logic.propositional.{Formula, FormulaF}
 
+/**
+ * Unification utilities for matching a meta-level pattern of formulas
+ * against a concrete formula. The result is a mapping from meta-variables
+ * appearing in the pattern to concrete formulas when a match exists.
+ */
 object Unification:
+  /**
+   * A successful unifier mapping meta variables from a pattern to concrete values.
+   *
+   * @tparam F functor of the formula structure (e.g. [[FormulaF]])
+   * @tparam X value bound to meta variables (e.g. [[Formula]])
+   */
   type Unification[F[_], X] = Map[Pattern.Formula.Meta[F], X]
+
+  /**
+   * The result of attempting to unify a pattern with a formula. None denotes unification failure.
+   */
   type UnificationResult[F[_], X] = Option[Unification[F, X]]
 
+  /**
+   * Attempt to unify a formula pattern with a concrete formula.
+   *
+   * Rules:
+   * - Meta variables in the pattern match any formula and are bound to it.
+   * - Concrete constructors must structurally match and recursively unify.
+   * - Leaf cases (Variable, True, False) succeed only if equal; otherwise fail.
+   * - For binary connectives (∧, ∨, →), both sides must unify and their substitutions must be consistent.
+   *
+   * @param pattern meta/structured pattern to match
+   * @param formula concrete formula to check against
+   * @return Some(unifier) if a consistent substitution exists; None otherwise
+   */
   def unify(pattern: Pattern.Formula[FormulaF], formula: Formula): UnificationResult[FormulaF, Formula] =
     pattern match
       case Pattern.Formula.Meta(name) =>
@@ -41,6 +69,11 @@ object Unification:
             yield merged
           case _ => None
 
+  /**
+   * Merge two unifiers if they agree on shared variables; otherwise fail.
+   *
+   * @return Some(merged) when consistent; None on conflict
+   */
   private def mergeUnification[F[_], X](fst: Unification[F, X], snd: Unification[F, X]): UnificationResult[F, X] =
     val intersection = fst.keySet.intersect(snd.keySet)
     if intersection.exists(key => fst(key) != snd(key)) then None else Some(fst ++ snd)
