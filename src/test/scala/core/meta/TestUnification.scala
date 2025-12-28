@@ -238,11 +238,11 @@ object TestUnification:
     else
       val sub = genFormula(depth - 1)
       Gen.frequency(
-        2 -> leaf,
+        1 -> leaf,
         2 -> sub.map(f => Formula(FormulaF.Negation(symbol.Negation(f)))),
-        3 -> Gen.zip(sub, sub).map { case (l, r) => Formula(FormulaF.Conjunction(symbol.Conjunction(l, r))) },
-        3 -> Gen.zip(sub, sub).map { case (l, r) => Formula(FormulaF.Disjunction(symbol.Disjunction(l, r))) },
-        3 -> Gen.zip(sub, sub).map { case (l, r) => Formula(FormulaF.Implication(symbol.Implication(l, r))) }
+        3 -> Gen.zip(sub, sub).map { case (l, r) => Formula(l /\ r) },
+        3 -> Gen.zip(sub, sub).map { case (l, r) => Formula(l \/ r) },
+        3 -> Gen.zip(sub, sub).map { case (l, r) => Formula(l --> r) },
       )
 
   extension (formula: Formula)
