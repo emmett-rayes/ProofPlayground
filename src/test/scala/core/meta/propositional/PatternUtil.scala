@@ -1,8 +1,9 @@
 package proofPlayground
-package core.meta
+package core.meta.propositional
 
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
+import core.meta.Pattern
 
 object PatternUtil:
   extension (formula: Formula)

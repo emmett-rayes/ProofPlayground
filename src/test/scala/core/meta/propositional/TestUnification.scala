@@ -1,9 +1,11 @@
 package proofPlayground
-package core.meta
+package core.meta.propositional
 
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
-import core.meta.PatternUtil.asPattern
+import core.meta.Pattern
+import core.meta.propositional.PatternUtil.asPattern
+import core.meta.propositional.Unification
 
 import org.scalatest.funsuite.AnyFunSuite
 

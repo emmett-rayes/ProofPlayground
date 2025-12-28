@@ -1,5 +1,5 @@
 package proofPlayground
-package core.meta
+package core.meta.propositional
 
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}

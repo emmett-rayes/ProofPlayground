@@ -1,7 +1,16 @@
 package proofPlayground
-package core.meta
+package core.meta.propositional
 
 import core.logic.propositional.{Formula, FormulaF}
+import core.meta.Pattern
+
+/**
+ * A successful unifier mapping meta variables from a pattern to concrete values.
+ *
+ * @tparam F functor of the formula structure (e.g. [[FormulaF]])
+ * @tparam X value bound to meta variables (e.g. [[Formula]])
+ */
+type Unification[F[_], X] = Map[Pattern.Formula.Meta[F], X]
 
 /**
  * Unification utilities for matching a meta-level pattern of formulas
@@ -9,14 +18,6 @@ import core.logic.propositional.{Formula, FormulaF}
  * appearing in the pattern to concrete formulas when a match exists.
  */
 object Unification:
-  /**
-   * A successful unifier mapping meta variables from a pattern to concrete values.
-   *
-   * @tparam F functor of the formula structure (e.g. [[FormulaF]])
-   * @tparam X value bound to meta variables (e.g. [[Formula]])
-   */
-  type Unification[F[_], X] = Map[Pattern.Formula.Meta[F], X]
-
   /**
    * The result of attempting to unify a pattern with a formula. None denotes unification failure.
    */
