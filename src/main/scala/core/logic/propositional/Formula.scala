@@ -41,7 +41,7 @@ case object FormulaF:
   sealed trait Propositional
 
   /** Create a propositional variable formula */
-  def variable[F]: FormulaF[F] = FormulaF.Variable(symbol.Variable[Propositional]())
+  def variable[F](): FormulaF[F] = FormulaF.Variable(symbol.Variable[Propositional]())
 
   /** Create a true formula. */
   def tru[F]: FormulaF[F] = FormulaF.True(symbol.True())
