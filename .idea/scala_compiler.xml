@@ -4,6 +4,7 @@
     <option name="separateProdTestSources" value="true" />
     <profile name="sbt 1" modules="ProofPlayground" />
     <profile name="sbt 3" modules="ProofPlayground.main,ProofPlayground.test">
+      <option name="implicitConversions" value="true" />
       <option name="featureWarnings" value="true" />
     </profile>
   </component>

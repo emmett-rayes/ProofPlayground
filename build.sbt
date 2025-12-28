@@ -10,6 +10,7 @@ lazy val root = (project in file("."))
 
 scalacOptions ++= Seq(
   "-feature",
+  "-language:implicitConversions",
 )
 
 libraryDependencies ++= Seq(
