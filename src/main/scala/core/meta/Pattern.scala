@@ -33,8 +33,26 @@ case object Pattern:
     case Concrete[F[_]](formula: F[Formula[F]]) extends Formula[F]
 
   case object Formula:
-    given [F[_]]: Conversion[String, Meta[F]] = Meta(_)
-    given [F[_]]: Conversion[F[Formula[F]], Concrete[F]] = Concrete(_)
+
+    /** Implicit conversion from `String` to `Formula.Meta`.
+     *
+     * Enables using a plain identifier as a meta-variable in the pattern DSL,
+     * e.g. "A" becomes `Formula.Meta[F]("A")` for any formula functor `F`.
+     *
+     * @tparam F the formula functor of the referenced formulas.
+     * @return a `Formula.Meta[F]` constructed from the given string name.
+     */
+    given [F[_]] => Conversion[String, Meta[F]] = Meta(_)
+
+    /** Implicit conversion from a concrete formula to `Formula.Concrete`.
+     *
+     * Allows writing a concrete formula directly in the pattern DSL,
+     * e.g. a value of type `F[Formula[F]]` becomes `Formula.Concrete[F](value)`.
+     *
+     * @tparam F the formula functor of the concrete formula.
+     * @return a `Formula.Concrete[F]` wrapping the provided concrete formula.
+     */
+    given [F[_]] => Conversion[F[Formula[F]], Concrete[F]] = Concrete(_)
 
   /** Pattern for matching sequences in proof structures.
    *
@@ -58,6 +76,14 @@ case object Pattern:
     case Concrete(seq: scala.Seq[Pattern]) extends Seq[Pattern]
 
   case object Seq:
+
+    /** Implicit conversion from `String` to `Seq.Meta`.
+     *
+     * Allows using plain identifiers for sequence meta-variables in the DSL,
+     * e.g. "Gamma" becomes `Seq.Meta("Gamma")`.
+     *
+     * @return a conversion that creates a `Seq.Meta` pattern from a `String` name.
+     */
     given Conversion[String, Meta] = Meta(_)
 
     /** Extension methods for sequence patterns.
@@ -65,4 +91,12 @@ case object Pattern:
      * Provides DSL for constructing sequence patterns.
      */
     extension [S](seq: Seq[S])
+
+      /** Prepend a pattern to an existing sequence pattern, producing a concrete sequence.
+       *
+       * Useful for building sequence patterns incrementally.
+       *
+       * @param pattern the pattern to prepend.
+       * @return a `Seq.Concrete` containing the existing `seq` followed by `pattern`.
+       */
       def ::(pattern: Pattern) = Concrete(scala.Seq(seq, pattern))
