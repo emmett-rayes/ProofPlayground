@@ -40,7 +40,7 @@ class TestUnification extends AnyFunSuite:
 
   test("true pattern does not unifies anything that is not true formula") {
     val pattern = Pattern.Formula.Concrete(tru)
-    val formula = arbitraryGen.arbitrary.filter(f => f != Formula(tru)).sample.get
+    val formula = arbitraryGen.arbitrary.retryUntil(f => f != Formula(tru)).sample.get
     val result = Unification.unify(pattern, formula)
 
     assert(result.isEmpty)
@@ -56,7 +56,7 @@ class TestUnification extends AnyFunSuite:
 
   test("false pattern does not unifies anything that is not false formula") {
     val pattern = Pattern.Formula.Concrete(tru)
-    val formula = arbitraryGen.arbitrary.filter(f => f != Formula(fls)).sample.get
+    val formula = arbitraryGen.arbitrary.retryUntil(f => f != Formula(fls)).sample.get
     val result = Unification.unify(pattern, formula)
 
     assert(result.isEmpty)
@@ -76,7 +76,7 @@ class TestUnification extends AnyFunSuite:
   test("negation patterns do not unify non-negation formulas") {
     val subPattern = Pattern.Formula.Meta[FormulaF]("phi")
     val pattern = Pattern.Formula.Concrete[FormulaF](~subPattern)
-    val formula = arbitraryGen.arbitrary.filter(f =>
+    val formula = arbitraryGen.arbitrary.retryUntil(f =>
       f.formula match
         case FormulaF.Negation(_) => false
         case _ => true
@@ -103,7 +103,7 @@ class TestUnification extends AnyFunSuite:
     val leftPattern = Pattern.Formula.Meta[FormulaF]("phi")
     val rightPattern = Pattern.Formula.Meta[FormulaF]("psi")
     val pattern = Pattern.Formula.Concrete[FormulaF](leftPattern /\ rightPattern)
-    val formula = arbitraryGen.arbitrary.filter(f =>
+    val formula = arbitraryGen.arbitrary.retryUntil(f =>
       f.formula match
         case FormulaF.Conjunction(_) => false
         case _ => true
@@ -117,12 +117,14 @@ class TestUnification extends AnyFunSuite:
     val metavariable = Pattern.Formula.Meta[FormulaF]("phi")
     val pattern = Pattern.Formula.Concrete[FormulaF](metavariable /\ metavariable)
     val leftFormula = arbitraryGen.arbitrary.sample.get
-    val rightFormula = arbitraryGen.arbitrary.filter(f => f != leftFormula).sample.get
+    val rightFormula = arbitraryGen.arbitrary.retryUntil(f => f != leftFormula).sample.get
     val formula = Formula(leftFormula /\ rightFormula)
     val result = Unification.unify(pattern, formula)
 
     assert(result.isEmpty)
   }
+
+
 
 
 object TestUnification:
