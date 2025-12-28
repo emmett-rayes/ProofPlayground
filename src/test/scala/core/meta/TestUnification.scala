@@ -4,16 +4,16 @@ package core.meta
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
-import core.meta.TestUnification.{arbitraryGen, asPattern}
+import core.meta.TestUnification.asPattern
 
-import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.funsuite.AnyFunSuite
 
 /** Tests for the [[Unification]] functions. */
 class TestUnification extends AnyFunSuite:
+  private val formulaGenerator = FormulaGenerationUtil.arbitraryGenerator
 
   test("identical formulas unify") {
-    val formula = TestUnification.arbitraryGen.arbitrary.sample.get
+    val formula = formulaGenerator.arbitrary.sample.get
     val pattern = formula.asPattern
     val result = Unification.unify(pattern, formula)
 
@@ -23,7 +23,7 @@ class TestUnification extends AnyFunSuite:
   test("meta-variables unify any propositional formula") {
     val metavariable = Pattern.Formula.Meta[FormulaF]("phi")
     val pattern = metavariable
-    val formula = TestUnification.arbitraryGen.arbitrary.sample.get
+    val formula = formulaGenerator.arbitrary.sample.get
     val result = Unification.unify(pattern, formula)
 
     assert(result.isDefined)
@@ -40,7 +40,7 @@ class TestUnification extends AnyFunSuite:
 
   test("true pattern does not unifies anything that is not true formula") {
     val pattern = Pattern.Formula.Concrete(tru)
-    val formula = arbitraryGen.arbitrary.retryUntil(f => f != Formula(tru)).sample.get
+    val formula = formulaGenerator.arbitrary.retryUntil(f => f != Formula(tru)).sample.get
     val result = Unification.unify(pattern, formula)
 
     assert(result.isEmpty)
@@ -56,7 +56,7 @@ class TestUnification extends AnyFunSuite:
 
   test("false pattern does not unifies anything that is not false formula") {
     val pattern = Pattern.Formula.Concrete(tru)
-    val formula = arbitraryGen.arbitrary.retryUntil(f => f != Formula(fls)).sample.get
+    val formula = formulaGenerator.arbitrary.retryUntil(f => f != Formula(fls)).sample.get
     val result = Unification.unify(pattern, formula)
 
     assert(result.isEmpty)
@@ -65,7 +65,7 @@ class TestUnification extends AnyFunSuite:
   test("negation patterns unify negation formulas") {
     val subPattern = Pattern.Formula.Meta[FormulaF]("phi")
     val pattern = Pattern.Formula.Concrete[FormulaF](~subPattern)
-    val subFormula = arbitraryGen.arbitrary.sample.get
+    val subFormula = formulaGenerator.arbitrary.sample.get
     val formula = Formula(~subFormula)
     val result = Unification.unify(pattern, formula)
 
@@ -76,7 +76,7 @@ class TestUnification extends AnyFunSuite:
   test("negation patterns do not unify non-negation formulas") {
     val subPattern = Pattern.Formula.Meta[FormulaF]("phi")
     val pattern = Pattern.Formula.Concrete[FormulaF](~subPattern)
-    val formula = arbitraryGen.arbitrary.retryUntil(f =>
+    val formula = formulaGenerator.arbitrary.retryUntil(f =>
       f.formula match
         case FormulaF.Negation(_) => false
         case _ => true
@@ -90,8 +90,8 @@ class TestUnification extends AnyFunSuite:
     val leftPattern = Pattern.Formula.Meta[FormulaF]("phi")
     val rightPattern = Pattern.Formula.Meta[FormulaF]("psi")
     val pattern = Pattern.Formula.Concrete[FormulaF](leftPattern /\ rightPattern)
-    val leftFormula = arbitraryGen.arbitrary.sample.get
-    val rightFormula = arbitraryGen.arbitrary.sample.get
+    val leftFormula = formulaGenerator.arbitrary.sample.get
+    val rightFormula = formulaGenerator.arbitrary.sample.get
     val formula = Formula(leftFormula /\ rightFormula)
     val result = Unification.unify(pattern, formula)
 
@@ -103,7 +103,7 @@ class TestUnification extends AnyFunSuite:
     val leftPattern = Pattern.Formula.Meta[FormulaF]("phi")
     val rightPattern = Pattern.Formula.Meta[FormulaF]("psi")
     val pattern = Pattern.Formula.Concrete[FormulaF](leftPattern /\ rightPattern)
-    val formula = arbitraryGen.arbitrary.retryUntil(f =>
+    val formula = formulaGenerator.arbitrary.retryUntil(f =>
       f.formula match
         case FormulaF.Conjunction(_) => false
         case _ => true
@@ -116,8 +116,8 @@ class TestUnification extends AnyFunSuite:
   test("conjunction unification fails when conflicting metavariables occur") {
     val metavariable = Pattern.Formula.Meta[FormulaF]("phi")
     val pattern = Pattern.Formula.Concrete[FormulaF](metavariable /\ metavariable)
-    val leftFormula = arbitraryGen.arbitrary.sample.get
-    val rightFormula = arbitraryGen.arbitrary.retryUntil(f => f != leftFormula).sample.get
+    val leftFormula = formulaGenerator.arbitrary.sample.get
+    val rightFormula = formulaGenerator.arbitrary.retryUntil(f => f != leftFormula).sample.get
     val formula = Formula(leftFormula /\ rightFormula)
     val result = Unification.unify(pattern, formula)
 
@@ -128,8 +128,8 @@ class TestUnification extends AnyFunSuite:
     val leftPattern = Pattern.Formula.Meta[FormulaF]("phi")
     val rightPattern = Pattern.Formula.Meta[FormulaF]("psi")
     val pattern = Pattern.Formula.Concrete[FormulaF](leftPattern \/ rightPattern)
-    val leftFormula = arbitraryGen.arbitrary.sample.get
-    val rightFormula = arbitraryGen.arbitrary.sample.get
+    val leftFormula = formulaGenerator.arbitrary.sample.get
+    val rightFormula = formulaGenerator.arbitrary.sample.get
     val formula = Formula(leftFormula \/ rightFormula)
     val result = Unification.unify(pattern, formula)
 
@@ -141,7 +141,7 @@ class TestUnification extends AnyFunSuite:
     val leftPattern = Pattern.Formula.Meta[FormulaF]("phi")
     val rightPattern = Pattern.Formula.Meta[FormulaF]("psi")
     val pattern = Pattern.Formula.Concrete[FormulaF](leftPattern \/ rightPattern)
-    val formula = arbitraryGen.arbitrary.retryUntil(f =>
+    val formula = formulaGenerator.arbitrary.retryUntil(f =>
       f.formula match
         case FormulaF.Disjunction(_) => false
         case _ => true
@@ -154,8 +154,8 @@ class TestUnification extends AnyFunSuite:
   test("disjunction unification fails when conflicting metavariables occur") {
     val metavariable = Pattern.Formula.Meta[FormulaF]("phi")
     val pattern = Pattern.Formula.Concrete[FormulaF](metavariable \/ metavariable)
-    val leftFormula = arbitraryGen.arbitrary.sample.get
-    val rightFormula = arbitraryGen.arbitrary.retryUntil(f => f != leftFormula).sample.get
+    val leftFormula = formulaGenerator.arbitrary.sample.get
+    val rightFormula = formulaGenerator.arbitrary.retryUntil(f => f != leftFormula).sample.get
     val formula = Formula(leftFormula \/ rightFormula)
     val result = Unification.unify(pattern, formula)
 
@@ -166,8 +166,8 @@ class TestUnification extends AnyFunSuite:
     val leftPattern = Pattern.Formula.Meta[FormulaF]("phi")
     val rightPattern = Pattern.Formula.Meta[FormulaF]("psi")
     val pattern = Pattern.Formula.Concrete[FormulaF](leftPattern --> rightPattern)
-    val leftFormula = arbitraryGen.arbitrary.sample.get
-    val rightFormula = arbitraryGen.arbitrary.sample.get
+    val leftFormula = formulaGenerator.arbitrary.sample.get
+    val rightFormula = formulaGenerator.arbitrary.sample.get
     val formula = Formula(leftFormula --> rightFormula)
     val result = Unification.unify(pattern, formula)
 
@@ -179,7 +179,7 @@ class TestUnification extends AnyFunSuite:
     val leftPattern = Pattern.Formula.Meta[FormulaF]("phi")
     val rightPattern = Pattern.Formula.Meta[FormulaF]("psi")
     val pattern = Pattern.Formula.Concrete[FormulaF](leftPattern --> rightPattern)
-    val formula = arbitraryGen.arbitrary.retryUntil(f =>
+    val formula = formulaGenerator.arbitrary.retryUntil(f =>
       f.formula match
         case FormulaF.Implication(_) => false
         case _ => true
@@ -192,8 +192,8 @@ class TestUnification extends AnyFunSuite:
   test("implication unification fails when conflicting metavariables occur") {
     val metavariable = Pattern.Formula.Meta[FormulaF]("phi")
     val pattern = Pattern.Formula.Concrete[FormulaF](metavariable --> metavariable)
-    val leftFormula = arbitraryGen.arbitrary.sample.get
-    val rightFormula = arbitraryGen.arbitrary.retryUntil(f => f != leftFormula).sample.get
+    val leftFormula = formulaGenerator.arbitrary.sample.get
+    val rightFormula = formulaGenerator.arbitrary.retryUntil(f => f != leftFormula).sample.get
     val formula = Formula(leftFormula --> rightFormula)
     val result = Unification.unify(pattern, formula)
 
@@ -201,49 +201,6 @@ class TestUnification extends AnyFunSuite:
   }
 
 object TestUnification:
-
-  /**
-   * Maximum depth for generated formulas.
-   */
-  inline val MAX_FORMULA_DEPTH = 5
-
-  /**
-   * Arbitrary generator for propositional formulas used in tests.
-   *
-   * Uses a size-bounded recursive generator to produce a formula.
-   */
-  given arbitraryGen: Arbitrary[Formula] = Arbitrary(
-    Gen.sized(n => TestUnification.genFormula(math.min(n, MAX_FORMULA_DEPTH)))
-  )
-
-  /**
-   * Size-bounded recursive generator for `Formula`.
-   *
-   * Generates a mix of leaf formulas (variable, ⊤, ⊥) and composite
-   * formulas (¬, ∧, ∨, →). When `depth` is 0 or less, only leaf constructors
-   * are produced. Otherwise, it probabilistically chooses between leaf and combined
-   * constructors, recursively generating smaller sub-formulas.
-   *
-   * @param depth current recursion depth limit
-   * @return a generator that yields well-formed propositional formulas
-   */
-  private def genFormula(depth: Int): Gen[Formula] =
-    lazy val leaf: Gen[Formula] = Gen.oneOf(
-      Formula(variable()),
-      Formula(tru),
-      Formula(fls),
-    )
-
-    if depth <= 0 then leaf
-    else
-      val sub = genFormula(depth - 1)
-      Gen.frequency(
-        1 -> leaf,
-        2 -> sub.map(f => Formula(FormulaF.Negation(symbol.Negation(f)))),
-        3 -> Gen.zip(sub, sub).map { case (l, r) => Formula(l /\ r) },
-        3 -> Gen.zip(sub, sub).map { case (l, r) => Formula(l \/ r) },
-        3 -> Gen.zip(sub, sub).map { case (l, r) => Formula(l --> r) },
-      )
 
   extension (formula: Formula)
     /** Converts a concrete `Formula` into a `Pattern.Formula.Concrete[FormulaF]`.
