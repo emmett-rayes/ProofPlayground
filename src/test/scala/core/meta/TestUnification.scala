@@ -113,7 +113,7 @@ class TestUnification extends AnyFunSuite:
     assert(result.isEmpty)
   }
 
-  test("unification fails when conflicting metavariables occur") {
+  test("conjunction unification fails when conflicting metavariables occur") {
     val metavariable = Pattern.Formula.Meta[FormulaF]("phi")
     val pattern = Pattern.Formula.Concrete[FormulaF](metavariable /\ metavariable)
     val leftFormula = arbitraryGen.arbitrary.sample.get
@@ -124,8 +124,81 @@ class TestUnification extends AnyFunSuite:
     assert(result.isEmpty)
   }
 
+  test("disjunction patterns unify disjunction formulas") {
+    val leftPattern = Pattern.Formula.Meta[FormulaF]("phi")
+    val rightPattern = Pattern.Formula.Meta[FormulaF]("psi")
+    val pattern = Pattern.Formula.Concrete[FormulaF](leftPattern \/ rightPattern)
+    val leftFormula = arbitraryGen.arbitrary.sample.get
+    val rightFormula = arbitraryGen.arbitrary.sample.get
+    val formula = Formula(leftFormula \/ rightFormula)
+    val result = Unification.unify(pattern, formula)
 
+    assert(result.isDefined)
+    assert(result.get === Map(leftPattern -> leftFormula, rightPattern -> rightFormula))
+  }
 
+  test("disjunction patterns do not unify non-disjunction formulas") {
+    val leftPattern = Pattern.Formula.Meta[FormulaF]("phi")
+    val rightPattern = Pattern.Formula.Meta[FormulaF]("psi")
+    val pattern = Pattern.Formula.Concrete[FormulaF](leftPattern \/ rightPattern)
+    val formula = arbitraryGen.arbitrary.retryUntil(f =>
+      f.formula match
+        case FormulaF.Disjunction(_) => false
+        case _ => true
+    ).sample.get
+    val result = Unification.unify(pattern, formula)
+
+    assert(result.isEmpty)
+  }
+
+  test("disjunction unification fails when conflicting metavariables occur") {
+    val metavariable = Pattern.Formula.Meta[FormulaF]("phi")
+    val pattern = Pattern.Formula.Concrete[FormulaF](metavariable \/ metavariable)
+    val leftFormula = arbitraryGen.arbitrary.sample.get
+    val rightFormula = arbitraryGen.arbitrary.retryUntil(f => f != leftFormula).sample.get
+    val formula = Formula(leftFormula \/ rightFormula)
+    val result = Unification.unify(pattern, formula)
+
+    assert(result.isEmpty)
+  }
+
+  test("implication patterns unify implication formulas") {
+    val leftPattern = Pattern.Formula.Meta[FormulaF]("phi")
+    val rightPattern = Pattern.Formula.Meta[FormulaF]("psi")
+    val pattern = Pattern.Formula.Concrete[FormulaF](leftPattern --> rightPattern)
+    val leftFormula = arbitraryGen.arbitrary.sample.get
+    val rightFormula = arbitraryGen.arbitrary.sample.get
+    val formula = Formula(leftFormula --> rightFormula)
+    val result = Unification.unify(pattern, formula)
+
+    assert(result.isDefined)
+    assert(result.get === Map(leftPattern -> leftFormula, rightPattern -> rightFormula))
+  }
+
+  test("implication patterns do not unify non-implication formulas") {
+    val leftPattern = Pattern.Formula.Meta[FormulaF]("phi")
+    val rightPattern = Pattern.Formula.Meta[FormulaF]("psi")
+    val pattern = Pattern.Formula.Concrete[FormulaF](leftPattern --> rightPattern)
+    val formula = arbitraryGen.arbitrary.retryUntil(f =>
+      f.formula match
+        case FormulaF.Implication(_) => false
+        case _ => true
+    ).sample.get
+    val result = Unification.unify(pattern, formula)
+
+    assert(result.isEmpty)
+  }
+
+  test("implication unification fails when conflicting metavariables occur") {
+    val metavariable = Pattern.Formula.Meta[FormulaF]("phi")
+    val pattern = Pattern.Formula.Concrete[FormulaF](metavariable --> metavariable)
+    val leftFormula = arbitraryGen.arbitrary.sample.get
+    val rightFormula = arbitraryGen.arbitrary.retryUntil(f => f != leftFormula).sample.get
+    val formula = Formula(leftFormula --> rightFormula)
+    val result = Unification.unify(pattern, formula)
+
+    assert(result.isEmpty)
+  }
 
 object TestUnification:
 

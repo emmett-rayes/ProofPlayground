@@ -28,13 +28,17 @@ object Unification:
               merged <- mergeUnification(lhs, rhs)
             yield merged
           case (FormulaF.Disjunction(disjunctionPattern), FormulaF.Disjunction(disjunction)) =>
-            unify(disjunctionPattern.lhs, disjunction.lhs)
-            unify(disjunctionPattern.rhs, disjunction.rhs)
-            // TODO
+            for
+              lhs <- unify(disjunctionPattern.lhs, disjunction.lhs)
+              rhs <- unify(disjunctionPattern.rhs, disjunction.rhs)
+              merged <- mergeUnification(lhs, rhs)
+            yield merged
           case (FormulaF.Implication(implicationPattern), FormulaF.Implication(implication)) =>
-            unify(implicationPattern.lhs, implication.lhs)
-            unify(implicationPattern.rhs, implication.rhs)
-          // TODO
+            for
+              lhs <- unify(implicationPattern.lhs, implication.lhs)
+              rhs <- unify(implicationPattern.rhs, implication.rhs)
+              merged <- mergeUnification(lhs, rhs)
+            yield merged
           case _ => None
 
   private def mergeUnification[F[_], X](fst: Unification[F, X], snd: Unification[F, X]): UnificationResult[F, X] =
