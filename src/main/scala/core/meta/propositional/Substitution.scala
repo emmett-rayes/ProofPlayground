@@ -9,8 +9,8 @@ import core.meta.{Pattern, PatternF}
 object Substitution:
   def substitute(pattern: Pattern[FormulaF], unification: Unification): Option[Formula] =
     pattern.unfix match
-      case pattern@PatternF.Meta(name) => unification.get(pattern)
-      case PatternF.Concrete(formula) =>
+      case pattern @ PatternF.Meta(name) => unification.get(pattern)
+      case PatternF.Formula(formula)     =>
         formula match
           case FormulaF.Variable(variable) =>
             Some(Formula(FormulaF.Variable(variable)))

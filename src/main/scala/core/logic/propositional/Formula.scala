@@ -5,28 +5,27 @@ import core.logic.symbol
 import core.{Fix, Functor}
 
 /** Representation of a propositional formula.
- *
- * A formula is defined as a fixed point over the functor [[FormulaF]].
- */
+  *
+  * A formula is defined as a fixed point over the functor [[FormulaF]].
+  */
 type Formula = Fix[FormulaF]
 
 object Formula:
   /** Implicit conversion from a formula functor to a formula.
-   *
-   * Enables using a [[FormulaF]] directly where a [[Formula]] is expected.
-   *
-   * @return a conversion that constructs a `Formula`.
-   */
+    *
+    * Enables using a [[FormulaF]] directly where a [[Formula]] is expected.
+    *
+    * @return a conversion that constructs a `Formula`.
+    */
   given Conversion[FormulaF[Formula], Formula] = Formula(_)
 
   /** Construct a formula from its functor representation. */
-  def apply(f: FormulaF[Formula]): Formula = Fix(f)
-
+  def apply(formula: FormulaF[Formula]): Formula = Fix(formula)
 
 /** The functor representing the structure of a propositional logic formula.
- *
- * @tparam T the type used for recursive positions.
- */
+  *
+  * @tparam T the type used for recursive positions.
+  */
 enum FormulaF[T]:
   /** A propositional variable. */
   case Variable(variable: symbol.Variable[FormulaF.Propositional])
@@ -50,13 +49,10 @@ enum FormulaF[T]:
   case Implication(implication: symbol.Implication[T])
 
 case object FormulaF:
-  /** Marker trait for propositional logic variables. */
-  sealed trait Propositional
-
-  /** Create a propositional variable formula using a fresh variable */
+  /** Create a propositional variable formula using a fresh variable. */
   def variable[T](): FormulaF.Variable[T] = Variable(symbol.Variable[Propositional]())
 
-  /** Create a propositional variable formula using the same variable */
+  /** Create a propositional variable formula using the same variable. */
   def variable[T, K](varSymbol: symbol.Variable[Propositional]): FormulaF.Variable[T] = Variable(varSymbol)
 
   /** Create a true formula. */
@@ -65,10 +61,13 @@ case object FormulaF:
   /** Create a false formula. */
   def fls[T]: FormulaF.False[T] = False(symbol.False())
 
+  /** Marker trait for propositional logic variables. */
+  sealed trait Propositional
+
   /** Extension methods for formulas.
-   *
-   * Provides DSL for constructing propositional formulas.
-   */
+    *
+    * Provides DSL for constructing propositional formulas.
+    */
   extension [T](t: T)
     /** Negation operator. */
     def unary_~ : FormulaF.Negation[T] = Negation(symbol.Negation(t))
@@ -87,10 +86,10 @@ case object FormulaF:
     extension [A](fa: FormulaF[A])
       override def map[B](f: A => B): FormulaF[B] =
         fa match
-          case Variable(sym) => variable(sym)
-          case True(_) => tru
-          case False(_) => fls
-          case Negation(negation) => ~f(negation.arg)
+          case Variable(sym)            => variable(sym)
+          case True(_)                  => tru
+          case False(_)                 => fls
+          case Negation(negation)       => ~f(negation.arg)
           case Conjunction(conjunction) => f(conjunction.lhs) /\ f(conjunction.rhs)
           case Disjunction(disjunction) => f(disjunction.lhs) \/ f(disjunction.rhs)
           case Implication(implication) => f(implication.lhs) --> f(implication.rhs)

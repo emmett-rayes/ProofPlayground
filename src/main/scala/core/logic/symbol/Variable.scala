@@ -5,13 +5,12 @@ import scala.collection.mutable
 import scala.reflect.ClassTag
 
 /** Represents a typed logical variable with a unique identifier.
- *
- * @tparam K The type associated with this variable.
- * @param id The unique identifier for this variable within its type.
- */
-case class Variable[K] private(id: Int)
+  *
+  * @tparam K The type associated with this variable.
+  * @param id The unique identifier for this variable within its type.
+  */
+case class Variable[K] private (id: Int)
 
-/** Companion object for creating unique variables. */
 case object Variable:
   private val counters = mutable.Map[Class[?], Int]().withDefaultValue(0)
 

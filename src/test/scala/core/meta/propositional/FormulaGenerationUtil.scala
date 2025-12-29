@@ -9,8 +9,7 @@ import org.scalacheck.{Arbitrary, Gen}
 
 object FormulaGenerationUtil:
 
-  /** Maximum depth for generated formulas.
-    */
+  /** Maximum depth for generated formulas. */
   inline val MAX_FORMULA_DEPTH = 5
 
   /** Arbitrary generator for propositional formulas used in tests.
@@ -23,14 +22,13 @@ object FormulaGenerationUtil:
 
   /** Size-bounded recursive generator for `Formula`.
     *
-    * Generates a mix of leaf formulas (variable, ⊤, ⊥) and composite formulas (¬, ∧, ∨, →). When `depth` is 0 or less,
-    * only leaf constructors are produced. Otherwise, it probabilistically chooses between leaf and combined
-    * constructors, recursively generating smaller sub-formulas.
+    * Generates a mix of leaf formulas (variable, ⊤, ⊥) and composite formulas (¬, ∧, ∨, →).
+    * When `depth` is 0 or less, only leaf constructors are produced.
+    * Otherwise, it probabilistically chooses between leaf and combined constructors,
+    * recursively generating smaller sub-formulas.
     *
-    * @param depth
-    *   current recursion depth limit
-    * @return
-    *   a generator that yields well-formed propositional formulas
+    * @param depth Recursion depth limit
+    * @return A generator that yields well-formed propositional formulas
     */
   private def generateFormula(depth: Int): Gen[Formula] =
     lazy val leaf: Gen[Formula] = Gen.oneOf(Formula(variable()), Formula(tru), Formula(fls))

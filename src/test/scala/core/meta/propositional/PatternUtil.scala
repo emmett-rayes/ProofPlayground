@@ -3,7 +3,6 @@ package core.meta.propositional
 
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
-import core.meta.PatternF.concrete
 import core.meta.{Pattern, PatternF}
 
 object PatternUtil:
@@ -12,15 +11,14 @@ object PatternUtil:
       *
       * This allows using concrete formulas directly in pattern matching tests.
       *
-      * @return
-      *   a `Pattern.Formula.Concrete` wrapping the formula
+      * @return A `Pattern.Formula.Concrete` wrapping the formula
       */
-    def asPattern: PatternF.Concrete[FormulaF, Pattern[FormulaF]] =
+    def asPattern: PatternF.Formula[FormulaF, Pattern[FormulaF]] =
       formula.unfix match
-        case FormulaF.Variable(variable) => FormulaF.Variable(variable)
-        case FormulaF.True(tru) => FormulaF.True(tru)
-        case FormulaF.False(fls) => FormulaF.False(fls)
-        case FormulaF.Negation(negation) => ~Pattern(negation.arg.asPattern)
+        case FormulaF.Variable(variable)       => FormulaF.Variable(variable)
+        case FormulaF.True(tru)                => FormulaF.True(tru)
+        case FormulaF.False(fls)               => FormulaF.False(fls)
+        case FormulaF.Negation(negation)       => ~Pattern(negation.arg.asPattern)
         case FormulaF.Conjunction(conjunction) =>
           Pattern(conjunction.lhs.asPattern) /\ Pattern(conjunction.rhs.asPattern)
         case FormulaF.Disjunction(disjunction) =>
