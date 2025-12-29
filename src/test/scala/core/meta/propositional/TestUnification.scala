@@ -4,11 +4,10 @@ package core.meta.propositional
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
-import core.meta.Pattern
+import core.meta.{Pattern, Unification}
 import core.meta.Pattern.given
 import core.meta.PatternF.{concrete, meta}
 import core.meta.propositional.PatternUtil.asPattern
-import core.meta.propositional.Unification
 
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -86,7 +85,7 @@ class TestUnification extends AnyFunSuite:
   test("negation patterns unify negation formulas") {
     val subPattern = Pattern(meta[FormulaF, Pattern[FormulaF]]("phi"))
     val pattern    = concrete[FormulaF, Pattern[FormulaF]](~subPattern)
-    val subFormula = formulaGenerator.arbitrary.sample.get
+    val subFormula = Formula(variable[Formula]())
     val formula    = Formula(~subFormula)
     val result     = Unification.unify(pattern, formula)
 
