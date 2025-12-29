@@ -3,14 +3,14 @@ package core.meta.propositional
 
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
-import core.meta.Pattern
 import core.meta.propositional.Unification
+import core.meta.{Pattern, PatternF}
 
 object Substitution:
-  def substitute(pattern: Pattern.Formula[FormulaF], unification: Unification[FormulaF, Formula]): Option[Formula] =
-    pattern match
-      case pattern @ Pattern.Formula.Meta(name) => unification.get(pattern)
-      case Pattern.Formula.Concrete(formula)    =>
+  def substitute(pattern: Pattern[FormulaF], unification: Unification): Option[Formula] =
+    pattern.unfix match
+      case pattern@PatternF.Meta(name) => unification.get(pattern)
+      case PatternF.Concrete(formula) =>
         formula match
           case FormulaF.Variable(variable) =>
             Some(Formula(FormulaF.Variable(variable)))

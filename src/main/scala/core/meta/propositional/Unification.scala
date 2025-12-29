@@ -2,15 +2,12 @@ package proofPlayground
 package core.meta.propositional
 
 import core.logic.propositional.{Formula, FormulaF}
-import core.meta.Pattern
+import core.meta.{Pattern, PatternF}
 
 /**
- * A successful unifier mapping meta variables from a pattern to concrete values.
- *
- * @tparam F functor of the formula structure (e.g. [[FormulaF]])
- * @tparam X value bound to meta variables (e.g. [[Formula]])
+ * A successful unifier mapping meta variables from a pattern to concrete values.*
  */
-type Unification[F[_], X] = Map[Pattern.Formula.Meta[F], X]
+type Unification = Map[PatternF.Meta[FormulaF, Pattern[FormulaF]], Formula]
 
 /**
  * Unification utilities for matching a meta-level pattern of formulas
@@ -18,11 +15,6 @@ type Unification[F[_], X] = Map[Pattern.Formula.Meta[F], X]
  * appearing in the pattern to concrete formulas when a match exists.
  */
 object Unification:
-  /**
-   * The result of attempting to unify a pattern with a formula. None denotes unification failure.
-   */
-  type UnificationResult[F[_], X] = Option[Unification[F, X]]
-
   /**
    * Attempt to unify a formula pattern with a concrete formula.
    *
@@ -36,11 +28,11 @@ object Unification:
    * @param formula concrete formula to check against
    * @return Some(unifier) if a consistent substitution exists; None otherwise
    */
-  def unify(pattern: Pattern.Formula[FormulaF], formula: Formula): UnificationResult[FormulaF, Formula] =
-    pattern match
-      case Pattern.Formula.Meta(name) =>
-        Some(Map(Pattern.Formula.Meta(name) -> formula))
-      case Pattern.Formula.Concrete(pattern) =>
+  def unify(pattern: Pattern[FormulaF], formula: Formula): Option[Unification] =
+    pattern.unfix match
+      case PatternF.Meta(name) =>
+        Some(Map(PatternF.Meta(name) -> formula))
+      case PatternF.Concrete(pattern) =>
         (pattern, formula.unfix) match
           case (FormulaF.Variable(variablePattern), FormulaF.Variable(variable)) if variablePattern == variable =>
             Some(Map.empty)
@@ -75,6 +67,6 @@ object Unification:
    *
    * @return Some(merged) when consistent; None on conflict
    */
-  private def mergeUnification[F[_], X](fst: Unification[F, X], snd: Unification[F, X]): UnificationResult[F, X] =
+  private def mergeUnification(fst: Unification, snd: Unification): Option[Unification] =
     val intersection = fst.keySet.intersect(snd.keySet)
     if intersection.exists(key => fst(key) != snd(key)) then None else Some(fst ++ snd)

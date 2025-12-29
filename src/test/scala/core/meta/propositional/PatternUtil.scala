@@ -3,30 +3,27 @@ package core.meta.propositional
 
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
-import core.meta.Pattern
+import core.meta.PatternF.concrete
+import core.meta.{Pattern, PatternF}
 
 object PatternUtil:
   extension (formula: Formula)
-    /** Converts a concrete `Formula` into a `Pattern.Formula.Concrete[FormulaF]`.
+    /** Converts a concrete `Formula` into a `PatternF.Concrete[FormulaF]`.
       *
       * This allows using concrete formulas directly in pattern matching tests.
       *
       * @return
       *   a `Pattern.Formula.Concrete` wrapping the formula
       */
-    def asPattern: Pattern.Formula.Concrete[FormulaF] =
+    def asPattern: PatternF.Concrete[FormulaF, Pattern[FormulaF]] =
       formula.unfix match
-        case FormulaF.Variable(variable) =>
-          FormulaF.Variable(variable)
-        case FormulaF.True(tru) =>
-          FormulaF.True(tru)
-        case FormulaF.False(fls) =>
-          FormulaF.False(fls)
-        case FormulaF.Negation(negation) =>
-          FormulaF.Negation(symbol.Negation(negation.arg.asPattern))
+        case FormulaF.Variable(variable) => FormulaF.Variable(variable)
+        case FormulaF.True(tru) => FormulaF.True(tru)
+        case FormulaF.False(fls) => FormulaF.False(fls)
+        case FormulaF.Negation(negation) => ~Pattern(negation.arg.asPattern)
         case FormulaF.Conjunction(conjunction) =>
-          FormulaF.Conjunction(symbol.Conjunction(conjunction.lhs.asPattern, conjunction.rhs.asPattern))
+          Pattern(conjunction.lhs.asPattern) /\ Pattern(conjunction.rhs.asPattern)
         case FormulaF.Disjunction(disjunction) =>
-          FormulaF.Disjunction(symbol.Disjunction(disjunction.lhs.asPattern, disjunction.rhs.asPattern))
+          Pattern(disjunction.lhs.asPattern) \/ Pattern(disjunction.rhs.asPattern)
         case FormulaF.Implication(implication) =>
-          FormulaF.Implication(symbol.Implication(implication.lhs.asPattern, implication.rhs.asPattern))
+          Pattern(implication.lhs.asPattern) --> Pattern(implication.rhs.asPattern)

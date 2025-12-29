@@ -6,12 +6,11 @@ package core.system.natural
  * A judgement consists of a set of assumptions and an assertion.
  * A judgement in natural deduction has a single formula in the conclusion.
  *
- * @tparam S the type constructor for the collection of assumptions.
  * @tparam F the type of formulas.
  * @param assumptions the collection of formulas assumed to be true.
  * @param assertion   the formula that is asserted.
  */
-case class Judgement[S[_], F](assumptions: S[F], assertion: F)
+case class Judgement[F](assumptions: Seq[F], assertion: F)
 
 case object Judgement:
 
@@ -19,5 +18,5 @@ case object Judgement:
    *
    * Provides DSL for constructing judgements.
    */
-  extension [S[_], F](assumptions: S[F])
+  extension [F](assumptions: Seq[F])
     def |-(assertion: F) = Judgement(assumptions, assertion) 

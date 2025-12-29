@@ -1,102 +1,66 @@
 package proofPlayground
 package core.meta
 
-/** Base trait for patterns appearing mostly in rules of inference.
+import core.{Fix, Functor}
+
+/** Pattern for matching formulas in proof structures.
  *
- * Patterns allow matching against proof structures using either
- * meta-variables (placeholders) or concrete values, or a combination.
+ * A formula pattern is defined as a fixed point over the functor [[PatternF]].
  */
-sealed trait Pattern
+type Pattern[F[_]] = Fix[[T] =>> PatternF[F, T]]
 
-case object Pattern:
-
-  /** Pattern for matching formulas in proof structures.
+object Pattern:
+  /** Implicit conversion from a formula pattern functor to a formula pattern.
    *
-   * A Formula pattern can be either a meta-variable that matches
-   * any formula or a concrete formula.
+   * Enables using a [[PatternF]] directly where a [[Pattern]] is expected.
    *
-   * @tparam X the formula functor of the referenced formulas.
+   * @tparam F the formula functor of the referenced formulas in the pattern.
+   * @return a conversion that constructs a `Pattern[F]`.
    */
-  enum Formula[X[_]] extends Pattern:
+  given [F[_]] => Conversion[PatternF[F, Pattern[F]], Pattern[F]] = Pattern(_)
 
-    /** A meta-variable pattern that matches any formula.
-     *
-     * @param name the identifier for this meta-variable.
-     */
-    case Meta[F[_]](name: String) extends Formula[F]
+  /** Construct a formula pattern from its functor representation. */
+  def apply[F[_]](f: PatternF[F, Pattern[F]]): Pattern[F] = Fix(f)
 
-    /** A concrete formula pattern that matches a specific formula.
-     *
-     * @tparam F the formula functor of the concrete formula.
-     * @param formula the specific formula to match.
-     */
-    case Concrete[F[_]](formula: F[Formula[F]]) extends Formula[F]
-
-  case object Formula:
-
-    /** Implicit conversion from `String` to `Formula.Meta`.
-     *
-     * Enables using a plain identifier as a meta-variable in the pattern DSL,
-     * e.g. "A" becomes `Formula.Meta[F]("A")` for any formula functor `F`.
-     *
-     * @tparam F the formula functor of the referenced formulas.
-     * @return a `Formula.Meta[F]` constructed from the given string name.
-     */
-    given [F[_]] => Conversion[String, Meta[F]] = Meta(_)
-
-    /** Implicit conversion from a concrete formula to `Formula.Concrete`.
-     *
-     * Allows writing a concrete formula directly in the pattern DSL,
-     * e.g. a value of type `F[Formula[F]]` becomes `Formula.Concrete[F](value)`.
-     *
-     * @tparam F the formula functor of the concrete formula.
-     * @return a `Formula.Concrete[F]` wrapping the provided concrete formula.
-     */
-    given [F[_]] => Conversion[F[Formula[F]], Concrete[F]] = Concrete(_)
-
-  /** Pattern for matching sequences in proof structures.
+/** The higher-order functor representing formula patterns.
+ *
+ * A Formula pattern can be either a meta-variable that matches any formula
+ * or a concrete formula. It is used in matching formulas in proof structures.
+ *
+ * @tparam F the formula functor of the referenced formulas.
+ * @tparam T the type used for recursive positions.
+ */
+enum PatternF[F[_], T]:
+  /** A meta-variable pattern that matches any formula.
    *
-   * A Seq pattern can be either a meta-variable that matches any sequence
-   * or a concrete sequence of patterns.
-   *
-   * @tparam S the type of sequence elements (contravariant).
+   * @param name the identifier for this meta-variable.
    */
-  enum Seq[-S] extends Pattern:
+  case Meta(name: String)
 
-    /** A meta-variable pattern that matches any sequence.
-     *
-     * @param name the identifier for this meta-variable.
-     */
-    case Meta(name: String) extends Seq[Pattern]
+  /** A concrete formula pattern that matches a specific formula.
+   *
+   * @param formula the specific formula to match.
+   */
+  case Concrete(formula: F[T])
 
-    /** A concrete sequence pattern that matches a specific sequence of patterns.
-     *
-     * @param seq the sequence of patterns to match.
-     */
-    case Concrete(seq: scala.Seq[Pattern]) extends Seq[Pattern]
 
-  case object Seq:
+case object PatternF:
+  /** Implicit conversion from a meta-variable name to a meta-variable pattern. */
+  given [F[_], T] => Conversion[String, PatternF[F, T]] = meta(_)
 
-    /** Implicit conversion from `String` to `Seq.Meta`.
-     *
-     * Allows using plain identifiers for sequence meta-variables in the DSL,
-     * e.g. "Gamma" becomes `Seq.Meta("Gamma")`.
-     *
-     * @return a conversion that creates a `Seq.Meta` pattern from a `String` name.
-     */
-    given Conversion[String, Meta] = Meta(_)
+  /** Create a meta-variable pattern with a given name. */
+  def meta[F[_], T](name: String): PatternF.Meta[F, T] = PatternF.Meta(name)
 
-    /** Extension methods for sequence patterns.
-     *
-     * Provides DSL for constructing sequence patterns.
-     */
-    extension [S](seq: Seq[S])
+  /** Implicit conversion from a concrete formula to a concrete formula pattern. */
+  given [F[_], T] => Conversion[F[T], PatternF.Concrete[F, T]] = concrete(_)
 
-      /** Prepend a pattern to an existing sequence pattern, producing a concrete sequence.
-       *
-       * Useful for building sequence patterns incrementally.
-       *
-       * @param pattern the pattern to prepend.
-       * @return a `Seq.Concrete` containing the existing `seq` followed by `pattern`.
-       */
-      def ::(pattern: Pattern) = Concrete(scala.Seq(seq, pattern))
+  /** Create a concrete formula pattern. */
+  def concrete[F[_], T](formula: F[T]): PatternF.Concrete[F, T] = PatternF.Concrete(formula)
+
+  /** [[Functor]] instance for `[[PatternF]]`. */
+  given [F[_] : Functor as F] =>Functor[[T] =>> PatternF[F, T]]:
+    extension [A](fa: PatternF[F, A])
+      override def map[B](f: A => B): PatternF[F, B] =
+        fa match
+          case Meta(name) => meta(name)
+          case Concrete(formula) => concrete(F.map(formula)(f))

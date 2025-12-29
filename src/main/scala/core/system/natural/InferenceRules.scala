@@ -2,24 +2,29 @@ package proofPlayground
 package core.system.natural
 
 import core.logic.propositional.FormulaF
-import core.meta.{Inference, Pattern}
+import core.logic.propositional.FormulaF.*
+import core.meta.PatternF.concrete
+import core.meta.{Inference, Pattern, PatternF}
+import core.system.natural.Judgement.*
 
 /** An inference rule for natural deduction judgements.
  *
  * Inference rules contain patterns of judgements.
  */
-type InferenceRule[F[_]] = Inference[Judgement[Pattern.Seq, Pattern.Formula[F]]]
+type InferenceRule[F[_]] = Inference[Judgement[Pattern[FormulaF]]]
 
-/** Collection of inference rules for natural deduction.
- */
+/** Collection of inference rules for natural deduction. */
 case object InferenceRules:
 
-  import FormulaF.*
-  import Judgement.*
-  import Pattern.Seq.*
+  private given Conversion[FormulaF[Pattern[FormulaF]], Pattern[FormulaF]] = f => Pattern(concrete(f))
 
-  /** Inference rules for intuitionistic propositional logic.
-   */
+  private given Conversion[Pattern[FormulaF], Seq[Pattern[FormulaF]]] = _ :: Nil
+
+  extension (pattern: Pattern[FormulaF])
+    private def ::(other: Seq[Pattern[FormulaF]]) = pattern +: other
+
+
+  /** Inference rules for intuitionistic propositional logic. */
   //noinspection DuplicatedCode
   case object IntuitionisticPropositional:
 
@@ -28,9 +33,9 @@ case object InferenceRules:
      * If Γ ⊢ A and Γ ⊢ B, then Γ ⊢ A ∧ B.
      */
     val ConjunctionIntroduction: InferenceRule[FormulaF] =
-      val gamma = Pattern.Seq.Meta("Gamma")
-      val phi = MetaVariable("phi")
-      val psi = MetaVariable("psi")
+      val gamma = Pattern[FormulaF]("Gamma")
+      val phi = Pattern[FormulaF]("phi")
+      val psi = Pattern[FormulaF]("psi")
 
       Inference(
         Set(
@@ -45,9 +50,9 @@ case object InferenceRules:
      * If Γ ⊢ A ∧ B, then Γ ⊢ A.
      */
     val ConjunctionElimination1: InferenceRule[FormulaF] =
-      val gamma = Pattern.Seq.Meta("Gamma")
-      val phi = MetaVariable("phi")
-      val psi = MetaVariable("psi")
+      val gamma = Pattern[FormulaF]("Gamma")
+      val phi = Pattern[FormulaF]("phi")
+      val psi = Pattern[FormulaF]("psi")
 
       Inference(
         Set(
@@ -61,9 +66,9 @@ case object InferenceRules:
      * If Γ ⊢ A ∧ B, then Γ ⊢ B.
      */
     val ConjunctionElimination2: InferenceRule[FormulaF] =
-      val gamma = Pattern.Seq.Meta("Gamma")
-      val phi = MetaVariable("phi")
-      val psi = MetaVariable("psi")
+      val gamma = Pattern[FormulaF]("Gamma")
+      val phi = Pattern[FormulaF]("phi")
+      val psi = Pattern[FormulaF]("psi")
 
       Inference(
         Set(
@@ -77,9 +82,9 @@ case object InferenceRules:
      * If Γ ⊢ A, then Γ ⊢ A ∨ B.
      */
     val DisjunctionIntroduction1: InferenceRule[FormulaF] =
-      val gamma = Pattern.Seq.Meta("Gamma")
-      val phi = MetaVariable("phi")
-      val psi = MetaVariable("psi")
+      val gamma = Pattern[FormulaF]("Gamma")
+      val phi = Pattern[FormulaF]("phi")
+      val psi = Pattern[FormulaF]("psi")
 
       Inference(
         Set(
@@ -93,9 +98,9 @@ case object InferenceRules:
      * If Γ ⊢ B, then Γ ⊢ A ∨ B.
      */
     val DisjunctionIntroduction2: InferenceRule[FormulaF] =
-      val gamma = Pattern.Seq.Meta("Gamma")
-      val phi = MetaVariable("phi")
-      val psi = MetaVariable("psi")
+      val gamma = Pattern[FormulaF]("Gamma")
+      val phi = Pattern[FormulaF]("phi")
+      val psi = Pattern[FormulaF]("psi")
 
       Inference(
         Set(
@@ -109,10 +114,10 @@ case object InferenceRules:
      * If Γ ⊢ A ∨ B, Γ,A ⊢ C and Γ,B ⊢ C, then Γ ⊢ C.
      */
     val DisjunctionElimination: InferenceRule[FormulaF] =
-      val gamma = Pattern.Seq.Meta("Gamma")
-      val phi = MetaVariable("phi")
-      val psi = MetaVariable("psi")
-      val rho = MetaVariable("rhi")
+      val gamma = Pattern[FormulaF]("Gamma")
+      val phi = Pattern[FormulaF]("phi")
+      val psi = Pattern[FormulaF]("psi")
+      val rho = Pattern[FormulaF]("rho")
 
       Inference(
         Set(
@@ -128,9 +133,9 @@ case object InferenceRules:
      * If Γ,A ⊢ B, then Γ ⊢ A → B.
      */
     val ImplicationIntroduction: InferenceRule[FormulaF] =
-      val gamma = Pattern.Seq.Meta("Gamma")
-      val phi = MetaVariable("phi")
-      val psi = MetaVariable("psi")
+      val gamma = Pattern[FormulaF]("Gamma")
+      val phi = Pattern[FormulaF]("phi")
+      val psi = Pattern[FormulaF]("psi")
 
       Inference(
         Set(
@@ -144,9 +149,9 @@ case object InferenceRules:
      * If Γ ⊢ A → B and Γ ⊢ A, then Γ ⊢ B.
      */
     val ImplicationElimination: InferenceRule[FormulaF] =
-      val gamma = Pattern.Seq.Meta("Gamma")
-      val phi = MetaVariable("phi")
-      val psi = MetaVariable("psi")
+      val gamma = Pattern[FormulaF]("Gamma")
+      val phi = Pattern[FormulaF]("phi")
+      val psi = Pattern[FormulaF]("psi")
 
       Inference(
         Set(
@@ -161,8 +166,8 @@ case object InferenceRules:
      * If Γ,A ⊢ ⊥, then Γ ⊢ ¬A.
      */
     val NegationIntroduction: InferenceRule[FormulaF] =
-      val gamma = Pattern.Seq.Meta("Gamma")
-      val phi = MetaVariable("phi")
+      val gamma = Pattern[FormulaF]("Gamma")
+      val phi = Pattern[FormulaF]("phi")
 
       Inference(
         Set(
@@ -176,8 +181,8 @@ case object InferenceRules:
      * If Γ ⊢ ¬A and Γ ⊢ A, then Γ ⊢ ⊥.
      */
     val NegationElimination: InferenceRule[FormulaF] =
-      val gamma = Pattern.Seq.Meta("Gamma")
-      val phi = MetaVariable("phi")
+      val gamma = Pattern[FormulaF]("Gamma")
+      val phi = Pattern[FormulaF]("phi")
 
       Inference(
         Set(
@@ -194,7 +199,7 @@ case object InferenceRules:
      * Γ ⊢ ⊤.
      */
     val TrueIntroduction: InferenceRule[FormulaF] =
-      val gamma = Pattern.Seq.Meta("Gamma")
+      val gamma = Pattern[FormulaF]("Gamma")
 
       Inference(
         Set(),
@@ -208,8 +213,8 @@ case object InferenceRules:
      * If Γ ⊢ ⊥, then Γ ⊢ A.
      */
     val FalseElimination: InferenceRule[FormulaF] =
-      val gamma = Pattern.Seq.Meta("Gamma")
-      val phi = MetaVariable("phi")
+      val gamma = Pattern[FormulaF]("Gamma")
+      val phi = Pattern[FormulaF]("phi")
 
       Inference(
         Set(
@@ -217,11 +222,3 @@ case object InferenceRules:
         ),
         gamma |- phi,
       )
-
-    private object MetaVariable:
-      /** Helper for creating formula meta-variables.
-       *
-       * @param str The meta-variable name.
-       * @return A `Pattern.Formula.Meta[FormulaF]` instance.
-       */
-      def apply(str: String) = Pattern.Formula.Meta[FormulaF](str)
