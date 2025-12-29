@@ -6,6 +6,10 @@
     <profile name="sbt 3" modules="ProofPlayground.main,ProofPlayground.test">
       <option name="implicitConversions" value="true" />
       <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-Wsafe-init" />
+        <parameter value="-Yexplicit-nulls" />
+      </parameters>
     </profile>
   </component>
 </project>
