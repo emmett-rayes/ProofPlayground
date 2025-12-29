@@ -54,16 +54,16 @@ case object FormulaF:
   sealed trait Propositional
 
   /** Create a propositional variable formula using a fresh variable */
-  def variable[T](): FormulaF[T] = Variable(symbol.Variable[Propositional]())
+  def variable[T](): FormulaF.Variable[T] = Variable(symbol.Variable[Propositional]())
 
   /** Create a propositional variable formula using the same variable */
-  def variable[T, K](varSymbol: symbol.Variable[Propositional]): FormulaF[T] = Variable(varSymbol)
+  def variable[T, K](varSymbol: symbol.Variable[Propositional]): FormulaF.Variable[T] = Variable(varSymbol)
 
   /** Create a true formula. */
-  def tru[T]: FormulaF[T] = True(symbol.True())
+  def tru[T]: FormulaF.True[T] = True(symbol.True())
 
   /** Create a false formula. */
-  def fls[T]: FormulaF[T] = False(symbol.False())
+  def fls[T]: FormulaF.False[T] = False(symbol.False())
 
   /** Extension methods for formulas.
    *
@@ -71,16 +71,16 @@ case object FormulaF:
    */
   extension [T](t: T)
     /** Negation operator. */
-    def unary_~ : FormulaF[T] = Negation(symbol.Negation(t))
+    def unary_~ : FormulaF.Negation[T] = Negation(symbol.Negation(t))
 
     /** Conjunction operator. */
-    def /\(other: T): FormulaF[T] = Conjunction(symbol.Conjunction(t, other))
+    def /\(other: T): FormulaF.Conjunction[T] = Conjunction(symbol.Conjunction(t, other))
 
     /** Disjunction operator. */
-    def \/(other: T): FormulaF[T] = Disjunction(symbol.Disjunction(t, other))
+    def \/(other: T): FormulaF.Disjunction[T] = Disjunction(symbol.Disjunction(t, other))
 
     /** Implication operator. */
-    def -->(other: T): FormulaF[T] = Implication(symbol.Implication(t, other))
+    def -->(other: T): FormulaF.Implication[T] = Implication(symbol.Implication(t, other))
 
   /** [[Functor]] instance for [[FormulaF]]. */
   given Functor[FormulaF]:
