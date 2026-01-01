@@ -43,8 +43,8 @@ class TestUnification extends AnyFunSuite:
   }
 
   test("variable pattern does not unify different variable formulas") {
-    val formula = Formula(variable())
     val pattern = concrete[FormulaF, Pattern[FormulaF]](variable())
+    val formula = Formula(variable())
     val result  = Unification.unify(pattern, formula)
 
     assert(result.isEmpty)

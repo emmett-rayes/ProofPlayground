@@ -1,9 +1,9 @@
 package proofPlayground
 package core.meta.propositional
 
+import core.logic.propositional.Formula
+import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.*
-import core.logic.propositional.{Formula, FormulaF}
-import core.logic.symbol
 
 import org.scalacheck.{Arbitrary, Gen}
 
@@ -31,15 +31,15 @@ object FormulaGenerationUtil:
     * @return A generator that yields well-formed propositional formulas
     */
   private def generateFormula(depth: Int): Gen[Formula] =
-    lazy val leaf: Gen[Formula] = Gen.oneOf(Formula(variable()), Formula(tru), Formula(fls))
+    lazy val leaf = Gen.oneOf[Formula](variable(), tru, fls)
 
     if depth <= 0 then leaf
     else
       val sub = generateFormula(depth - 1)
       Gen.frequency(
         1 -> leaf,
-        2 -> sub.map(f => Formula(FormulaF.Negation(symbol.Negation(f)))),
-        3 -> Gen.zip(sub, sub).map { case (l, r) => Formula(l /\ r) },
-        3 -> Gen.zip(sub, sub).map { case (l, r) => Formula(l \/ r) },
-        3 -> Gen.zip(sub, sub).map { case (l, r) => Formula(l --> r) }
+        2 -> sub.map(f => ~f),
+        3 -> Gen.zip(sub, sub).map { case (l, r) => l /\ r },
+        3 -> Gen.zip(sub, sub).map { case (l, r) => l \/ r },
+        3 -> Gen.zip(sub, sub).map { case (l, r) => l --> r }
       )
