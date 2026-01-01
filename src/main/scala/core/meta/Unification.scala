@@ -36,11 +36,13 @@ object Unification:
   def unify(pattern: Pattern[FormulaF], scrutinee: Formula): Option[Unification[Formula]] =
     catamorphism(pattern)(algebra[FormulaF, Formula](algebra))(scrutinee)
 
+  /** Unification algebra for the [[PatternF]] functor with carrier `Unifier[T]`. */
   private def algebra[F[_], T](subalgebra: Algebra[F, Unifier[T]])(pattern: PatternF[F, Unifier[T]]): Unifier[T] =
     pattern match
       case PatternF.Meta(name)       => scrutinee => Some(Map(meta(name) -> scrutinee))
       case PatternF.Formula(formula) => subalgebra(formula)
 
+  /** Unification algebra for the [[FormulaF]] functor with carrier `Unifier[Formula]`. */
   private def algebra(formula: FormulaF[Unifier[Formula]]): Unifier[Formula] =
     scrutinee =>
       (scrutinee.unfix, formula) match
