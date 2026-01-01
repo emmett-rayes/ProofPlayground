@@ -10,7 +10,10 @@ lazy val root = (project in file("."))
 
 scalacOptions ++= Seq(
   "-feature",
+  "-source:future",
   "-language:implicitConversions",
+  "-language:experimental.modularity",
+  "-language:experimental.pureFunctions",
   "-Wsafe-init",
   "-Yexplicit-nulls",
 )
