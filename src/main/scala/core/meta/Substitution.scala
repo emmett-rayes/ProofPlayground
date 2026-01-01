@@ -17,10 +17,10 @@ object Substitution:
     F[_],
     T
   ](subalgebra: Algebra[F, Option[T]])(unification: Unification[T])(pattern: PatternF[F, Option[T]])
-  : Option[T] =
+    : Option[T] =
     pattern match
-      case pattern@PatternF.Meta(name) => unification.get(pattern)
-      case PatternF.Formula(formula) => subalgebra(formula)
+      case pattern @ PatternF.Meta(name) => unification.get(pattern)
+      case PatternF.Formula(formula)     => subalgebra(formula)
 
   /** Substitution algebra for the [[FormulaF]] functor with carrier `Option[Formula]`. */
   private def algebra[T](unification: Unification[Formula])(formula: FormulaF[Option[Formula]]): Option[Formula] =

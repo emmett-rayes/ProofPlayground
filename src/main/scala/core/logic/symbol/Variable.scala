@@ -21,6 +21,6 @@ case object Variable:
     */
   def apply[K: ClassTag](): Variable[K] =
     val cls = summon[ClassTag[K]].runtimeClass
-    val id = counters(cls)
+    val id  = counters(cls)
     counters(cls) = id + 1
     new Variable[K](id)

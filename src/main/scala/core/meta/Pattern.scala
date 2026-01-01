@@ -61,5 +61,5 @@ case object PatternF:
     extension [A](fa: PatternF[F, A])
       override def map[B](f: A => B): PatternF[F, B] =
         fa match
-          case Meta(name)        => meta(name)
+          case Meta(name)       => meta(name)
           case Formula(formula) => concrete(F.map(formula)(f))
