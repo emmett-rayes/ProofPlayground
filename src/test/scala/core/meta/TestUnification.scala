@@ -250,3 +250,17 @@ class TestUnification extends AnyFunSuite:
     assert(unification.isDefined)
     assert(unification.get(gamma) === Seq(Formula(tru), Formula(fls), Formula(~varA)))
   }
+
+  test("sequence unification single formula ending with meta-variable") {
+    val gamma: PatternF.Meta[FormulaF, Pattern[FormulaF]] = meta("Gamma")
+    val disjunction: Pattern[FormulaF] = concrete(Pattern(meta("phi")) \/ Pattern(meta("psi")))
+    val patterns: Seq[Pattern[FormulaF]] = Seq(disjunction, gamma)
+
+    val varA: Formula = Formula(variable())
+    val varB: Formula = Formula(variable())
+    val formulas: Seq[Formula] = Seq(Formula(varA \/ varB), Formula(tru), Formula(fls), Formula(~varA))
+
+    val unification = Unification.unify(patterns, formulas)
+    assert(unification.isDefined)
+    assert(unification.get(gamma) === Seq(Formula(tru), Formula(fls), Formula(~varA)))
+  }
