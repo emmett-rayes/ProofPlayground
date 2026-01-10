@@ -75,15 +75,19 @@ object Unification:
             case PatternF.Formula(_) => (map + (idx -> idx), idx)
         }._1
 
-      val unificationSeq = unification.map(p => p._1 -> Seq(p._2))
+      val idxStutteringMeta = patterns.map(_.unfix).zip(patterns.map(_.unfix).drop(1)).zipWithIndex.collect {
+        case ((PatternF.Meta(_), PatternF.Meta(_)), idx) => idx + 1
+      }
+
+      val unificationSeq = unification.map(p => p._1 -> Seq(p._2)).withDefaultValue(Seq.empty)
       patterns.zipWithIndex.foldLeft(unificationSeq) { (unification, pWithIdx) =>
         val (pattern, idx) = pWithIdx
         pattern.unfix match
-          case PatternF.Formula(_)  => unification
-          case p @ PatternF.Meta(_) =>
+          case p @ PatternF.Meta(_) if !idxStutteringMeta.contains(idx) =>
             val before = idxConcreteBefore.get(idx).flatMap(idxMap.get).getOrElse(-1)
             val after  = idxConcreteAfter.get(idx).flatMap(idxMap.get).getOrElse(scrutinees.size)
             unification + (p -> scrutinees.slice(before + 1, after))
+          case _ => unification
       }
 
   /** Attempt to unify a formula pattern with a concrete formula.
