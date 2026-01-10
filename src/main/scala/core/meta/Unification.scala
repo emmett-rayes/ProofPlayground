@@ -82,7 +82,7 @@ object Unification:
           case PatternF.Formula(_)  => unification
           case p @ PatternF.Meta(_) =>
             val before = idxConcreteBefore.get(idx).flatMap(idxMap.get).getOrElse(-1)
-            val after = idxConcreteAfter.get(idx).flatMap(idxMap.get).getOrElse(scrutinees.size)
+            val after  = idxConcreteAfter.get(idx).flatMap(idxMap.get).getOrElse(scrutinees.size)
             unification + (p -> scrutinees.slice(before + 1, after))
       }
 
