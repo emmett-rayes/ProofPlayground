@@ -1,13 +1,12 @@
 package proofPlayground
-package core.meta.propositional
+package core.meta
 
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
 import core.meta.Pattern.given
 import core.meta.PatternF.{concrete, meta}
-import core.meta.propositional.FormulaGenerationUtil
-import core.meta.propositional.PatternUtil.asPattern
+import core.meta.PatternUtil.asPattern
 import core.meta.{Pattern, PatternF, Substitution, Unification}
 
 import org.scalatest.funsuite.AnyFunSuite
