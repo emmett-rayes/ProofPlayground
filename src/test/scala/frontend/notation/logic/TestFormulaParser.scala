@@ -94,6 +94,28 @@ class TestFormulaParser extends AnyFunSuite:
     assert(result.get.parsed == fls)
   }
 
+  test("negation parsing recognizes '~A'") {
+    val subparser = FormulaF.Variable.parser[Formula]
+    val parser    = FormulaF.Negation.parser(subparser)
+    val input     = raw"~A".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed == ~variable("A"))
+  }
+
+  test("negation parsing recognizes '¬A'") {
+    val subparser = FormulaF.Variable.parser[Formula]
+    val parser    = FormulaF.Negation.parser(subparser)
+    val input     = raw"¬A".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed == ~variable("A"))
+  }
+
   test(raw"conjunction parsing recognizes 'A /\ B'") {
     val subparser = FormulaF.Variable.parser[Formula]
     val parser    = FormulaF.Conjunction.parser(subparser)
