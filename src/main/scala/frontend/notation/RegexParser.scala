@@ -15,5 +15,5 @@ object RegexParser:
           throw ParseError(input, "Expected input at this position.")
         regex.findPrefixMatchOf(trimmed.mkString) match
           case None    => throw ParseError(input, s"Expected input that matches ${regex.regex}")
-          case Some(m) => (input.mkString.substring(m.end), input.mkString.substring(m.start, m.end))
+          case Some(m) => (trimmed.mkString.substring(m.end), trimmed.mkString.substring(m.start, m.end))
       }
