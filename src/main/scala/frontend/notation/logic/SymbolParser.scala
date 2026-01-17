@@ -3,16 +3,28 @@ package frontend.notation.logic
 
 import core.logic.symbol.*
 import frontend.notation.parser.Combinators.*
-import frontend.notation.parser.{Literal, Parser, Tokens}
+import frontend.notation.parser.Parser
+import frontend.notation.{LiteralParser, RegexParser, Tokens}
+
+import scala.reflect.ClassTag
 
 object SymbolParser:
+  extension ($ : Variable.type)
+    /** Parser for variable symbols.
+      *
+      * @tparam K the type of the variable identifiers.
+      * @return a parser that recognizes and produces propositional variables.
+      */
+    def parser[K: ClassTag]: Parser[Tokens, Variable[K]] =
+      RegexParser.parser("[A-Z]\\d*".r).map(s => Variable[K](s))
+
   extension ($ : True.type)
     /** Parser for the true constant.
       *
       * @return a parser that recognizes and produces the True constant.
       */
     def parser: Parser[Tokens, True] =
-      Literal.parser["True"].orElse(Literal.parser["⊤"]).map(_ => True())
+      LiteralParser.parser["True"].orElse(LiteralParser.parser["⊤"]).map(_ => True())
 
   extension ($ : False.type)
     /** Parser for the false constant.
@@ -20,7 +32,7 @@ object SymbolParser:
       * @return a parser that recognizes and produces the True constant.
       */
     def parser: Parser[Tokens, False] =
-      Literal.parser["False"].orElse(Literal.parser["⊥"]).map(_ => False())
+      LiteralParser.parser["False"].orElse(LiteralParser.parser["⊥"]).map(_ => False())
 
   extension ($ : Negation.type)
     /** Parser for unary negation.
@@ -29,7 +41,7 @@ object SymbolParser:
       * @return a parser that recognizes and produces negations.
       */
     def parser[F](subparser: Parser[Tokens, F]): Parser[Tokens, Negation[F]] =
-      Literal.parser["~"].orElse(Literal.parser["¬"]).skipThen(subparser).map(Negation(_))
+      LiteralParser.parser["~"].orElse(LiteralParser.parser["¬"]).skipThen(subparser).map(Negation(_))
 
   extension ($ : Conjunction.type)
     /** Parser for binary conjunction.
@@ -38,7 +50,7 @@ object SymbolParser:
       * @return a parser that recognizes and produces binary conjunctions.
       */
     def parser[F](subparser: Parser[Tokens, F]): Parser[Tokens, Conjunction[F]] =
-      subparser.thenSkip(Literal.parser["/\\"].orElse(Literal.parser["∧"])).andThen(subparser).map {
+      subparser.thenSkip(LiteralParser.parser["/\\"].orElse(LiteralParser.parser["∧"])).andThen(subparser).map {
         (lhs, rhs) => Conjunction(lhs, rhs)
       }
 
@@ -49,7 +61,7 @@ object SymbolParser:
       * @return a parser that recognizes and produces binary disjunction.
       */
     def parser[F](subparser: Parser[Tokens, F]): Parser[Tokens, Disjunction[F]] =
-      subparser.thenSkip(Literal.parser["\\/"].orElse(Literal.parser["∨"])).andThen(subparser).map {
+      subparser.thenSkip(LiteralParser.parser["\\/"].orElse(LiteralParser.parser["∨"])).andThen(subparser).map {
         (lhs, rhs) => Disjunction(lhs, rhs)
       }
 
@@ -60,7 +72,7 @@ object SymbolParser:
       * @return a parser that recognizes and produces implication.
       */
     def parser[F](subparser: Parser[Tokens, F]): Parser[Tokens, Implication[F]] =
-      subparser.thenSkip(Literal.parser["-->"].orElse(Literal.parser["→"])).andThen(subparser).map {
+      subparser.thenSkip(LiteralParser.parser["-->"].orElse(LiteralParser.parser["→"])).andThen(subparser).map {
         (lhs, rhs) => Implication(lhs, rhs)
       }
 
@@ -71,6 +83,6 @@ object SymbolParser:
       * @return a parser that recognizes and produces difference.
       */
     def parser[F](subparser: Parser[Tokens, F]): Parser[Tokens, Difference[F]] =
-      subparser.thenSkip(Literal.parser["--<"]).andThen(subparser).map {
+      subparser.thenSkip(LiteralParser.parser["--<"]).andThen(subparser).map {
         (lhs, rhs) => Difference(lhs, rhs)
       }
