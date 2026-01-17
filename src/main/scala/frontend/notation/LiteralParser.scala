@@ -21,5 +21,5 @@ object LiteralParser:
         if !trimmed.startsWith(expected.value.asTokens) then
           throw ParseError(input, s"Expected ${expected.value} at this position. ${trimmed.head}")
         trimmed.splitAt(expected.value.length) match
-          case (remaining, matched) => (remaining, matched.mkString.asInstanceOf[S])
+          case (matched, remaining) => (remaining, matched.mkString.asInstanceOf[S])
       }
