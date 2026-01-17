@@ -1,0 +1,55 @@
+package proofPlayground
+package frontend.notation.logic
+
+import core.logic.propositional.FormulaF.{tru, variable}
+import core.logic.propositional.{Formula, FormulaF}
+import frontend.notation.asTokens
+
+import org.scalatest.funsuite.AnyFunSuite
+
+/** Tests for [[FormulaParser]] functions. */
+class TestFormulaParser extends AnyFunSuite:
+  import FormulaParser.*
+
+  test("variable parsing recognizes simple propositional variables") {
+    val parser = FormulaF.Variable.parser[Formula]
+    val input  = "A".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed == variable("A"))
+  }
+
+  test("variable parsing recognizes propositional variables with digits") {
+    val parser = FormulaF.Variable.parser[Formula]
+    val input  = "A2".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed == variable("A2"))
+  }
+
+  test("variable parsing rejects propositional variables with small letters") {
+    val parser = FormulaF.Variable.parser[Formula]
+    val input  = "a".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isFailure)
+  }
+
+  test("variable parsing recognizes multiple letters as multiple propositional variables") {
+    val parser = FormulaF.Variable.parser[Formula]
+    val input  = "AB".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.nonEmpty)
+    assert(result.get.parsed == variable("A"))
+
+    val result2 = parser.parse(result.get.remaining)
+    assert(result2.isSuccess)
+    assert(result2.get.remaining.isEmpty)
+    assert(result2.get.parsed == variable("B"))
+  }
