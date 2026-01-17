@@ -3,7 +3,6 @@ package frontend.notation.parser
 
 import scala.language.reflectiveCalls
 import scala.reflect.ClassTag
-import scala.reflect.Selectable.reflectiveSelectable
 import scala.util.{Failure, Success, Try}
 
 /** The result of a parser, containing either the remaining input and the parsed output,
@@ -77,3 +76,22 @@ object Parser:
     */
   def fail[Input, Output](message: String): Parser[Input, Output] =
     input => Failure(ParseError(input, message))
+
+  extension [Input <: {def size: Int}, Output](self: Parser[Input, Output])
+    /** Creates a non-recursive version of this parser that rejects left-recursion.
+      *
+      * @return a parser that fails if left-recursion is detected.
+      */
+    def nonRecur(using tag: ClassTag[Output]): Parser[Input, Output] =
+      var pending: Option[(size: Int, tag: ClassTag[?])] = None
+      input =>
+        if pending.isDefined && pending.get.size == input.size && pending.get.tag.equals(tag)
+        then Failure(ParseError(input, "Left-recursion detected."))
+        else
+          val old = pending
+          pending = Some((input.size, tag))
+          val result = self.parse(input)
+          pending = old.map { (size, oldTag) =>
+            (result.map(_.remaining.size).getOrElse(size), oldTag)
+          }
+          result
