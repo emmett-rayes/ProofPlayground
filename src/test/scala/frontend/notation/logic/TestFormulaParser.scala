@@ -137,3 +137,25 @@ class TestFormulaParser extends AnyFunSuite:
     assert(result.get.remaining.isEmpty)
     assert(result.get.parsed == variable("A") \/ variable("B"))
   }
+
+  test(raw"implication parsing recognizes 'A --> B'") {
+    val subparser = FormulaF.Variable.parser[Formula]
+    val parser    = FormulaF.Implication.parser(subparser)
+    val input     = raw"A --> B".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed == variable("A") --> variable("B"))
+  }
+
+  test(raw"implication parsing recognizes 'A → B'") {
+    val subparser = FormulaF.Variable.parser[Formula]
+    val parser    = FormulaF.Implication.parser(subparser)
+    val input     = raw"A → B".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed == variable("A") --> variable("B"))
+  }
