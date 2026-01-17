@@ -1,6 +1,9 @@
 package proofPlayground
 package frontend.notation.parser
 
+import scala.language.reflectiveCalls
+import scala.reflect.ClassTag
+import scala.reflect.Selectable.reflectiveSelectable
 import scala.util.{Failure, Success, Try}
 
 /** The result of a parser, containing either the remaining input and the parsed output,
@@ -9,14 +12,7 @@ import scala.util.{Failure, Success, Try}
   * @tparam Input the type of the input to be parsed.
   * @tparam Output the type of the output produced by the parser.
   */
-type ParserResult[Input, Output] = Try[(Input, Output)]
-
-extension [Input, Output](self: ParserResult[Input, Output])
-  /** @return the remaining input after parsing, if successful. */
-  def remaining: Try[Input] = self.map(_._1)
-
-  /** @return the parsed output, if successful. */
-  def result: Try[Output] = self.map(_._2)
+type ParserResult[Input, Output] = Try[(remaining: Input, parsed: Output)]
 
 /** A parser that takes an input of type `Input` and produces an output of type `Output`.
   *
@@ -58,7 +54,8 @@ trait Parser[Input, +Output]:
     */
   final def orElse[Else](other: => Parser[Input, Else]): Parser[Input, Either[Output, Else]] =
     input =>
-      parse(input).map(r => (r._1, Left(r._2))).orElse(other.parse(input).map(r => (r._1, Right(r._2))))
+      parse(input).map(result => (result.remaining, Left(result.parsed)))
+        .orElse(other.parse(input).map(result => (result.remaining, Right(result.parsed))))
 
 object Parser:
   /** Creates a parser that always succeeds with the given output without consuming any input.
