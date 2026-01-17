@@ -53,3 +53,23 @@ class TestFormulaParser extends AnyFunSuite:
     assert(result2.get.remaining.isEmpty)
     assert(result2.get.parsed == variable("B"))
   }
+
+  test("true parsing recognizes 'True'") {
+    val parser = FormulaF.True.parser[Formula]
+    val input  = "True".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed == tru)
+  }
+
+  test("true parsing recognizes '⊤'") {
+    val parser = FormulaF.True.parser[Formula]
+    val input  = "⊤".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed == tru)
+  }
