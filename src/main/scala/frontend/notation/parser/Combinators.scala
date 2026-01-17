@@ -39,7 +39,7 @@ object Combinators:
       * @tparam Then the type of the output produced by the other parser.
       * @return a new parser that produces a tuple of the outputs from this parser and the other parser.
       */
-    def andThen[Then](other: => Parser[Input, Then]): Parser[Input, (Output, Then)] =
+    def andThen[Then](other: Parser[Input, Then]): Parser[Input, (Output, Then)] =
       for selfOutput <- self; otherOutput <- other
       yield (selfOutput, otherOutput)
 
@@ -49,7 +49,7 @@ object Combinators:
       * @tparam Then the type of the output produced by the other parser.
       * @return a new parser that produces the output from the other parser.
       */
-    def skipThen[Then](other: => Parser[Input, Then]): Parser[Input, Then] =
+    def skipThen[Then](other: Parser[Input, Then]): Parser[Input, Then] =
       self.andThen(other).map(_._2)
 
     /** Chains this parser with another parser, discarding the output of the other parser.
@@ -58,7 +58,7 @@ object Combinators:
       * @tparam Skip the type of the output produced by the other parser.
       * @return a new parser that produces the output from this parser.
       */
-    def thenSkip[Skip](other: => Parser[Input, Skip]): Parser[Input, Output] =
+    def thenSkip[Skip](other: Parser[Input, Skip]): Parser[Input, Output] =
       self.andThen(other).map(_._1)
 
     /** Parses this parser between the outputs of two other parsers, discarding their outputs.
@@ -69,8 +69,5 @@ object Combinators:
       * @tparam Second the type of the output produced by the second parser.
       * @return a new parser that produces the output from this parser.
       */
-    def between[First, Second](
-      first: => Parser[Input, First],
-      second: => Parser[Input, Second]
-    ): Parser[Input, Output] =
+    def between[First, Second](first: Parser[Input, First], second: Parser[Input, Second]): Parser[Input, Output] =
       first.skipThen(self).thenSkip(second)
