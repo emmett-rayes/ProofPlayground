@@ -70,3 +70,13 @@ object Parser:
     */
   def unit[Input, Output](output: Output): Parser[Input, Output] =
     input => Success(input, output)
+
+  /** Creates a parser that always fails with the given error message.
+    *
+    * @param message the error message for the failure.
+    * @tparam Input  the type of the input to be parsed.
+    * @tparam Output the type of the output produced by the parser.
+    * @return a parser that always fails with the given error message.
+    */
+  def fail[Input, Output](message: String): Parser[Input, Output] =
+    input => Failure(ParseError(input, message))
