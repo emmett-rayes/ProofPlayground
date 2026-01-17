@@ -1,10 +1,12 @@
 package proofPlayground
-package frontend.notation.parser
+package frontend.notation
+
+import frontend.notation.parser.{ParseError, Parser}
 
 import scala.util.Try
 import scala.util.matching.Regex
 
-object Regex:
+object RegexParser:
   def parser(regex: Regex): Parser[Tokens, String] =
     input =>
       val trimmed = input.skipWhitespace

@@ -1,5 +1,5 @@
 package proofPlayground
-package frontend.notation.parser
+package frontend.notation
 
 /** A token is a single character in the input string to be parsed. */
 type Token = Char

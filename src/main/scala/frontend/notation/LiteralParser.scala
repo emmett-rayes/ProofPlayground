@@ -1,11 +1,14 @@
 package proofPlayground
-package frontend.notation.parser
+package frontend.notation
+
+import frontend.notation.Tokens
+import frontend.notation.parser.{ParseError, Parser}
 
 import scala.util.Try
 
 type Literal[T] = Singleton & T
 
-object Literal:
+object LiteralParser:
   /** Creates a parser that matches the given literal string.
     *
     * @tparam S the literal string to match.
