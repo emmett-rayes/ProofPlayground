@@ -76,7 +76,7 @@ class TestFormulaParser extends AnyFunSuite:
 
   test("false parsing recognizes 'False'") {
     val parser = FormulaF.False.parser[Formula]
-    val input = "False".asTokens
+    val input  = "False".asTokens
 
     val result = parser.parse(input)
     assert(result.isSuccess)
@@ -86,10 +86,32 @@ class TestFormulaParser extends AnyFunSuite:
 
   test("false parsing recognizes '⊥'") {
     val parser = FormulaF.False.parser[Formula]
-    val input = "⊥".asTokens
+    val input  = "⊥".asTokens
 
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
     assert(result.get.parsed == fls)
+  }
+
+  test(raw"conjunction parsing recognizes 'A /\ B'") {
+    val subparser = FormulaF.Variable.parser[Formula]
+    val parser    = FormulaF.Conjunction.parser(subparser)
+    val input     = raw"A /\ B".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed == variable("A") /\ variable("B"))
+  }
+
+  test(raw"conjunction parsing recognizes 'A ∧ B'") {
+    val subparser = FormulaF.Variable.parser[Formula]
+    val parser    = FormulaF.Conjunction.parser(subparser)
+    val input     = raw"A ∧ B".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed == variable("A") /\ variable("B"))
   }
