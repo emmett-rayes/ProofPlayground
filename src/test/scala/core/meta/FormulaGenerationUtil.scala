@@ -31,7 +31,9 @@ object FormulaGenerationUtil:
     * @return A generator that yields well-formed propositional formulas
     */
   private def generateFormula(depth: Int): Gen[Formula] =
-    lazy val leaf = Gen.oneOf[Formula](variable(), tru, fls)
+    def randomId() = Gen.alphaStr.sample.get
+
+    lazy val leaf = Gen.oneOf[Formula](variable(randomId()), tru, fls)
 
     if depth <= 0 then leaf
     else

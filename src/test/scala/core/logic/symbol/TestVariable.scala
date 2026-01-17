@@ -9,33 +9,33 @@ final class TestVariable extends AnyFunSuite:
   test("two different variables are not equal") {
     sealed trait DummyKind
 
-    val v1 = Variable[DummyKind]()
-    val v2 = Variable[DummyKind]()
+    val v1 = Variable[DummyKind]("V1")
+    val v2 = Variable[DummyKind]("V2")
     assert(v1 !== v2)
   }
 
   test("two different variables have different ids") {
     sealed trait DummyKind
 
-    val v1 = Variable[DummyKind]()
-    val v2 = Variable[DummyKind]()
+    val v1 = Variable[DummyKind]("V1")
+    val v2 = Variable[DummyKind]("V2")
     assert(v1.id !== v2.id)
   }
 
-  test("variables of different kinds have independent counters") {
+  test("variables of different kinds are not equal") {
     sealed trait DummyKind1
     sealed trait DummyKind2
 
-    val v1 = Variable[DummyKind1]()
-    val v2 = Variable[DummyKind2]()
-    assert(v1.id === v2.id)
+    val v1k1 = Variable[DummyKind1]("V1")
+    val v1k2 = Variable[DummyKind2]("V1")
+    assert(v1k1 !== v1k2)
   }
 
-  test("variables of different kinds have invariant counters") {
+  test("variable kinds are invariant") {
     sealed trait DummyKind1
     sealed trait DummyKind2 extends DummyKind1
 
-    val v1 = Variable[DummyKind1]()
-    val v2 = Variable[DummyKind2]()
-    assert(v1.id === v2.id)
+    val v1k1 = Variable[DummyKind1]("V1")
+    val v1k2 = Variable[DummyKind2]("V1")
+    assert(v1k1 !== v1k2)
   }

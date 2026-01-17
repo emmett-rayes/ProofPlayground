@@ -49,8 +49,8 @@ enum FormulaF[T]:
   case Implication(implication: symbol.Implication[T])
 
 case object FormulaF:
-  /** Create a propositional variable formula using a fresh variable. */
-  def variable[T](): FormulaF.Variable[T] = Variable(symbol.Variable[Propositional]())
+  /** Create a propositional variable formula using a variable identifier. */
+  def variable[T](id: String): FormulaF.Variable[T] = Variable(symbol.Variable[Propositional](id))
 
   /** Create a propositional variable formula using the same variable. */
   def variable[T, K](varSymbol: symbol.Variable[Propositional]): FormulaF.Variable[T] = Variable(varSymbol)

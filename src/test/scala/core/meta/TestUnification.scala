@@ -34,7 +34,7 @@ class TestUnification extends AnyFunSuite:
   }
 
   test("variable pattern unifies same variable formula") {
-    val variableSymbol = symbol.Variable[FormulaF.Propositional]()
+    val variableSymbol = symbol.Variable[FormulaF.Propositional]("A")
     val formula        = Formula(FormulaF.Variable(variableSymbol))
     val pattern        = concrete[FormulaF, Pattern[FormulaF]](FormulaF.Variable(variableSymbol))
     val result         = Unification.unify(pattern, formula)
@@ -43,8 +43,8 @@ class TestUnification extends AnyFunSuite:
   }
 
   test("variable pattern does not unify different variable formulas") {
-    val pattern = concrete[FormulaF, Pattern[FormulaF]](variable())
-    val formula = Formula(variable())
+    val pattern = concrete[FormulaF, Pattern[FormulaF]](variable("A"))
+    val formula = Formula(variable("B"))
     val result  = Unification.unify(pattern, formula)
 
     assert(result.isEmpty)
@@ -85,7 +85,7 @@ class TestUnification extends AnyFunSuite:
   test("negation patterns unify negation formulas") {
     val subPattern = Pattern(meta[FormulaF, Pattern[FormulaF]]("phi"))
     val pattern    = concrete[FormulaF, Pattern[FormulaF]](~subPattern)
-    val subFormula = Formula(variable[Formula]())
+    val subFormula = Formula(variable("A"))
     val formula    = Formula(~subFormula)
     val result     = Unification.unify(pattern, formula)
 
@@ -224,8 +224,8 @@ class TestUnification extends AnyFunSuite:
     val gamma: PatternF.Meta[FormulaF, Pattern[FormulaF]] = meta("Gamma")
     val patterns: Seq[Pattern[FormulaF]]                  = Seq(gamma)
 
-    val varA: Formula          = Formula(variable())
-    val varB: Formula          = Formula(variable())
+    val varA: Formula          = Formula(variable("A"))
+    val varB: Formula          = Formula(variable("B"))
     val formulas: Seq[Formula] = Seq(Formula(varA \/ varB), Formula(tru), Formula(fls), Formula(~varA))
 
     val unification = Unification.unify(patterns, formulas)
@@ -238,8 +238,8 @@ class TestUnification extends AnyFunSuite:
     val delta: PatternF.Meta[FormulaF, Pattern[FormulaF]] = meta("Delta")
     val patterns: Seq[Pattern[FormulaF]]                  = Seq(gamma, delta)
 
-    val varA: Formula          = Formula(variable())
-    val varB: Formula          = Formula(variable())
+    val varA: Formula          = Formula(variable("A"))
+    val varB: Formula          = Formula(variable("B"))
     val formulas: Seq[Formula] = Seq(Formula(varA \/ varB), Formula(tru), Formula(fls), Formula(~varA))
 
     val unification = Unification.unify(patterns, formulas)
@@ -255,8 +255,8 @@ class TestUnification extends AnyFunSuite:
     val negation: Pattern[FormulaF]                       = concrete(~Pattern(meta("phi")))
     val patterns: Seq[Pattern[FormulaF]]                  = Seq(delta, disjunction, gamma, negation)
 
-    val varA: Formula          = Formula(variable())
-    val varB: Formula          = Formula(variable())
+    val varA: Formula          = Formula(variable("A"))
+    val varB: Formula          = Formula(variable("B"))
     val formulas: Seq[Formula] = Seq(Formula(varA \/ varB), Formula(tru), Formula(fls), Formula(~varA))
 
     val unification = Unification.unify(patterns, formulas)
@@ -272,8 +272,8 @@ class TestUnification extends AnyFunSuite:
     val negation: Pattern[FormulaF]                       = concrete(~Pattern(meta("phi")))
     val patterns: Seq[Pattern[FormulaF]]                  = Seq(delta, disjunction, negation, gamma)
 
-    val varA: Formula          = Formula(variable())
-    val varB: Formula          = Formula(variable())
+    val varA: Formula          = Formula(variable("A"))
+    val varB: Formula          = Formula(variable("B"))
     val formulas: Seq[Formula] = Seq(Formula(varA \/ varB), Formula(~varA), Formula(tru), Formula(fls))
 
     val unification = Unification.unify(patterns, formulas)
@@ -287,8 +287,8 @@ class TestUnification extends AnyFunSuite:
     val disjunction: Pattern[FormulaF]                    = concrete(Pattern(meta("phi")) \/ Pattern(meta("psi")))
     val patterns: Seq[Pattern[FormulaF]]                  = Seq(gamma, disjunction)
 
-    val varA: Formula          = Formula(variable())
-    val varB: Formula          = Formula(variable())
+    val varA: Formula          = Formula(variable("A"))
+    val varB: Formula          = Formula(variable("B"))
     val formulas: Seq[Formula] = Seq(Formula(tru), Formula(fls), Formula(~varA), Formula(varA \/ varB))
 
     val unification = Unification.unify(patterns, formulas)
@@ -301,8 +301,8 @@ class TestUnification extends AnyFunSuite:
     val disjunction: Pattern[FormulaF]                    = concrete(Pattern(meta("phi")) \/ Pattern(meta("psi")))
     val patterns: Seq[Pattern[FormulaF]]                  = Seq(disjunction, gamma)
 
-    val varA: Formula          = Formula(variable())
-    val varB: Formula          = Formula(variable())
+    val varA: Formula          = Formula(variable("A"))
+    val varB: Formula          = Formula(variable("B"))
     val formulas: Seq[Formula] = Seq(Formula(varA \/ varB), Formula(tru), Formula(fls), Formula(~varA))
 
     val unification = Unification.unify(patterns, formulas)

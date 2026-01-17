@@ -42,7 +42,7 @@ class TestSubstitution extends AnyFunSuite:
   }
 
   test("variable pattern is not affected by substitution") {
-    val variableSymbol = symbol.Variable[FormulaF.Propositional]()
+    val variableSymbol = symbol.Variable[FormulaF.Propositional]("A")
     val pattern        = concrete[FormulaF, Pattern[FormulaF]](variable(variableSymbol))
     val result         = Substitution.substitute(pattern, Map.empty)
 

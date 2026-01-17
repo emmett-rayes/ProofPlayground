@@ -9,18 +9,18 @@ import scala.reflect.ClassTag
   * @tparam K The type associated with this variable.
   * @param id The unique identifier for this variable within its type.
   */
-case class Variable[K] private (id: Int)
+final class Variable[K] private (val id: String)
 
 case object Variable:
-  private val counters = mutable.Map[Class[?], Int]().withDefaultValue(0)
+  private val registry = mutable.Map[(Class[?], String), Variable[?]]()
 
-  /** Creates a new unique variable for the given type.
-    * @tparam K The type associated with this variable.
-    *         It represents the kind over which variables range.
-    * @return A new variable with a unique identifier for type K.
+  /** Creates or gets the unique variable for the given type and identifier.
+    *
+    * @param id The unique identifier for the variable.
+    * @tparam K The type associated with this variable. It represents the kind over which variables range.
+    * @return The variable associated with the unique identifier for type K.
     */
-  def apply[K: ClassTag](): Variable[K] =
+  def apply[K: ClassTag](id: String): Variable[K] =
     val cls = summon[ClassTag[K]].runtimeClass
-    val id  = counters(cls)
-    counters(cls) = id + 1
-    new Variable[K](id)
+    // downcast safety: the variable is freshly created with type K
+    registry.getOrElseUpdate((cls, id), new Variable[K](id)).asInstanceOf[Variable[K]]
