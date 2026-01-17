@@ -1,7 +1,7 @@
 package proofPlayground
 package frontend.notation.logic
 
-import core.logic.propositional.FormulaF.{tru, variable}
+import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
 import frontend.notation.asTokens
 
@@ -72,4 +72,24 @@ class TestFormulaParser extends AnyFunSuite:
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
     assert(result.get.parsed == tru)
+  }
+
+  test("false parsing recognizes 'False'") {
+    val parser = FormulaF.False.parser[Formula]
+    val input = "False".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed == fls)
+  }
+
+  test("false parsing recognizes '⊥'") {
+    val parser = FormulaF.False.parser[Formula]
+    val input = "⊥".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed == fls)
   }
