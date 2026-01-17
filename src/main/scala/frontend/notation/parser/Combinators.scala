@@ -20,7 +20,7 @@ object Combinators:
       val greedy =
         for selfOutput <- self; otherOutputs <- repeated
         yield selfOutput :: otherOutputs
-      greedy.orElse(Parser.unit(List())).map(_.merge)
+      greedy.orElse(Parser.unit(List()))
 
     /** Parses `n` or more occurrences of this parser, collecting the results into a list.
       *

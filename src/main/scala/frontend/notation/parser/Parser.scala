@@ -51,10 +51,8 @@ trait Parser[Input, +Output]:
     * @tparam Else the type of the output produced by the other parser.
     * @return a new parser that produces either the output of this parser or the output of the other parser.
     */
-  final def orElse[Else](other: => Parser[Input, Else]): Parser[Input, Either[Output, Else]] =
-    input =>
-      parse(input).map(result => (result.remaining, Left(result.parsed)))
-        .orElse(other.parse(input).map(result => (result.remaining, Right(result.parsed))))
+  final def orElse[Else](other: => Parser[Input, Else]): Parser[Input, Output | Else] =
+    input => parse(input).orElse(other.parse(input))
 
 object Parser:
   /** Creates a parser that always succeeds with the given output without consuming any input.
@@ -77,7 +75,7 @@ object Parser:
   def fail[Input, Output](message: String): Parser[Input, Output] =
     input => Failure(ParseError(input, message))
 
-  extension [Input <: {def size: Int}, Output](self: Parser[Input, Output])
+  extension [Input <: { def size: Int }, Output](self: Parser[Input, Output])
     /** Creates a non-recursive version of this parser that rejects left-recursion.
       *
       * @return a parser that fails if left-recursion is detected.
