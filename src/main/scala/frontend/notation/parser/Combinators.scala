@@ -2,7 +2,7 @@ package proofPlayground
 package frontend.notation.parser
 
 object Combinators:
-  extension [Input, Output](self: => Parser[Input, Output])
+  extension [Input, Output](self: Parser[Input, Output])
     /** Maps the output of this parser if successful using the given function `f`.
       *
       * @param f a function that takes the output of this parser and returns a mapped value.
