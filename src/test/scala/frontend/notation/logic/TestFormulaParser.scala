@@ -191,3 +191,16 @@ class TestFormulaParser extends AnyFunSuite:
     assert(result.get.remaining.isEmpty)
     assert(result.get.parsed == Formula(Formula(variable("A")) /\ Formula(variable("B"))))
   }
+
+  test("formula parsing recognizes nested formulas") {
+    val parser = Formula.parser
+    val input = raw"((A \/ B) --> (C /\ D))".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed == Formula(
+      Formula(Formula(variable[Formula]("A")) \/ Formula(variable[Formula]("B"))) -->
+        Formula(Formula(variable[Formula]("C")) /\ Formula(variable[Formula]("D")))
+    ))
+  }
