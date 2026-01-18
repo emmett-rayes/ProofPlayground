@@ -181,3 +181,13 @@ class TestFormulaParser extends AnyFunSuite:
     assert(result.get.remaining.isEmpty)
     assert(result.get.parsed == variable("A") --> variable("B"))
   }
+
+  test("formula parsing recognizes formulas with parentheses") {
+    val parser = Formula.parser
+    val input = raw"(A /\ B)".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed == Formula(Formula(variable("A")) /\ Formula(variable("B"))))
+  }
