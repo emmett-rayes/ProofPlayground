@@ -9,7 +9,10 @@ import scala.reflect.ClassTag
   * @tparam K The type associated with this variable.
   * @param id The unique identifier for this variable within its type.
   */
-final class Variable[K] private (val id: String)
+final class Variable[K] private(val id: String):
+  override def toString: String = s"Variable($id)"
+
+  override def hashCode(): Int = (getClass, id).hashCode()
 
 case object Variable:
   private val registry = mutable.Map[(Class[?], String), Variable[?]]()
