@@ -14,6 +14,6 @@ object RegexParser:
         if trimmed.isEmpty then
           throw ParseError(input, "Expected input at this position.")
         regex.findPrefixMatchOf(trimmed.mkString) match
-          case None    => throw ParseError(input, s"Expected input that matches ${regex.regex}")
+          case None    => throw ParseError(input, s"Expected a matching for ${regex.regex} at this position $trimmed.")
           case Some(m) => (trimmed.mkString.substring(m.end), trimmed.mkString.substring(m.start, m.end))
       }

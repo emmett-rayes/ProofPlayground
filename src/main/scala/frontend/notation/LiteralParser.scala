@@ -19,7 +19,7 @@ object LiteralParser:
       val trimmed = input.skipWhitespace
       Try {
         if !trimmed.startsWith(expected.value.asTokens) then
-          throw ParseError(input, s"Expected ${expected.value} at this position. ${trimmed.head}")
+          throw ParseError(input, s"Expected ${expected.value} at this position $trimmed.")
         trimmed.splitAt(expected.value.length) match
           case (matched, remaining) => (remaining, matched.mkString.asInstanceOf[S])
       }
