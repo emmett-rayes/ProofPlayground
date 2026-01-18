@@ -3,8 +3,7 @@ package frontend.notation.logic
 
 import core.logic.symbol.*
 import frontend.notation.parser.Combinators.*
-import frontend.notation.parser.Parser
-import frontend.notation.{LiteralParser, RegexParser, Tokens}
+import frontend.notation.parser.{LiteralParser, Parser, RegexParser, Tokens}
 
 import scala.reflect.ClassTag
 

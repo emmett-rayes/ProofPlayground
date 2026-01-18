@@ -1,7 +1,6 @@
 package proofPlayground
-package frontend.notation
+package frontend.notation.parser
 
-import frontend.notation.Tokens
 import frontend.notation.parser.{ParseError, Parser}
 
 import scala.util.Try

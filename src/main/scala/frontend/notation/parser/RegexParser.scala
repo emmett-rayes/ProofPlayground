@@ -1,5 +1,5 @@
 package proofPlayground
-package frontend.notation
+package frontend.notation.parser
 
 import frontend.notation.parser.{ParseError, Parser}
 

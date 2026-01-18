@@ -5,8 +5,7 @@ import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
 import frontend.notation.logic.SymbolParser.*
 import frontend.notation.parser.Combinators.*
-import frontend.notation.parser.Parser
-import frontend.notation.{LiteralParser, Tokens}
+import frontend.notation.parser.{LiteralParser, Parser, Tokens}
 
 import scala.language.postfixOps
 import scala.reflect.ClassTag

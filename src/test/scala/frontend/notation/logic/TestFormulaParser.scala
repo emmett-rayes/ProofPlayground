@@ -3,7 +3,7 @@ package frontend.notation.logic
 
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
-import frontend.notation.asTokens
+import frontend.notation.parser.asTokens
 
 import org.scalatest.funsuite.AnyFunSuite
 
