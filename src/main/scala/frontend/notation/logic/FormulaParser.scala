@@ -3,11 +3,10 @@ package frontend.notation.logic
 
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
-import frontend.notation.NonRecursiveParser.nonRecur
 import frontend.notation.logic.SymbolParser.*
 import frontend.notation.parser.Combinators.*
 import frontend.notation.parser.Parser
-import frontend.notation.{LiteralParser, NonRecursiveParser, Tokens}
+import frontend.notation.{LiteralParser, Tokens}
 
 import scala.language.postfixOps
 import scala.reflect.ClassTag
@@ -22,23 +21,31 @@ private def disjunctionParser[F] = symbol.Disjunction.parser[F]
 private def implicationParser[F] = symbol.Implication.parser[F]
 
 object FormulaParser:
-  private given NonRecursiveParser.Context = NonRecursiveParser.Context()
+  extension (self: Parser[Tokens, FormulaF[Formula]])
+    private def wrap: Parser[Tokens, Formula] = self.map(Formula(_))
 
-  extension [T]($ : Formula.type)
+  extension ($: Formula.type)
     def parser: Parser[Tokens, Formula] =
-      FormulaF.parser[Formula](parser).map(Formula(_))
+      def implication = FormulaF.Implication.parser(disjunction).wrap
+        `orElse` disjunction
 
-  extension ($ : FormulaF.type)
-    def parser[T](subparser: => Parser[Tokens, T]): Parser[Tokens, FormulaF[T]] =
+      def disjunction = FormulaF.Disjunction.parser(conjunction).wrap
+        `orElse` conjunction
 
-      FormulaF.True.parser[T]
-        `orElse` FormulaF.False.parser[T]
-        `orElse` FormulaF.Negation.parser[T](subparser)
-        `orElse` FormulaF.Conjunction.parser[T](subparser).nonRecur
-        `orElse` FormulaF.Disjunction.parser[T](subparser).nonRecur
-        `orElse` FormulaF.Implication.parser[T](subparser).nonRecur
-        `orElse` FormulaF.Variable.parser[T]
-        `orElse` parser(subparser).between(LiteralParser.parser["("], LiteralParser.parser[")"])
+      def conjunction = FormulaF.Conjunction.parser(unary).wrap
+        `orElse` unary
+
+      def unary = FormulaF.Negation.parser(atomic).wrap
+        `orElse` atomic
+
+      def atomic =
+        FormulaF.True.parser.wrap
+          `orElse` FormulaF.False.parser.wrap
+          `orElse` FormulaF.Variable.parser.wrap
+          `orElse` parser.between(LiteralParser.parser["("], LiteralParser.parser[")"])
+          `orElse` Parser.fail("Exhausted all choices without a match.")
+
+      implication
 
   extension ($ : FormulaF.Variable.type)
     def parser[T]: Parser[Tokens, FormulaF.Variable[T]] =
