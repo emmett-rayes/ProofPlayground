@@ -3,11 +3,13 @@ package frontend.notation.logic
 
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
-import frontend.notation.Tokens
+import frontend.notation.NonRecursiveParser.nonRecur
 import frontend.notation.logic.SymbolParser.*
-import frontend.notation.parser.Combinators.map
+import frontend.notation.parser.Combinators.*
 import frontend.notation.parser.Parser
+import frontend.notation.{LiteralParser, NonRecursiveParser, Tokens}
 
+import scala.language.postfixOps
 import scala.reflect.ClassTag
 
 private def variableParser[K: ClassTag] = symbol.Variable.parser[K]
@@ -20,9 +22,23 @@ private def disjunctionParser[F] = symbol.Disjunction.parser[F]
 private def implicationParser[F] = symbol.Implication.parser[F]
 
 object FormulaParser:
-  extension [T]($ : Formula)(using Conversion[T, Formula])(using p: Parser[Tokens, T])
+  private given NonRecursiveParser.Context = NonRecursiveParser.Context()
+
+  extension [T]($ : Formula.type)
     def parser: Parser[Tokens, Formula] =
-      p.map(r => r)
+      FormulaF.parser[Formula](parser).map(Formula(_))
+
+  extension ($ : FormulaF.type)
+    def parser[T](subparser: => Parser[Tokens, T]): Parser[Tokens, FormulaF[T]] =
+
+      FormulaF.True.parser[T]
+        `orElse` FormulaF.False.parser[T]
+        `orElse` FormulaF.Negation.parser[T](subparser)
+        `orElse` FormulaF.Conjunction.parser[T](subparser).nonRecur
+        `orElse` FormulaF.Disjunction.parser[T](subparser).nonRecur
+        `orElse` FormulaF.Implication.parser[T](subparser).nonRecur
+        `orElse` FormulaF.Variable.parser[T]
+        `orElse` parser(subparser).between(LiteralParser.parser["("], LiteralParser.parser[")"])
 
   extension ($ : FormulaF.Variable.type)
     def parser[T]: Parser[Tokens, FormulaF.Variable[T]] =
