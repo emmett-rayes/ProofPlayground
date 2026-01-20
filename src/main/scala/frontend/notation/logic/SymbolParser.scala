@@ -23,7 +23,8 @@ object SymbolParser:
       * @return a parser that recognizes and produces the True constant.
       */
     def parser: Parser[Tokens, True] =
-      LiteralParser.parser["True"].orElse(LiteralParser.parser["⊤"]).map(_ => True())
+      val op = LiteralParser.parser["True"].orElse(LiteralParser.parser["⊤"])
+      op.map(_ => True())
 
   extension ($ : False.type)
     /** Parser for the false constant.
@@ -31,7 +32,8 @@ object SymbolParser:
       * @return a parser that recognizes and produces the True constant.
       */
     def parser: Parser[Tokens, False] =
-      LiteralParser.parser["False"].orElse(LiteralParser.parser["⊥"]).map(_ => False())
+      val op = LiteralParser.parser["False"].orElse(LiteralParser.parser["⊥"])
+      op.map(_ => False())
 
   extension ($ : Negation.type)
     /** Parser for unary negation.
@@ -40,7 +42,8 @@ object SymbolParser:
       * @return a parser that recognizes and produces negations.
       */
     def parser[F](subparser: Parser[Tokens, F]): Parser[Tokens, Negation[F]] =
-      LiteralParser.parser["~"].orElse(LiteralParser.parser["¬"]).skipThen(subparser).map(Negation(_))
+      val op = LiteralParser.parser["~"].orElse(LiteralParser.parser["¬"])
+      op.skipThen(subparser).map(Negation(_))
 
   extension ($ : Conjunction.type)
     /** Parser for binary conjunction.
@@ -49,8 +52,22 @@ object SymbolParser:
       * @return a parser that recognizes and produces binary conjunctions.
       */
     def parser[F](subparser: Parser[Tokens, F]): Parser[Tokens, Conjunction[F]] =
-      subparser.thenSkip(LiteralParser.parser["/\\"].orElse(LiteralParser.parser["∧"])).andThen(subparser).map {
+      val op = LiteralParser.parser["/\\"].orElse(LiteralParser.parser["∧"])
+      subparser.thenSkip(op).andThen(subparser).map {
         (lhs, rhs) => Conjunction(lhs, rhs)
+      }
+
+    /** Parser for chained conjunctions.
+      *
+      * @param subparser the parser for the subformulas.
+      * @param converter a function to convert a conjunction of two subformulas into a single formula.
+      * @return a parser that recognizes and produces lists of subformulas.
+      */
+    def chainedParser[F](subparser: Parser[Tokens, F])(converter: Conjunction[F] => F): Parser[Tokens, Conjunction[F]] =
+      val op = LiteralParser.parser["/\\"].orElse(LiteralParser.parser["∧"])
+      subparser.andThen(op.skipThen(subparser).atLeast(1)).map { (first, rest) =>
+        val lhs = rest.dropRight(1).foldLeft(first)((acc, curr) => converter(Conjunction(acc, curr)))
+        Conjunction(lhs, rest.last)
       }
 
   extension ($ : Disjunction.type)
@@ -60,8 +77,22 @@ object SymbolParser:
       * @return a parser that recognizes and produces binary disjunction.
       */
     def parser[F](subparser: Parser[Tokens, F]): Parser[Tokens, Disjunction[F]] =
-      subparser.thenSkip(LiteralParser.parser["\\/"].orElse(LiteralParser.parser["∨"])).andThen(subparser).map {
+      val op = LiteralParser.parser["\\/"].orElse(LiteralParser.parser["∨"])
+      subparser.thenSkip(op).andThen(subparser).map {
         (lhs, rhs) => Disjunction(lhs, rhs)
+      }
+
+    /** Parser for chained disjunctions.
+      *
+      * @param subparser the parser for the subformulas.
+      * @param converter a function to convert a disjunction of two subformulas into a single formula.
+      * @return a parser that recognizes and produces lists of subformulas as left-associated Disjunctions.
+      */
+    def chainedParser[F](subparser: Parser[Tokens, F])(converter: Disjunction[F] => F): Parser[Tokens, Disjunction[F]] =
+      val op = LiteralParser.parser["\\/"].orElse(LiteralParser.parser["∨"])
+      subparser.andThen(op.skipThen(subparser).atLeast(1)).map { (first, rest) =>
+        val lhs = rest.dropRight(1).foldLeft(first)((acc, curr) => converter(Disjunction(acc, curr)))
+        Disjunction(lhs, rest.last)
       }
 
   extension ($ : Implication.type)
@@ -71,8 +102,22 @@ object SymbolParser:
       * @return a parser that recognizes and produces implication.
       */
     def parser[F](subparser: Parser[Tokens, F]): Parser[Tokens, Implication[F]] =
-      subparser.thenSkip(LiteralParser.parser["-->"].orElse(LiteralParser.parser["→"])).andThen(subparser).map {
+      val op = LiteralParser.parser["-->"].orElse(LiteralParser.parser["→"])
+      subparser.thenSkip(op).andThen(subparser).map {
         (lhs, rhs) => Implication(lhs, rhs)
+      }
+
+    /** Parser for chained implications.
+      *
+      * @param subparser the parser for the subformulas.
+      * @param converter a function to convert an implication of two subformulas into a single formula.
+      * @return a parser that recognizes and produces lists of subformulas as left-associated Implications.
+      */
+    def chainedParser[F](subparser: Parser[Tokens, F])(converter: Implication[F] => F): Parser[Tokens, Implication[F]] =
+      val op = LiteralParser.parser["-->"].orElse(LiteralParser.parser["→"])
+      subparser.andThen(op.skipThen(subparser).atLeast(1)).map { (first, rest) =>
+        val rhs = rest.reduceRight((curr, acc) => converter(Implication(curr, acc)))
+        Implication(first, rhs)
       }
 
   extension ($ : Difference.type)
@@ -82,6 +127,20 @@ object SymbolParser:
       * @return a parser that recognizes and produces difference.
       */
     def parser[F](subparser: Parser[Tokens, F]): Parser[Tokens, Difference[F]] =
-      subparser.thenSkip(LiteralParser.parser["--<"]).andThen(subparser).map {
+      val op = LiteralParser.parser["--<"]
+      subparser.thenSkip(op).andThen(subparser).map {
         (lhs, rhs) => Difference(lhs, rhs)
+      }
+
+    /** Parser for chained differences.
+      *
+      * @param subparser the parser for the subformulas.
+      * @param converter a function to convert a difference of two subformulas into a single formula.
+      * @return a parser that recognizes and produces lists of subformulas as left-associated Differences.
+      */
+    def chainedParser[F](subparser: Parser[Tokens, F])(converter: Difference[F] => F): Parser[Tokens, Difference[F]] =
+      val op = LiteralParser.parser["--<"]
+      subparser.andThen(op.skipThen(subparser).atLeast(1)).map { (first, rest) =>
+        val rhs = rest.reduceRight((curr, acc) => converter(Difference(curr, acc)))
+        Difference(first, rhs)
       }

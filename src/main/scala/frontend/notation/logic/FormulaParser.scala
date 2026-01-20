@@ -1,13 +1,15 @@
 package proofPlayground
 package frontend.notation.logic
 
+import core.logic.propositional.Formula.given
+import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
 import frontend.notation.logic.SymbolParser.*
 import frontend.notation.parser.Combinators.*
 import frontend.notation.parser.{LiteralParser, Parser, Tokens}
 
-import scala.language.postfixOps
+import scala.language.{implicitConversions, postfixOps}
 import scala.reflect.ClassTag
 
 private def variableParser[K: ClassTag] = symbol.Variable.parser[K]
@@ -19,29 +21,33 @@ private def conjunctionParser[F] = symbol.Conjunction.parser[F]
 private def disjunctionParser[F] = symbol.Disjunction.parser[F]
 private def implicationParser[F] = symbol.Implication.parser[F]
 
+private def conjunctionChainedParser[F] = symbol.Conjunction.chainedParser[F]
+private def disjunctionChainedParser[F] = symbol.Disjunction.chainedParser[F]
+private def implicationChainedParser[F] = symbol.Implication.chainedParser[F]
+
 object FormulaParser:
 
   extension (self: Parser[Tokens, FormulaF[Formula]])
     private def wrap: Parser[Tokens, Formula] = self.map(Formula(_))
 
-  extension ($: Formula.type)
+  extension ($ : Formula.type)
     def parser: Parser[Tokens, Formula] =
 
       def implication: Parser[Tokens, Formula] =
-        FormulaF.Implication.parser(disjunction).wrap
-        `orElse` disjunction
+        FormulaF.Implication.chainedParser(disjunction).wrap
+          `orElse` disjunction
 
       def disjunction: Parser[Tokens, Formula] =
-        FormulaF.Disjunction.parser(conjunction).wrap
-        `orElse` conjunction
+        FormulaF.Disjunction.chainedParser(conjunction).wrap
+          `orElse` conjunction
 
       def conjunction: Parser[Tokens, Formula] =
-        FormulaF.Conjunction.parser(unary).wrap
-        `orElse` unary
+        FormulaF.Conjunction.chainedParser(unary).wrap
+          `orElse` unary
 
       def unary: Parser[Tokens, Formula] =
         FormulaF.Negation.parser(input => unary.parse(input)).wrap
-        `orElse` atomic
+          `orElse` atomic
 
       def atomic: Parser[Tokens, Formula] =
         FormulaF.True.parser.wrap
@@ -72,10 +78,25 @@ object FormulaParser:
     def parser[T](subparser: Parser[Tokens, T]): Parser[Tokens, FormulaF.Conjunction[T]] =
       conjunctionParser(subparser).map(FormulaF.Conjunction[T])
 
+    def chainedParser[T](subparser: Parser[Tokens, T])(using
+      Conversion[FormulaF.Conjunction[T], T]
+    ): Parser[Tokens, FormulaF.Conjunction[T]] =
+      conjunctionChainedParser(subparser)(FormulaF.Conjunction(_)).map(FormulaF.Conjunction[T])
+
   extension ($ : FormulaF.Disjunction.type)
     def parser[T](subparser: Parser[Tokens, T]): Parser[Tokens, FormulaF.Disjunction[T]] =
       disjunctionParser(subparser).map(FormulaF.Disjunction[T])
 
+    def chainedParser[T](subparser: Parser[Tokens, T])(using
+      Conversion[FormulaF.Disjunction[T], T]
+    ): Parser[Tokens, FormulaF.Disjunction[T]] =
+      disjunctionChainedParser(subparser)(FormulaF.Disjunction(_)).map(FormulaF.Disjunction[T])
+
   extension ($ : FormulaF.Implication.type)
     def parser[T](subparser: Parser[Tokens, T]): Parser[Tokens, FormulaF.Implication[T]] =
       implicationParser(subparser).map(FormulaF.Implication[T])
+
+    def chainedParser[T](subparser: Parser[Tokens, T])(using
+      Conversion[FormulaF.Implication[T], T]
+    ): Parser[Tokens, FormulaF.Implication[T]] =
+      implicationChainedParser(subparser)(FormulaF.Implication(_)).map(FormulaF.Implication[T])
