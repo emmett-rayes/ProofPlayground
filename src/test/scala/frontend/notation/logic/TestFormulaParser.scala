@@ -218,7 +218,7 @@ class TestFormulaParser extends AnyFunSuite:
 
   test("formula parsing recognizes complex nested formulas") {
     val parser = Formula.parser
-    val input = raw"(A \/ B) --> ((~C) /\ (~D))".asTokens
+    val input  = raw"(A \/ B) --> ((~C) /\ (~D))".asTokens
 
     val result = parser.parse(input)
     assert(result.isSuccess)
@@ -344,7 +344,9 @@ class TestFormulaParser extends AnyFunSuite:
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
     assert(result.get.parsed === Formula(
-      Formula(Formula(Formula(variable[Formula]("A")) /\ Formula(variable[Formula]("B"))) \/ Formula(variable[Formula]("C"))) -->
+      Formula(
+        Formula(Formula(variable[Formula]("A")) /\ Formula(variable[Formula]("B"))) \/ Formula(variable[Formula]("C"))
+      ) -->
         Formula(variable[Formula]("D"))
     ))
   }
@@ -410,7 +412,7 @@ class TestFormulaParser extends AnyFunSuite:
       Formula(Formula(variable[Formula]("A")) /\ Formula(variable[Formula]("B"))) \/
         Formula(
           Formula(~Formula(variable[Formula]("C"))) -->
-          Formula(variable[Formula]("D"))
+            Formula(variable[Formula]("D"))
         )
     ))
   }
@@ -513,3 +515,35 @@ class TestFormulaParser extends AnyFunSuite:
     ))
   }
 
+  test("chained conjunctions are left associative") {
+    val parser = Formula.parser
+    val input  = "A /\\ B /\\ C".asTokens
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === Formula(
+      Formula(Formula(variable[Formula]("A")) /\ Formula(variable[Formula]("B"))) /\ Formula(variable[Formula]("C"))
+    ))
+  }
+
+  test("chained disjunctions are left associative") {
+    val parser = Formula.parser
+    val input  = "A \\/ B \\/ C".asTokens
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === Formula(
+      Formula(Formula(variable[Formula]("A")) \/ Formula(variable[Formula]("B"))) \/ Formula(variable[Formula]("C"))
+    ))
+  }
+
+  test("chained implications are right associative") {
+    val parser = Formula.parser
+    val input  = "A --> B --> C".asTokens
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === Formula(
+      Formula(variable[Formula]("A")) --> Formula(Formula(variable[Formula]("B")) --> Formula(variable[Formula]("C")))
+    ))
+  }
