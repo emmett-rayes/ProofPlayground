@@ -4,6 +4,7 @@ package core.system.natural
 import core.meta.PatternF.concrete
 import core.meta.{Inference, Pattern, PatternF}
 import core.system.natural.Judgement.*
+import scala.language.implicitConversions
 
 /** An inference rule for natural deduction judgements.
   *

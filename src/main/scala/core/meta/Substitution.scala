@@ -6,6 +6,7 @@ import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
 import core.meta.{Pattern, PatternF}
 import core.{Algebra, catamorphism}
+import scala.language.implicitConversions
 
 object Substitution:
   def substitute(pattern: Pattern[FormulaF], unification: Unification[Formula]): Option[Formula] =

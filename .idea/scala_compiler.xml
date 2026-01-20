@@ -3,8 +3,7 @@
   <component name="ScalaCompilerConfiguration">
     <option name="separateProdTestSources" value="true" />
     <profile name="sbt 1" modules="ProofPlayground" />
-    <profile name="sbt 3" modules="ProofPlayground.main,ProofPlayground.test">
-      <option name="implicitConversions" value="true" />
+    <profile name="sbt 2" modules="ProofPlayground.main,ProofPlayground.test">
       <option name="featureWarnings" value="true" />
       <parameters>
         <parameter value="-source:future" />
