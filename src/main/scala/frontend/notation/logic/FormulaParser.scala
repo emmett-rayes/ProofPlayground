@@ -20,24 +20,30 @@ private def disjunctionParser[F] = symbol.Disjunction.parser[F]
 private def implicationParser[F] = symbol.Implication.parser[F]
 
 object FormulaParser:
+
   extension (self: Parser[Tokens, FormulaF[Formula]])
     private def wrap: Parser[Tokens, Formula] = self.map(Formula(_))
 
   extension ($: Formula.type)
     def parser: Parser[Tokens, Formula] =
-      def implication = FormulaF.Implication.parser(disjunction).wrap
+
+      def implication: Parser[Tokens, Formula] =
+        FormulaF.Implication.parser(disjunction).wrap
         `orElse` disjunction
 
-      def disjunction = FormulaF.Disjunction.parser(conjunction).wrap
+      def disjunction: Parser[Tokens, Formula] =
+        FormulaF.Disjunction.parser(conjunction).wrap
         `orElse` conjunction
 
-      def conjunction = FormulaF.Conjunction.parser(unary).wrap
+      def conjunction: Parser[Tokens, Formula] =
+        FormulaF.Conjunction.parser(unary).wrap
         `orElse` unary
 
-      def unary = FormulaF.Negation.parser(atomic).wrap
+      def unary: Parser[Tokens, Formula] =
+        FormulaF.Negation.parser(input => unary.parse(input)).wrap
         `orElse` atomic
 
-      def atomic =
+      def atomic: Parser[Tokens, Formula] =
         FormulaF.True.parser.wrap
           `orElse` FormulaF.False.parser.wrap
           `orElse` FormulaF.Variable.parser.wrap
