@@ -1,15 +1,18 @@
 package proofPlayground
 package core.meta
 
+import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
 import core.meta.Pattern.given
-import core.meta.PatternF.{concrete, meta}
-import core.meta.PatternUtil.asPattern
+import core.meta.PatternF.meta
+import core.meta.PatternUtil.{asPattern, given}
 import core.meta.{Pattern, Unification}
 
 import org.scalatest.funsuite.AnyFunSuite
+
+import scala.language.implicitConversions
 
 /** Tests for the [[Unification]] functions. */
 class TestUnification extends AnyFunSuite:
@@ -24,10 +27,11 @@ class TestUnification extends AnyFunSuite:
   }
 
   test("meta-variables unify any propositional formula") {
-    val metavariable = meta[FormulaF, Pattern[FormulaF]]("phi")
-    val pattern      = metavariable
-    val formula      = formulaGenerator.arbitrary.sample.get
-    val result       = Unification.unify(pattern, formula)
+    val metavariable: PatternF.Meta[FormulaF, Pattern[FormulaF]] = meta("phi")
+
+    val pattern = metavariable: Pattern[FormulaF]
+    val formula = formulaGenerator.arbitrary.sample.get
+    val result  = Unification.unify(pattern, formula)
 
     assert(result.isDefined)
     assert(result.get === Map(metavariable -> formula))
@@ -35,58 +39,58 @@ class TestUnification extends AnyFunSuite:
 
   test("variable pattern unifies same variable formula") {
     val variableSymbol = symbol.Variable[FormulaF.Propositional]("A")
-    val formula        = Formula(FormulaF.Variable(variableSymbol))
-    val pattern        = concrete[FormulaF, Pattern[FormulaF]](FormulaF.Variable(variableSymbol))
+    val formula        = variable(variableSymbol): Formula
+    val pattern        = variable(variableSymbol): Pattern[FormulaF]
     val result         = Unification.unify(pattern, formula)
 
     assert(result.isDefined)
   }
 
   test("variable pattern does not unify different variable formulas") {
-    val pattern = concrete[FormulaF, Pattern[FormulaF]](variable("A"))
-    val formula = Formula(variable("B"))
+    val pattern = variable("A"): Pattern[FormulaF]
+    val formula = variable("B"): Formula
     val result  = Unification.unify(pattern, formula)
 
     assert(result.isEmpty)
   }
 
   test("true pattern unifies true formula") {
-    val pattern = concrete[FormulaF, Pattern[FormulaF]](tru)
-    val formula = Formula(tru)
+    val pattern = tru: Pattern[FormulaF]
+    val formula = tru: Formula
     val result  = Unification.unify(pattern, formula)
 
     assert(result.isDefined)
   }
 
   test("true pattern does not unifies anything that is not true formula") {
-    val pattern = concrete[FormulaF, Pattern[FormulaF]](tru)
-    val formula = formulaGenerator.arbitrary.retryUntil(f => f != Formula(tru)).sample.get
+    val pattern = tru: Pattern[FormulaF]
+    val formula = formulaGenerator.arbitrary.retryUntil(f => f != tru).sample.get
     val result  = Unification.unify(pattern, formula)
 
     assert(result.isEmpty)
   }
 
   test("false pattern unifies false formula") {
-    val pattern = concrete[FormulaF, Pattern[FormulaF]](fls)
-    val formula = Formula(fls)
+    val pattern = fls: Pattern[FormulaF]
+    val formula = fls: Formula
     val result  = Unification.unify(pattern, formula)
 
     assert(result.isDefined)
   }
 
   test("false pattern does not unifies anything that is not false formula") {
-    val pattern = concrete[FormulaF, Pattern[FormulaF]](tru)
-    val formula = formulaGenerator.arbitrary.retryUntil(f => f != Formula(fls)).sample.get
+    val pattern = tru: Pattern[FormulaF]
+    val formula = formulaGenerator.arbitrary.retryUntil(f => f != fls).sample.get
     val result  = Unification.unify(pattern, formula)
 
     assert(result.isEmpty)
   }
 
   test("negation patterns unify negation formulas") {
-    val subPattern = Pattern(meta[FormulaF, Pattern[FormulaF]]("phi"))
-    val pattern    = concrete[FormulaF, Pattern[FormulaF]](~subPattern)
-    val subFormula = Formula(variable("A"))
-    val formula    = Formula(~subFormula)
+    val subPattern = meta("phi"): Pattern[FormulaF]
+    val pattern    = ~subPattern
+    val subFormula = variable("A"): Formula
+    val formula    = ~subFormula
     val result     = Unification.unify(pattern, formula)
 
     assert(result.isDefined)
@@ -94,8 +98,8 @@ class TestUnification extends AnyFunSuite:
   }
 
   test("negation patterns do not unify non-negation formulas") {
-    val subPattern = Pattern(meta[FormulaF, Pattern[FormulaF]]("phi"))
-    val pattern    = concrete[FormulaF, Pattern[FormulaF]](~subPattern)
+    val subPattern = meta("phi"): Pattern[FormulaF]
+    val pattern    = ~subPattern
     val formula    = formulaGenerator.arbitrary.retryUntil(f =>
       f.unfix match
         case FormulaF.Negation(_) => false
@@ -107,12 +111,12 @@ class TestUnification extends AnyFunSuite:
   }
 
   test("conjunction patterns unify conjunction formulas") {
-    val leftPattern  = Pattern(meta[FormulaF, Pattern[FormulaF]]("phi"))
-    val rightPattern = Pattern(meta[FormulaF, Pattern[FormulaF]]("psi"))
-    val pattern      = concrete[FormulaF, Pattern[FormulaF]](leftPattern /\ rightPattern)
+    val leftPattern  = meta("phi"): Pattern[FormulaF]
+    val rightPattern = meta("psi"): Pattern[FormulaF]
+    val pattern      = leftPattern /\ rightPattern
     val leftFormula  = formulaGenerator.arbitrary.sample.get
     val rightFormula = formulaGenerator.arbitrary.sample.get
-    val formula      = Formula(leftFormula /\ rightFormula)
+    val formula      = leftFormula /\ rightFormula
     val result       = Unification.unify(pattern, formula)
 
     assert(result.isDefined)
@@ -120,9 +124,9 @@ class TestUnification extends AnyFunSuite:
   }
 
   test("conjunction patterns do not unify non-conjunction formulas") {
-    val leftPattern  = Pattern(meta[FormulaF, Pattern[FormulaF]]("phi"))
-    val rightPattern = Pattern(meta[FormulaF, Pattern[FormulaF]]("psi"))
-    val pattern      = concrete[FormulaF, Pattern[FormulaF]](leftPattern /\ rightPattern)
+    val leftPattern  = meta("phi"): Pattern[FormulaF]
+    val rightPattern = meta("psi"): Pattern[FormulaF]
+    val pattern      = leftPattern /\ rightPattern
     val formula      = formulaGenerator.arbitrary.retryUntil(f =>
       f.unfix match
         case FormulaF.Conjunction(_) => false
@@ -134,23 +138,23 @@ class TestUnification extends AnyFunSuite:
   }
 
   test("conjunction unification fails when conflicting metavariables occur") {
-    val metavariable = Pattern(meta[FormulaF, Pattern[FormulaF]]("phi"))
-    val pattern      = concrete[FormulaF, Pattern[FormulaF]](metavariable /\ metavariable)
+    val metavariable = meta("phi"): Pattern[FormulaF]
+    val pattern      = metavariable /\ metavariable
     val leftFormula  = formulaGenerator.arbitrary.sample.get
     val rightFormula = formulaGenerator.arbitrary.retryUntil(f => f != leftFormula).sample.get
-    val formula      = Formula(leftFormula /\ rightFormula)
+    val formula      = leftFormula /\ rightFormula
     val result       = Unification.unify(pattern, formula)
 
     assert(result.isEmpty)
   }
 
   test("disjunction patterns unify disjunction formulas") {
-    val leftPattern  = Pattern(meta[FormulaF, Pattern[FormulaF]]("phi"))
-    val rightPattern = Pattern(meta[FormulaF, Pattern[FormulaF]]("psi"))
-    val pattern      = concrete[FormulaF, Pattern[FormulaF]](leftPattern \/ rightPattern)
+    val leftPattern  = meta("phi"): Pattern[FormulaF]
+    val rightPattern = meta("psi"): Pattern[FormulaF]
+    val pattern      = leftPattern \/ rightPattern
     val leftFormula  = formulaGenerator.arbitrary.sample.get
     val rightFormula = formulaGenerator.arbitrary.sample.get
-    val formula      = Formula(leftFormula \/ rightFormula)
+    val formula      = leftFormula \/ rightFormula
     val result       = Unification.unify(pattern, formula)
 
     assert(result.isDefined)
@@ -158,9 +162,9 @@ class TestUnification extends AnyFunSuite:
   }
 
   test("disjunction patterns do not unify non-disjunction formulas") {
-    val leftPattern  = Pattern(meta[FormulaF, Pattern[FormulaF]]("phi"))
-    val rightPattern = Pattern(meta[FormulaF, Pattern[FormulaF]]("psi"))
-    val pattern      = concrete[FormulaF, Pattern[FormulaF]](leftPattern \/ rightPattern)
+    val leftPattern  = meta("phi"): Pattern[FormulaF]
+    val rightPattern = meta("psi"): Pattern[FormulaF]
+    val pattern      = leftPattern \/ rightPattern
     val formula      = formulaGenerator.arbitrary.retryUntil(f =>
       f.unfix match
         case FormulaF.Disjunction(_) => false
@@ -172,23 +176,23 @@ class TestUnification extends AnyFunSuite:
   }
 
   test("disjunction unification fails when conflicting metavariables occur") {
-    val metavariable = Pattern(meta[FormulaF, Pattern[FormulaF]]("phi"))
-    val pattern      = concrete[FormulaF, Pattern[FormulaF]](metavariable \/ metavariable)
+    val metavariable = meta("phi"): Pattern[FormulaF]
+    val pattern      = metavariable \/ metavariable
     val leftFormula  = formulaGenerator.arbitrary.sample.get
     val rightFormula = formulaGenerator.arbitrary.retryUntil(f => f != leftFormula).sample.get
-    val formula      = Formula(leftFormula \/ rightFormula)
+    val formula      = leftFormula \/ rightFormula
     val result       = Unification.unify(pattern, formula)
 
     assert(result.isEmpty)
   }
 
   test("implication patterns unify implication formulas") {
-    val leftPattern  = Pattern(meta[FormulaF, Pattern[FormulaF]]("phi"))
-    val rightPattern = Pattern(meta[FormulaF, Pattern[FormulaF]]("psi"))
-    val pattern      = concrete[FormulaF, Pattern[FormulaF]](leftPattern --> rightPattern)
+    val leftPattern  = meta("phi"): Pattern[FormulaF]
+    val rightPattern = meta("psi"): Pattern[FormulaF]
+    val pattern      = leftPattern --> rightPattern
     val leftFormula  = formulaGenerator.arbitrary.sample.get
     val rightFormula = formulaGenerator.arbitrary.sample.get
-    val formula      = Formula(leftFormula --> rightFormula)
+    val formula      = leftFormula --> rightFormula
     val result       = Unification.unify(pattern, formula)
 
     assert(result.isDefined)
@@ -196,9 +200,9 @@ class TestUnification extends AnyFunSuite:
   }
 
   test("implication patterns do not unify non-implication formulas") {
-    val leftPattern  = Pattern(meta[FormulaF, Pattern[FormulaF]]("phi"))
-    val rightPattern = Pattern(meta[FormulaF, Pattern[FormulaF]]("psi"))
-    val pattern      = concrete[FormulaF, Pattern[FormulaF]](leftPattern --> rightPattern)
+    val leftPattern  = meta("phi"): Pattern[FormulaF]
+    val rightPattern = meta("psi"): Pattern[FormulaF]
+    val pattern      = leftPattern --> rightPattern
     val formula      = formulaGenerator.arbitrary.retryUntil(f =>
       f.unfix match
         case FormulaF.Implication(_) => false
@@ -210,11 +214,11 @@ class TestUnification extends AnyFunSuite:
   }
 
   test("implication unification fails when conflicting metavariables occur") {
-    val metavariable = Pattern(meta[FormulaF, Pattern[FormulaF]]("phi"))
-    val pattern      = concrete[FormulaF, Pattern[FormulaF]](metavariable --> metavariable)
+    val metavariable = meta("phi"): Pattern[FormulaF]
+    val pattern      = metavariable --> metavariable
     val leftFormula  = formulaGenerator.arbitrary.sample.get
     val rightFormula = formulaGenerator.arbitrary.retryUntil(f => f != leftFormula).sample.get
-    val formula      = Formula(leftFormula --> rightFormula)
+    val formula      = leftFormula --> rightFormula
     val result       = Unification.unify(pattern, formula)
 
     assert(result.isEmpty)
@@ -224,9 +228,9 @@ class TestUnification extends AnyFunSuite:
     val gamma: PatternF.Meta[FormulaF, Pattern[FormulaF]] = meta("Gamma")
     val patterns: Seq[Pattern[FormulaF]]                  = Seq(gamma)
 
-    val varA: Formula          = Formula(variable("A"))
-    val varB: Formula          = Formula(variable("B"))
-    val formulas: Seq[Formula] = Seq(Formula(varA \/ varB), Formula(tru), Formula(fls), Formula(~varA))
+    val varA     = variable("A"): Formula
+    val varB     = variable("B"): Formula
+    val formulas = Seq[Formula](varA \/ varB, tru, fls, ~varA)
 
     val unification = Unification.unify(patterns, formulas)
     assert(unification.isDefined)
@@ -238,9 +242,9 @@ class TestUnification extends AnyFunSuite:
     val delta: PatternF.Meta[FormulaF, Pattern[FormulaF]] = meta("Delta")
     val patterns: Seq[Pattern[FormulaF]]                  = Seq(gamma, delta)
 
-    val varA: Formula          = Formula(variable("A"))
-    val varB: Formula          = Formula(variable("B"))
-    val formulas: Seq[Formula] = Seq(Formula(varA \/ varB), Formula(tru), Formula(fls), Formula(~varA))
+    val varA                   = variable("A"): Formula
+    val varB                   = variable("B"): Formula
+    val formulas: Seq[Formula] = Seq(varA \/ varB, tru, fls, ~varA)
 
     val unification = Unification.unify(patterns, formulas)
     assert(unification.isDefined)
@@ -249,63 +253,63 @@ class TestUnification extends AnyFunSuite:
   }
 
   test("sequence unification with multiple meta-variables starting with meta-variable") {
-    val delta: PatternF.Meta[FormulaF, Pattern[FormulaF]] = meta("Delta")
     val gamma: PatternF.Meta[FormulaF, Pattern[FormulaF]] = meta("Gamma")
-    val disjunction: Pattern[FormulaF]                    = concrete(Pattern(meta("phi")) \/ Pattern(meta("psi")))
-    val negation: Pattern[FormulaF]                       = concrete(~Pattern(meta("phi")))
-    val patterns: Seq[Pattern[FormulaF]]                  = Seq(delta, disjunction, gamma, negation)
+    val delta: PatternF.Meta[FormulaF, Pattern[FormulaF]] = meta("Delta")
+    val disjunction                      = (meta("phi"): Pattern[FormulaF]) \/ (meta("psi"): Pattern[FormulaF])
+    val negation                         = ~(meta("phi"): Pattern[FormulaF])
+    val patterns: Seq[Pattern[FormulaF]] = Seq(delta, disjunction, gamma, negation)
 
-    val varA: Formula          = Formula(variable("A"))
-    val varB: Formula          = Formula(variable("B"))
-    val formulas: Seq[Formula] = Seq(Formula(varA \/ varB), Formula(tru), Formula(fls), Formula(~varA))
+    val varA                   = variable("A"): Formula
+    val varB                   = variable("B"): Formula
+    val formulas: Seq[Formula] = Seq(varA \/ varB, tru, fls, ~varA)
 
     val unification = Unification.unify(patterns, formulas)
     assert(unification.isDefined)
     assert(unification.get(delta) === Seq.empty)
-    assert(unification.get(gamma) === Seq(Formula(tru), Formula(fls)))
+    assert(unification.get(gamma) === Seq[Formula](tru, fls))
   }
 
   test("sequence unification with multiple meta-variables ending with meta-variable") {
-    val delta: PatternF.Meta[FormulaF, Pattern[FormulaF]] = meta("Delta")
     val gamma: PatternF.Meta[FormulaF, Pattern[FormulaF]] = meta("Gamma")
-    val disjunction: Pattern[FormulaF]                    = concrete(Pattern(meta("phi")) \/ Pattern(meta("psi")))
-    val negation: Pattern[FormulaF]                       = concrete(~Pattern(meta("phi")))
-    val patterns: Seq[Pattern[FormulaF]]                  = Seq(delta, disjunction, negation, gamma)
+    val delta: PatternF.Meta[FormulaF, Pattern[FormulaF]] = meta("Delta")
+    val disjunction                      = (meta("phi"): Pattern[FormulaF]) \/ (meta("psi"): Pattern[FormulaF])
+    val negation                         = ~(meta("phi"): Pattern[FormulaF])
+    val patterns: Seq[Pattern[FormulaF]] = Seq(delta, disjunction, negation, gamma)
 
-    val varA: Formula          = Formula(variable("A"))
-    val varB: Formula          = Formula(variable("B"))
-    val formulas: Seq[Formula] = Seq(Formula(varA \/ varB), Formula(~varA), Formula(tru), Formula(fls))
+    val varA                   = variable("A"): Formula
+    val varB                   = variable("B"): Formula
+    val formulas: Seq[Formula] = Seq(varA \/ varB, ~varA, tru, fls)
 
     val unification = Unification.unify(patterns, formulas)
     assert(unification.isDefined)
     assert(unification.get(delta) === Seq.empty)
-    assert(unification.get(gamma) === Seq(Formula(tru), Formula(fls)))
+    assert(unification.get(gamma) === Seq[Formula](tru, fls))
   }
 
   test("sequence unification single formula starting with meta-variable") {
     val gamma: PatternF.Meta[FormulaF, Pattern[FormulaF]] = meta("Gamma")
-    val disjunction: Pattern[FormulaF]                    = concrete(Pattern(meta("phi")) \/ Pattern(meta("psi")))
-    val patterns: Seq[Pattern[FormulaF]]                  = Seq(gamma, disjunction)
+    val disjunction                      = (meta("phi"): Pattern[FormulaF]) \/ (meta("psi"): Pattern[FormulaF])
+    val patterns: Seq[Pattern[FormulaF]] = Seq(gamma, disjunction)
 
-    val varA: Formula          = Formula(variable("A"))
-    val varB: Formula          = Formula(variable("B"))
-    val formulas: Seq[Formula] = Seq(Formula(tru), Formula(fls), Formula(~varA), Formula(varA \/ varB))
+    val varA                   = variable("A"): Formula
+    val varB                   = variable("B"): Formula
+    val formulas: Seq[Formula] = Seq(tru, fls, ~varA, varA \/ varB)
 
     val unification = Unification.unify(patterns, formulas)
     assert(unification.isDefined)
-    assert(unification.get(gamma) === Seq(Formula(tru), Formula(fls), Formula(~varA)))
+    assert(unification.get(gamma) === Seq[Formula](tru, fls, ~varA))
   }
 
   test("sequence unification single formula ending with meta-variable") {
     val gamma: PatternF.Meta[FormulaF, Pattern[FormulaF]] = meta("Gamma")
-    val disjunction: Pattern[FormulaF]                    = concrete(Pattern(meta("phi")) \/ Pattern(meta("psi")))
-    val patterns: Seq[Pattern[FormulaF]]                  = Seq(disjunction, gamma)
+    val disjunction                      = (meta("phi"): Pattern[FormulaF]) \/ (meta("psi"): Pattern[FormulaF])
+    val patterns: Seq[Pattern[FormulaF]] = Seq(disjunction, gamma)
 
-    val varA: Formula          = Formula(variable("A"))
-    val varB: Formula          = Formula(variable("B"))
-    val formulas: Seq[Formula] = Seq(Formula(varA \/ varB), Formula(tru), Formula(fls), Formula(~varA))
+    val varA                   = variable("A"): Formula
+    val varB                   = variable("B"): Formula
+    val formulas: Seq[Formula] = Seq(varA \/ varB, tru, fls, ~varA)
 
     val unification = Unification.unify(patterns, formulas)
     assert(unification.isDefined)
-    assert(unification.get(gamma) === Seq(Formula(tru), Formula(fls), Formula(~varA)))
+    assert(unification.get(gamma) === Seq[Formula](tru, fls, ~varA))
   }

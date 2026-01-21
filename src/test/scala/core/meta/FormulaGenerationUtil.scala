@@ -5,6 +5,8 @@ import core.logic.propositional.Formula
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.*
 
+import scala.language.implicitConversions
+
 import org.scalacheck.{Arbitrary, Gen}
 
 object FormulaGenerationUtil:

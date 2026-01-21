@@ -4,6 +4,8 @@ package core.logic.propositional
 import core.logic.symbol
 import core.{Fix, Functor}
 
+import scala.language.implicitConversions
+
 /** Representation of a propositional formula.
   *
   * A formula is defined as a fixed point over the functor [[FormulaF]].
@@ -68,28 +70,28 @@ case object FormulaF:
     *
     * Provides DSL for constructing propositional formulas.
     */
-  extension [T](t: T)
+  extension [T](t: T)(using Conversion[FormulaF[T], T])
     /** Negation operator. */
-    def unary_~ : FormulaF.Negation[T] = Negation(symbol.Negation(t))
+    def unary_~ : T = Negation(symbol.Negation(t))
 
     /** Conjunction operator. */
-    def /\(other: T): FormulaF.Conjunction[T] = Conjunction(symbol.Conjunction(t, other))
+    def /\(other: T): T = Conjunction(symbol.Conjunction(t, other))
 
     /** Disjunction operator. */
-    def \/(other: T): FormulaF.Disjunction[T] = Disjunction(symbol.Disjunction(t, other))
+    def \/(other: T): T = Disjunction(symbol.Disjunction(t, other))
 
     /** Implication operator. */
-    def -->(other: T): FormulaF.Implication[T] = Implication(symbol.Implication(t, other))
+    def -->(other: T): T = Implication(symbol.Implication(t, other))
 
   /** [[Functor]] instance for [[FormulaF]]. */
   given Functor[FormulaF]:
     extension [A](fa: FormulaF[A])
       override def map[B](f: A => B): FormulaF[B] =
         fa match
-          case Variable(sym)            => variable(sym)
-          case True(_)                  => tru
-          case False(_)                 => fls
-          case Negation(negation)       => ~f(negation.arg)
-          case Conjunction(conjunction) => f(conjunction.lhs) /\ f(conjunction.rhs)
-          case Disjunction(disjunction) => f(disjunction.lhs) \/ f(disjunction.rhs)
-          case Implication(implication) => f(implication.lhs) --> f(implication.rhs)
+          case Variable(sym)            => Variable(sym)
+          case True(_)                  => True(symbol.True())
+          case False(_)                 => False(symbol.False())
+          case Negation(negation)       => Negation(symbol.Negation(f(negation.arg)))
+          case Conjunction(conjunction) => Conjunction(symbol.Conjunction(f(conjunction.lhs), f(conjunction.rhs)))
+          case Disjunction(disjunction) => Disjunction(symbol.Disjunction(f(disjunction.lhs), f(disjunction.rhs)))
+          case Implication(implication) => Implication(symbol.Implication(f(implication.lhs), f(implication.rhs)))
