@@ -52,16 +52,16 @@ enum FormulaF[T]:
 
 case object FormulaF:
   /** Create a propositional variable formula using a variable identifier. */
-  def variable[T](id: String): FormulaF.Variable[T] = Variable(symbol.Variable[Propositional](id))
+  def variable[T](id: String)(using Conversion[FormulaF[T], T]): T = Variable(symbol.Variable[Propositional](id))
 
   /** Create a propositional variable formula using the same variable. */
-  def variable[T, K](varSymbol: symbol.Variable[Propositional]): FormulaF.Variable[T] = Variable(varSymbol)
+  def variable[T](varSymbol: symbol.Variable[Propositional])(using Conversion[FormulaF[T], T]): T = Variable(varSymbol)
 
   /** Create a true formula. */
-  def tru[T]: FormulaF.True[T] = True(symbol.True())
+  def tru[T](using Conversion[FormulaF[T], T]): T = True(symbol.True())
 
   /** Create a false formula. */
-  def fls[T]: FormulaF.False[T] = False(symbol.False())
+  def fls[T](using Conversion[FormulaF[T], T]): T = False(symbol.False())
 
   /** Marker trait for propositional logic variables. */
   sealed trait Propositional

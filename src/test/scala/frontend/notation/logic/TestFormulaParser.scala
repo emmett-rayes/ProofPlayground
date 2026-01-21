@@ -1,9 +1,9 @@
 package proofPlayground
 package frontend.notation.logic
 
+import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.{variable, *}
 import core.logic.propositional.{Formula, FormulaF}
-import core.logic.propositional.Formula.given
 import frontend.notation.parser.asTokens
 
 import org.scalatest.funsuite.AnyFunSuite
@@ -15,7 +15,7 @@ class TestFormulaParser extends AnyFunSuite:
   import FormulaParser.*
 
   test("variable parsing recognizes simple propositional variables") {
-    val parser = FormulaF.Variable.parser[Formula]
+    val parser = Formula.parser
     val input  = "A".asTokens
 
     val result = parser.parse(input)
@@ -25,7 +25,7 @@ class TestFormulaParser extends AnyFunSuite:
   }
 
   test("variable parsing recognizes propositional variables with digits") {
-    val parser = FormulaF.Variable.parser[Formula]
+    val parser = Formula.parser
     val input  = "A2".asTokens
 
     val result = parser.parse(input)
@@ -35,7 +35,7 @@ class TestFormulaParser extends AnyFunSuite:
   }
 
   test("variable parsing rejects propositional variables with small letters") {
-    val parser = FormulaF.Variable.parser[Formula]
+    val parser = Formula.parser
     val input  = "a".asTokens
 
     val result = parser.parse(input)
@@ -43,7 +43,7 @@ class TestFormulaParser extends AnyFunSuite:
   }
 
   test("variable parsing recognizes multiple letters as multiple propositional variables") {
-    val parser = FormulaF.Variable.parser[Formula]
+    val parser = Formula.parser
     val input  = "AB".asTokens
 
     val result = parser.parse(input)
@@ -58,7 +58,7 @@ class TestFormulaParser extends AnyFunSuite:
   }
 
   test("true parsing recognizes 'True'") {
-    val parser = FormulaF.True.parser[Formula]
+    val parser = Formula.parser
     val input  = "True".asTokens
 
     val result = parser.parse(input)
@@ -68,33 +68,33 @@ class TestFormulaParser extends AnyFunSuite:
   }
 
   test("true parsing recognizes '⊤'") {
-    val parser = FormulaF.True.parser[Formula]
+    val parser = Formula.parser
     val input  = "⊤".asTokens
 
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === tru)
+    assert(result.get.parsed === tru[Formula])
   }
 
   test("false parsing recognizes 'False'") {
-    val parser = FormulaF.False.parser[Formula]
+    val parser = Formula.parser
     val input  = "False".asTokens
 
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === fls)
+    assert(result.get.parsed === fls[Formula])
   }
 
   test("false parsing recognizes '⊥'") {
-    val parser = FormulaF.False.parser[Formula]
+    val parser = Formula.parser
     val input  = "⊥".asTokens
 
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === fls)
+    assert(result.get.parsed === fls[Formula])
   }
 
   test("negation parsing recognizes '~A'") {
@@ -104,7 +104,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === ~(variable("A"): Formula))
+    assert(result.get.parsed === ~variable[Formula]("A"))
   }
 
   test("negation parsing recognizes '¬A'") {
@@ -114,7 +114,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === ~(variable("A"): Formula))
+    assert(result.get.parsed === ~variable[Formula]("A"))
   }
 
   test(raw"conjunction parsing recognizes 'A /\ B'") {
@@ -124,7 +124,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === (variable("A"): Formula) /\ (variable("B"): Formula))
+    assert(result.get.parsed === variable[Formula]("A") /\ variable[Formula]("B"))
   }
 
   test(raw"conjunction parsing recognizes 'A ∧ B'") {
@@ -134,7 +134,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === (variable("A"): Formula) /\ (variable("B"): Formula))
+    assert(result.get.parsed === variable[Formula]("A") /\ variable[Formula]("B"))
   }
 
   test(raw"disjunction parsing recognizes 'A \/ B'") {
@@ -144,7 +144,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === (variable("A"): Formula) \/ (variable("B"): Formula))
+    assert(result.get.parsed === variable[Formula]("A") \/ variable[Formula]("B"))
   }
 
   test(raw"disjunction parsing recognizes 'A ∨ B'") {
@@ -154,7 +154,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === (variable("A"): Formula) \/ (variable("B"): Formula))
+    assert(result.get.parsed === variable[Formula]("A") \/ variable[Formula]("B"))
   }
 
   test(raw"implication parsing recognizes 'A --> B'") {
@@ -164,7 +164,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === (variable("A"): Formula) --> (variable("B"): Formula))
+    assert(result.get.parsed === variable[Formula]("A") --> variable[Formula]("B"))
   }
 
   test(raw"implication parsing recognizes 'A → B'") {
@@ -174,7 +174,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === (variable("A"): Formula) --> (variable("B"): Formula))
+    assert(result.get.parsed === variable[Formula]("A") --> variable[Formula]("B"))
   }
 
   test("formula parsing recognizes formulas with parentheses") {
@@ -184,7 +184,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === (variable("A"): Formula) /\ (variable("B"): Formula))
+    assert(result.get.parsed === variable[Formula]("A") /\ variable[Formula]("B"))
   }
 
   test("formula parsing recognizes nested formulas") {
@@ -194,7 +194,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === (variable("A"): Formula) \/ ((variable("B"): Formula) /\ (variable("C"): Formula)))
+    assert(result.get.parsed === variable[Formula]("A") \/ (variable[Formula]("B") /\ variable[Formula]("C")))
   }
 
   test("formula parsing recognizes nested formulas with parentheses") {
@@ -204,7 +204,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === ((variable("A"): Formula) \/ (variable("B"): Formula)) /\ (variable("C"): Formula))
+    assert(result.get.parsed === (variable[Formula]("A") \/ variable[Formula]("B")) /\ variable[Formula]("C"))
   }
 
   test("formula parsing recognizes complex nested formulas") {
@@ -215,8 +215,8 @@ class TestFormulaParser extends AnyFunSuite:
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
     assert(result.get.parsed ===
-      (variable("A"): Formula) \/ (variable("B"): Formula)
-      --> ((~(variable("C"): Formula)) /\ (~(variable("D"): Formula))))
+      variable[Formula]("A") \/ variable[Formula]("B")
+      --> ((~variable[Formula]("C")) /\ (~variable[Formula]("D"))))
   }
 
   test("formula parsing recognizes double negation") {
@@ -226,7 +226,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === ~(~(variable("A"): Formula)))
+    assert(result.get.parsed === ~(~variable[Formula]("A")))
   }
 
   test("formula parsing recognizes triple negation") {
@@ -236,7 +236,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === ~(~(~variable("A"): Formula)))
+    assert(result.get.parsed === ~(~(~variable[Formula]("A"))))
   }
 
   test("formula parsing recognizes single variable") {
@@ -246,7 +246,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === (variable("A"): Formula))
+    assert(result.get.parsed === variable[Formula]("A"))
   }
 
   test("formula parsing recognizes True constant") {
@@ -297,7 +297,7 @@ class TestFormulaParser extends AnyFunSuite:
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
     // Conjunction binds tighter: A \/ (B /\ C)
-    assert(result.get.parsed === (variable("A"): Formula) \/ ((variable("B"): Formula) /\ (variable("C"): Formula)))
+    assert(result.get.parsed === variable[Formula]("A") \/ (variable[Formula]("B") /\ variable[Formula]("C")))
   }
 
   test("formula parsing respects implication as lowest precedence") {
@@ -308,9 +308,9 @@ class TestFormulaParser extends AnyFunSuite:
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
     // Implication binds loosest: (A \/ B) --> (C /\ D)
-    assert(result.get.parsed === ((variable("A"): Formula) \/ (variable("B"): Formula)) --> ((variable(
+    assert(result.get.parsed === (variable[Formula]("A") \/ variable[Formula]("B")) --> ((variable(
       "C"
-    ): Formula) /\ (variable("D"): Formula)))
+    ): Formula) /\ variable[Formula]("D")))
   }
 
   test("formula parsing with deeply nested parentheses") {
@@ -320,7 +320,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === (variable("A"): Formula))
+    assert(result.get.parsed === variable[Formula]("A"))
   }
 
   test("formula parsing with mixed Unicode and ASCII operators") {
@@ -330,9 +330,9 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === (((variable("A"): Formula) /\ (variable("B"): Formula)) \/ (variable(
+    assert(result.get.parsed === ((variable[Formula]("A") /\ variable[Formula]("B")) \/ (variable(
       "C"
-    ): Formula)) --> (variable("D"): Formula))
+    ): Formula)) --> variable[Formula]("D"))
   }
 
   test("formula parsing recognizes ⊤ constant") {
@@ -362,7 +362,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === ~(variable("A"): Formula))
+    assert(result.get.parsed === ~variable[Formula]("A"))
   }
 
   test("formula parsing with ⊤ and ⊥ in expression") {
@@ -382,7 +382,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === (variable("A"): Formula) --> (variable("B"): Formula))
+    assert(result.get.parsed === variable[Formula]("A") --> variable[Formula]("B"))
   }
 
   test("formula parsing recognizes complex expression with all operators") {
@@ -392,9 +392,9 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === ((variable("A"): Formula) /\ (variable(
+    assert(result.get.parsed === (variable[Formula]("A") /\ (variable(
       "B"
-    ): Formula)) \/ ((~(variable("C"): Formula)) --> (variable("D"): Formula)))
+    ): Formula)) \/ ((~variable[Formula]("C")) --> variable[Formula]("D")))
   }
 
   test("variable parsing rejects empty input") {
@@ -456,7 +456,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === Formula(variable[Formula]("A123")))
+    assert(result.get.parsed === variable[Formula]("A123"))
   }
 
   test("formula parsing recognizes multiple different variables") {
@@ -466,7 +466,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === ((variable("X"): Formula) /\ (variable("Y"): Formula)) /\ (variable("Z"): Formula))
+    assert(result.get.parsed === (variable[Formula]("X") /\ variable[Formula]("Y")) /\ variable[Formula]("Z"))
   }
 
   test("negation parsing with parenthesized subformula") {
@@ -476,7 +476,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === ~((variable("A"): Formula) /\ (variable("B"): Formula)))
+    assert(result.get.parsed === ~(variable[Formula]("A") /\ variable[Formula]("B")))
   }
 
   test("formula parsing with alternating conjunctions and disjunctions") {
@@ -488,7 +488,7 @@ class TestFormulaParser extends AnyFunSuite:
     assert(result.get.remaining.isEmpty)
     // Due to precedence: (A /\ B) \/ (C /\ D)
     assert(result.get.parsed ===
-      ((variable("A"): Formula) /\ (variable("B"): Formula)) \/ ((variable("C"): Formula) /\ (variable("D"): Formula)))
+      (variable[Formula]("A") /\ variable[Formula]("B")) \/ (variable[Formula]("C") /\ variable[Formula]("D")))
   }
 
   test("chained conjunctions are left associative") {
@@ -497,7 +497,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === ((variable("A"): Formula) /\ (variable("B"): Formula)) /\ (variable("C"): Formula))
+    assert(result.get.parsed === (variable[Formula]("A") /\ variable[Formula]("B")) /\ variable[Formula]("C"))
   }
 
   test("chained disjunctions are left associative") {
@@ -506,7 +506,7 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === ((variable("A"): Formula) \/ (variable("B"): Formula)) \/ (variable("C"): Formula))
+    assert(result.get.parsed === (variable[Formula]("A") \/ variable[Formula]("B")) \/ variable[Formula]("C"))
   }
 
   test("chained implications are right associative") {
@@ -515,5 +515,5 @@ class TestFormulaParser extends AnyFunSuite:
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === (variable("A"): Formula) --> ((variable("B"): Formula) --> (variable("C"): Formula)))
+    assert(result.get.parsed === variable[Formula]("A") --> (variable[Formula]("B") --> variable[Formula]("C")))
   }

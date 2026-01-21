@@ -47,7 +47,7 @@ class TestSubstitution extends AnyFunSuite:
 
   test("variable pattern is not affected by substitution") {
     val variableSymbol = symbol.Variable[FormulaF.Propositional]("A")
-    val pattern        = concrete[FormulaF, Pattern[FormulaF]](variable(variableSymbol))
+    val pattern        = variable[Pattern[FormulaF]](variableSymbol)
     val result         = Substitution.substitute(pattern, Map.empty)
 
     assert(result.isDefined)
@@ -55,19 +55,19 @@ class TestSubstitution extends AnyFunSuite:
   }
 
   test("true pattern is not affected by substitution") {
-    val pattern = concrete[FormulaF, Pattern[FormulaF]](tru)
+    val pattern = tru[Pattern[FormulaF]]
     val result  = Substitution.substitute(pattern, Map.empty)
 
     assert(result.isDefined)
-    assert(result.get === Formula(tru))
+    assert(result.get === tru[Formula])
   }
 
   test("false pattern is not affected by substitution") {
-    val pattern = concrete[FormulaF, Pattern[FormulaF]](fls)
+    val pattern = fls[Pattern[FormulaF]]
     val result  = Substitution.substitute(pattern, Map.empty)
 
     assert(result.isDefined)
-    assert(result.get === Formula(fls))
+    assert(result.get === fls[Formula])
   }
 
   test("conjunction propagates substitutions") {

@@ -64,7 +64,7 @@ class TestUnification extends AnyFunSuite:
 
   test("true pattern does not unifies anything that is not true formula") {
     val pattern = tru: Pattern[FormulaF]
-    val formula = formulaGenerator.arbitrary.retryUntil(f => f != tru).sample.get
+    val formula = formulaGenerator.arbitrary.retryUntil(f => f != tru[Formula]).sample.get
     val result  = Unification.unify(pattern, formula)
 
     assert(result.isEmpty)
@@ -80,7 +80,7 @@ class TestUnification extends AnyFunSuite:
 
   test("false pattern does not unifies anything that is not false formula") {
     val pattern = tru: Pattern[FormulaF]
-    val formula = formulaGenerator.arbitrary.retryUntil(f => f != fls).sample.get
+    val formula = formulaGenerator.arbitrary.retryUntil(f => f != fls[Formula]).sample.get
     val result  = Unification.unify(pattern, formula)
 
     assert(result.isEmpty)
