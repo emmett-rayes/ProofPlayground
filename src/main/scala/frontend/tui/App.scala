@@ -5,11 +5,7 @@ import tui.withTerminal
 
 class Navigation:
   private var shouldExit: Boolean = false
-  private var screen: Screen      =
-    FormulaInput(
-      submit = formula => (),
-      exit = () => shouldExit = true,
-    )
+  private var screen: Screen      = FormulaInput(() => shouldExit = true)
 
   def exited: Boolean       = shouldExit
   def currentScreen: Screen = screen

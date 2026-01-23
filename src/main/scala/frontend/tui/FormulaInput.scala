@@ -5,25 +5,28 @@ import tui.*
 import tui.crossterm.{Event, KeyCode}
 import tui.widgets.{BlockWidget, ParagraphWidget}
 
-class FormulaInput(submit: String => Unit, exit: () => Unit) extends Screen:
-  private var mode: InputMode = InputMode.Normal
-  private var formula: String = ""
+object FormulaInput:
+  def apply(shouldExit: () => Unit): FormulaInput =
+    val model = FormulaInputModel(shouldExit)
+    new FormulaInput(model)(model)
 
+class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Signals) extends Screen:
   override def handleEvent(event: Event): Unit =
     event match {
       case key: tui.crossterm.Event.Key =>
-        mode match {
+        data.mode match {
           case InputMode.Normal =>
             key.keyEvent().code() match
-              case c: KeyCode.Enter              => mode = InputMode.Editing
-              case c: KeyCode.Char if c.c == 'q' => exit()
+              case c: KeyCode.Enter              => signals.edit()
+              case c: KeyCode.Char if c.c == 'q' => signals.quit()
               case _                             => ()
           case InputMode.Editing =>
             key.keyEvent().code() match {
-              case c: KeyCode.Enter     => submit(formula)
-              case c: KeyCode.Esc       => formula = ""; mode = InputMode.Normal
-              case c: KeyCode.Backspace => formula = formula.dropRight(1)
-              case c: KeyCode.Char      => formula += c.c
+              case c: KeyCode.Enter     => signals.submit()
+              case c: KeyCode.Esc       => signals.clear()
+              case c: KeyCode.Backspace => signals.backspace()
+              case c: KeyCode.Char      => signals.character(c.c)
+              case _                    => ()
             }
         }
       case _ => ()
@@ -50,12 +53,12 @@ class FormulaInput(submit: String => Unit, exit: () => Unit) extends Screen:
     val prompt = ParagraphWidget(text = Text.from(Span.nostyle("Enter initial formula:")))
 
     val input = ParagraphWidget(
-      text = Text.from(Span.nostyle(formula)),
-      style = if mode == InputMode.Editing then Style.DEFAULT.fg(Color.Yellow) else Style.DEFAULT,
+      text = Text.from(Span.nostyle(data.formula)),
+      style = if data.mode == InputMode.Editing then Style.DEFAULT.fg(Color.Yellow) else Style.DEFAULT,
       block = Some(BlockWidget(borders = Borders.ALL, title = Some(Spans.nostyle(" Formula ")))),
     )
 
-    val footerText = mode match
+    val footerText = data.mode match
       case InputMode.Normal =>
         Text.from(
           Span.nostyle("Press "),
@@ -82,9 +85,5 @@ class FormulaInput(submit: String => Unit, exit: () => Unit) extends Screen:
     frame.renderWidget(prompt, chunks(1))
     frame.renderWidget(input, chunks(2))
     frame.renderWidget(footer, chunks.last)
-    if mode == InputMode.Editing then
-      frame.setCursor(x = chunks(2).x + Grapheme(formula).width + 1, y = chunks(2).y + 1)
-
-  private enum InputMode:
-    case Normal
-    case Editing
+    if data.mode == InputMode.Editing then
+      frame.setCursor(x = chunks(2).x + Grapheme(data.formula).width + 1, y = chunks(2).y + 1)
