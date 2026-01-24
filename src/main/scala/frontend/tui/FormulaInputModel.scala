@@ -18,7 +18,7 @@ object FormulaInputModel:
     def cursorLeft(): Unit
     def cursorRight(): Unit
     def edit(): Unit
-    def clear(): Unit
+    def back(): Unit
     def submit(): Unit
     def quit(): Unit
 
@@ -33,17 +33,11 @@ class FormulaInputModel(shouldExit: () => Unit) extends FormulaInputModel.Data, 
   override def cursor: Int = cursorPosition
 
   override def character(c: Char): Unit =
-    if inputMode.isInstanceOf[InputMode.Error] then
-      inputMode = InputMode.Editing
-
     if inputMode == InputMode.Editing then
       formulaText = formulaText.patch(cursorPosition, c.toString, 0)
       cursorPosition += 1
 
   override def backspace(): Unit =
-    if inputMode.isInstanceOf[InputMode.Error] then
-      inputMode = InputMode.Editing
-
     if inputMode == InputMode.Editing then
       formulaText = formulaText.patch(cursorPosition - 1, "", 1)
       cursorPosition -= 1
@@ -52,26 +46,24 @@ class FormulaInputModel(shouldExit: () => Unit) extends FormulaInputModel.Data, 
     inputMode = InputMode.Editing
     cursorPosition = formulaText.length
 
-  override def clear(): Unit =
-    formulaText = ""
-    cursorPosition = 0
-    inputMode = InputMode.Normal
+  override def back(): Unit =
+    inputMode match
+      case InputMode.Normal  => ()
+      case InputMode.Error(_) => inputMode = InputMode.Editing
+      case InputMode.Editing =>
+        formulaText = ""
+        cursorPosition = 0
+        inputMode = InputMode.Normal
 
   override def submit(): Unit =
-    inputMode = InputMode.Error("Invalid formula")
+    inputMode = InputMode.Error("Invalid formula.")
 
   override def quit(): Unit = shouldExit()
 
   override def cursorLeft(): Unit =
-    if inputMode.isInstanceOf[InputMode.Error] then
-      inputMode = InputMode.Editing
-
     if inputMode == InputMode.Editing && cursorPosition > 0 then
       cursorPosition -= 1
 
   override def cursorRight(): Unit =
-    if inputMode.isInstanceOf[InputMode.Error] then
-      inputMode = InputMode.Editing
-
     if inputMode == InputMode.Editing && cursorPosition < formulaText.length then
       cursorPosition += 1

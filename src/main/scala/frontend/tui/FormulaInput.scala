@@ -23,7 +23,7 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
           case InputMode.Editing | InputMode.Error(_) =>
             key.keyEvent().code() match {
               case c: KeyCode.Enter     => signals.submit()
-              case c: KeyCode.Esc       => signals.clear()
+              case c: KeyCode.Esc       => signals.back()
               case c: KeyCode.Backspace => signals.backspace()
               case c: KeyCode.Left      => signals.cursorLeft()
               case c: KeyCode.Right     => signals.cursorRight()
@@ -74,13 +74,21 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
           Span.styled("q", Style.DEFAULT.addModifier(Modifier.BOLD)),
           Span.nostyle(" to exit."),
         )
-      case InputMode.Editing | InputMode.Error(_) =>
+      case InputMode.Editing =>
         Text.from(
           Span.nostyle("Press "),
           Span.styled("Enter", Style.DEFAULT.addModifier(Modifier.BOLD)),
           Span.nostyle(" to submit, "),
           Span.styled("Esc", Style.DEFAULT.addModifier(Modifier.BOLD)),
           Span.nostyle(" to cancel."),
+        )
+      case InputMode.Error(message) =>
+        Text.from(
+          Span.styled("Error: ", Style.DEFAULT.fg(Color.Red).addModifier(Modifier.BOLD)),
+          Span.styled(message, Style.DEFAULT.fg(Color.Red)),
+          Span.nostyle(" Press "),
+          Span.styled("Esc", Style.DEFAULT.addModifier(Modifier.BOLD)),
+          Span.nostyle(" to continue editing."),
         )
 
     val footer = ParagraphWidget(
