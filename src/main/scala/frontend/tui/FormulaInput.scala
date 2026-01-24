@@ -2,6 +2,7 @@ package proofPlayground
 package frontend.tui
 
 import frontend.tui.FormulaInputModel.Navigation
+
 import tui.*
 import tui.crossterm.{Event, KeyCode}
 import tui.widgets.{BlockWidget, ParagraphWidget}
@@ -48,6 +49,7 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
       margin = Margin(1),
       constraints = Array(
         Constraint.Length(2), // header
+        Constraint.Length(1), // spacer
         Constraint.Length(2), // prompt
         Constraint.Length(3), // input
         Constraint.Min(0),    // spacer
@@ -57,7 +59,7 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
 
     val header = ParagraphWidget(
       text = Text.from(Span.styled("Proof Playground", Style.DEFAULT.fg(Color.Cyan).addModifier(Modifier.BOLD))),
-      block = Some(BlockWidget(borders = Borders.BOTTOM)),
+      block = Some(BlockWidget(borders = Borders.BOTTOM, borderType = BlockWidget.BorderType.Double)),
     )
 
     val prompt = ParagraphWidget(text = Text.from(Span.nostyle("Enter initial formula:")))
@@ -105,15 +107,15 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
 
     val footer = ParagraphWidget(
       text = footerText,
-      block = Some(BlockWidget(borders = Borders.TOP)),
+      block = Some(BlockWidget(borders = Borders.TOP, borderType = BlockWidget.BorderType.Double)),
     )
 
     frame.renderWidget(header, chunks(0))
-    frame.renderWidget(prompt, chunks(1))
-    frame.renderWidget(input, chunks(2))
+    frame.renderWidget(prompt, chunks(2))
+    frame.renderWidget(input, chunks(3))
     frame.renderWidget(footer, chunks.last)
     data.mode match
       case InputMode.Editing | InputMode.Error(_) =>
         val cursorOffset = Grapheme(data.formula.take(data.cursor)).width
-        frame.setCursor(x = chunks(2).x + cursorOffset + 1, y = chunks(2).y + 1)
+        frame.setCursor(x = chunks(3).x + cursorOffset + 1, y = chunks(3).y + 1)
       case _ => ()
