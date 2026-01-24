@@ -5,8 +5,6 @@ import core.logic.propositional.Formula
 
 import tui.withTerminal
 
-import Show.show
-
 class Coordinator:
   private var shouldExit: Boolean = false
   private var screen: Screen      = FormulaInput(
@@ -14,7 +12,7 @@ class Coordinator:
       override def signalExit(): Unit =
         shouldExit = true
       override def submitFormula(formula: Formula): Unit =
-        ???
+        screen = ProofTree()
   )
 
   def exited: Boolean       = shouldExit
