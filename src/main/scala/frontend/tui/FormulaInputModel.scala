@@ -1,6 +1,11 @@
 package proofPlayground
 package frontend.tui
 
+import core.logic.propositional.Formula
+import frontend.notation.logic.FormulaParser.parser
+
+import scala.util.{Failure, Success}
+
 enum InputMode:
   case Normal
   case Editing
@@ -48,15 +53,19 @@ class FormulaInputModel(shouldExit: () => Unit) extends FormulaInputModel.Data, 
 
   override def back(): Unit =
     inputMode match
-      case InputMode.Normal  => ()
+      case InputMode.Normal   => ()
       case InputMode.Error(_) => inputMode = InputMode.Editing
-      case InputMode.Editing =>
+      case InputMode.Editing  =>
         formulaText = ""
         cursorPosition = 0
         inputMode = InputMode.Normal
 
   override def submit(): Unit =
-    inputMode = InputMode.Error("Invalid formula.")
+    Formula.parser.parse(formulaText) match
+      case Success(value) if value.remaining.isEmpty =>
+        inputMode = InputMode.Normal
+      case _ =>
+        inputMode = InputMode.Error("Invalid formula.")
 
   override def quit(): Unit = shouldExit()
 
