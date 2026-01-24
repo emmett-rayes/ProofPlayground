@@ -25,6 +25,8 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
               case c: KeyCode.Enter     => signals.submit()
               case c: KeyCode.Esc       => signals.clear()
               case c: KeyCode.Backspace => signals.backspace()
+              case c: KeyCode.Left      => signals.cursorLeft()
+              case c: KeyCode.Right     => signals.cursorRight()
               case c: KeyCode.Char      => signals.character(c.c)
               case _                    => ()
             }
@@ -86,4 +88,6 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
     frame.renderWidget(input, chunks(2))
     frame.renderWidget(footer, chunks.last)
     if data.mode == InputMode.Editing then
-      frame.setCursor(x = chunks(2).x + Grapheme(data.formula).width + 1, y = chunks(2).y + 1)
+      // Place the cursor at the correct position in the input box
+      val cursorOffset = Grapheme(data.formula.take(data.cursor)).width
+      frame.setCursor(x = chunks(2).x + cursorOffset + 1, y = chunks(2).y + 1)
