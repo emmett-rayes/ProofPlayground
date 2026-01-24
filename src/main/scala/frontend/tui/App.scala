@@ -1,20 +1,30 @@
 package proofPlayground
 package frontend.tui
 
+import core.logic.propositional.Formula
+
 import tui.withTerminal
 
-class Navigation:
+import Show.show
+
+class Coordinator:
   private var shouldExit: Boolean = false
-  private var screen: Screen      = FormulaInput(() => shouldExit = true)
+  private var screen: Screen      = FormulaInput(
+    new FormulaInputModel.Navigation:
+      override def signalExit(): Unit =
+        shouldExit = true
+      override def submitFormula(formula: Formula): Unit =
+        ???
+  )
 
   def exited: Boolean       = shouldExit
   def currentScreen: Screen = screen
 
 @main
 def main(): Unit =
-  val navigation = Navigation()
+  val coordinator = Coordinator()
   withTerminal { (jni, terminal) =>
-    while !navigation.exited do
-      terminal.draw(navigation.currentScreen.render)
-      navigation.currentScreen.handleEvent(jni.read())
+    while !coordinator.exited do
+      terminal.draw(coordinator.currentScreen.render)
+      coordinator.currentScreen.handleEvent(jni.read())
   }

@@ -1,13 +1,14 @@
 package proofPlayground
 package frontend.tui
 
+import frontend.tui.FormulaInputModel.Navigation
 import tui.*
 import tui.crossterm.{Event, KeyCode}
 import tui.widgets.{BlockWidget, ParagraphWidget}
 
 object FormulaInput:
-  def apply(shouldExit: () => Unit): FormulaInput =
-    val model = FormulaInputModel(shouldExit)
+  def apply(navigation: Navigation): FormulaInput =
+    val model = FormulaInputModel(navigation)
     new FormulaInput(model)(model)
 
 class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Signals) extends Screen:
@@ -21,7 +22,7 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
               case c: KeyCode.Char if c.c == 'q' => signals.quit()
               case c: KeyCode.Char if c.c == 'c' => signals.clear()
               case _                             => ()
-          case InputMode.Editing | InputMode.Error(_) =>
+          case InputMode.Editing =>
             key.keyEvent().code() match {
               case c: KeyCode.Enter     => signals.submit()
               case c: KeyCode.Esc       => signals.back()
@@ -30,6 +31,12 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
               case c: KeyCode.Right     => signals.cursorRight()
               case c: KeyCode.Char      => signals.character(c.c)
               case _                    => ()
+            }
+          case InputMode.Error(_) =>
+            key.keyEvent().code() match {
+              case c: KeyCode.Enter => signals.edit()
+              case c: KeyCode.Esc   => signals.edit()
+              case _                => ()
             }
         }
       case _ => ()
@@ -90,6 +97,8 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
           Span.styled("Error: ", Style.DEFAULT.fg(Color.Red).addModifier(Modifier.BOLD)),
           Span.styled(message, Style.DEFAULT.fg(Color.Red)),
           Span.nostyle(" Press "),
+          Span.styled("Enter", Style.DEFAULT.addModifier(Modifier.BOLD)),
+          Span.nostyle(" or "),
           Span.styled("Esc", Style.DEFAULT.addModifier(Modifier.BOLD)),
           Span.nostyle(" to continue editing."),
         )

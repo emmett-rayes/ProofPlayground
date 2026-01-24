@@ -28,7 +28,13 @@ object FormulaInputModel:
     def submit(): Unit
     def quit(): Unit
 
-class FormulaInputModel(shouldExit: () => Unit) extends FormulaInputModel.Data, FormulaInputModel.Signals:
+  trait Navigation:
+    def signalExit(): Unit
+    def submitFormula(formula: Formula): Unit
+
+class FormulaInputModel(navigation: FormulaInputModel.Navigation) extends FormulaInputModel.Data,
+      FormulaInputModel.Signals:
+
   private var formulaText: String  = ""
   private var inputMode: InputMode = InputMode.Normal
   private var cursorPosition: Int  = 0
@@ -53,9 +59,8 @@ class FormulaInputModel(shouldExit: () => Unit) extends FormulaInputModel.Data, 
 
   override def back(): Unit =
     inputMode match
-      case InputMode.Normal   => ()
-      case InputMode.Error(_) => inputMode = InputMode.Editing
-      case InputMode.Editing  => inputMode = InputMode.Normal
+      case InputMode.Editing => inputMode = InputMode.Normal
+      case _                 => ()
 
   override def clear(): Unit =
     if inputMode == InputMode.Normal then
@@ -65,11 +70,11 @@ class FormulaInputModel(shouldExit: () => Unit) extends FormulaInputModel.Data, 
   override def submit(): Unit =
     Formula.parser.parse(formulaText) match
       case Success(value) if value.remaining.isEmpty =>
-        inputMode = InputMode.Normal
+        navigation.submitFormula(value.parsed)
       case _ =>
         inputMode = InputMode.Error("Invalid formula.")
 
-  override def quit(): Unit = shouldExit()
+  override def quit(): Unit = navigation.signalExit()
 
   override def cursorLeft(): Unit =
     if inputMode == InputMode.Editing && cursorPosition > 0 then
