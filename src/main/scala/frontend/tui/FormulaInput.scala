@@ -20,7 +20,7 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
               case c: KeyCode.Enter              => signals.edit()
               case c: KeyCode.Char if c.c == 'q' => signals.quit()
               case _                             => ()
-          case InputMode.Editing =>
+          case InputMode.Editing | InputMode.Error(_) =>
             key.keyEvent().code() match {
               case c: KeyCode.Enter     => signals.submit()
               case c: KeyCode.Esc       => signals.clear()
@@ -54,9 +54,14 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
 
     val prompt = ParagraphWidget(text = Text.from(Span.nostyle("Enter initial formula:")))
 
+    val inputStyle = data.mode match
+      case InputMode.Normal   => Style.DEFAULT
+      case InputMode.Editing  => Style.DEFAULT.fg(Color.Yellow)
+      case InputMode.Error(_) => Style.DEFAULT.fg(Color.Red)
+
     val input = ParagraphWidget(
       text = Text.from(Span.nostyle(data.formula)),
-      style = if data.mode == InputMode.Editing then Style.DEFAULT.fg(Color.Yellow) else Style.DEFAULT,
+      style = inputStyle,
       block = Some(BlockWidget(borders = Borders.ALL, title = Some(Spans.nostyle(" Formula ")))),
     )
 
@@ -69,7 +74,7 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
           Span.styled("q", Style.DEFAULT.addModifier(Modifier.BOLD)),
           Span.nostyle(" to exit."),
         )
-      case InputMode.Editing =>
+      case InputMode.Editing | InputMode.Error(_) =>
         Text.from(
           Span.nostyle("Press "),
           Span.styled("Enter", Style.DEFAULT.addModifier(Modifier.BOLD)),
@@ -87,7 +92,9 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
     frame.renderWidget(prompt, chunks(1))
     frame.renderWidget(input, chunks(2))
     frame.renderWidget(footer, chunks.last)
-    if data.mode == InputMode.Editing then
-      // Place the cursor at the correct position in the input box
-      val cursorOffset = Grapheme(data.formula.take(data.cursor)).width
-      frame.setCursor(x = chunks(2).x + cursorOffset + 1, y = chunks(2).y + 1)
+    data.mode match
+      case InputMode.Editing | InputMode.Error(_) =>
+        // Place the cursor at the correct position in the input box
+        val cursorOffset = Grapheme(data.formula.take(data.cursor)).width
+        frame.setCursor(x = chunks(2).x + cursorOffset + 1, y = chunks(2).y + 1)
+      case _ => ()

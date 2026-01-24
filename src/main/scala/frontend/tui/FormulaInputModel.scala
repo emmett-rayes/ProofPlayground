@@ -4,6 +4,7 @@ package frontend.tui
 enum InputMode:
   case Normal
   case Editing
+  case Error(message: String)
 
 object FormulaInputModel:
   trait Data:
@@ -24,19 +25,26 @@ object FormulaInputModel:
 class FormulaInputModel(shouldExit: () => Unit) extends FormulaInputModel.Data, FormulaInputModel.Signals:
   private var formulaText: String  = ""
   private var inputMode: InputMode = InputMode.Normal
-  private var cursorPosition: Int = 0
+  private var cursorPosition: Int  = 0
 
   override def mode: InputMode = inputMode
   override def formula: String = formulaText
+
   override def cursor: Int = cursorPosition
 
   override def character(c: Char): Unit =
+    if inputMode.isInstanceOf[InputMode.Error] then
+      inputMode = InputMode.Editing
+
     if inputMode == InputMode.Editing then
       formulaText = formulaText.patch(cursorPosition, c.toString, 0)
       cursorPosition += 1
 
   override def backspace(): Unit =
-    if inputMode == InputMode.Editing && cursorPosition > 0 && formulaText.nonEmpty then
+    if inputMode.isInstanceOf[InputMode.Error] then
+      inputMode = InputMode.Editing
+
+    if inputMode == InputMode.Editing then
       formulaText = formulaText.patch(cursorPosition - 1, "", 1)
       cursorPosition -= 1
 
@@ -46,17 +54,24 @@ class FormulaInputModel(shouldExit: () => Unit) extends FormulaInputModel.Data, 
 
   override def clear(): Unit =
     formulaText = ""
-    inputMode = InputMode.Normal
     cursorPosition = 0
+    inputMode = InputMode.Normal
 
-  override def submit(): Unit = () // TODO
+  override def submit(): Unit =
+    inputMode = InputMode.Error("Invalid formula")
 
   override def quit(): Unit = shouldExit()
 
   override def cursorLeft(): Unit =
+    if inputMode.isInstanceOf[InputMode.Error] then
+      inputMode = InputMode.Editing
+
     if inputMode == InputMode.Editing && cursorPosition > 0 then
       cursorPosition -= 1
 
   override def cursorRight(): Unit =
+    if inputMode.isInstanceOf[InputMode.Error] then
+      inputMode = InputMode.Editing
+
     if inputMode == InputMode.Editing && cursorPosition < formulaText.length then
       cursorPosition += 1
