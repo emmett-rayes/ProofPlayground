@@ -19,6 +19,7 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
             key.keyEvent().code() match
               case c: KeyCode.Enter              => signals.edit()
               case c: KeyCode.Char if c.c == 'q' => signals.quit()
+              case c: KeyCode.Char if c.c == 'c' => signals.clear()
               case _                             => ()
           case InputMode.Editing | InputMode.Error(_) =>
             key.keyEvent().code() match {
@@ -71,6 +72,8 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
           Span.nostyle("Press "),
           Span.styled("Enter", Style.DEFAULT.addModifier(Modifier.BOLD)),
           Span.nostyle(" to edit, "),
+          Span.styled("c", Style.DEFAULT.addModifier(Modifier.BOLD)),
+          Span.nostyle(" to clear input, "),
           Span.styled("q", Style.DEFAULT.addModifier(Modifier.BOLD)),
           Span.nostyle(" to exit."),
         )
@@ -102,7 +105,6 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
     frame.renderWidget(footer, chunks.last)
     data.mode match
       case InputMode.Editing | InputMode.Error(_) =>
-        // Place the cursor at the correct position in the input box
         val cursorOffset = Grapheme(data.formula.take(data.cursor)).width
         frame.setCursor(x = chunks(2).x + cursorOffset + 1, y = chunks(2).y + 1)
       case _ => ()

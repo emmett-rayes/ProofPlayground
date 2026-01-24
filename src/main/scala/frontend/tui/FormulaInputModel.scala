@@ -4,7 +4,7 @@ package frontend.tui
 import core.logic.propositional.Formula
 import frontend.notation.logic.FormulaParser.parser
 
-import scala.util.{Failure, Success}
+import scala.util.Success
 
 enum InputMode:
   case Normal
@@ -24,6 +24,7 @@ object FormulaInputModel:
     def cursorRight(): Unit
     def edit(): Unit
     def back(): Unit
+    def clear(): Unit
     def submit(): Unit
     def quit(): Unit
 
@@ -34,8 +35,7 @@ class FormulaInputModel(shouldExit: () => Unit) extends FormulaInputModel.Data, 
 
   override def mode: InputMode = inputMode
   override def formula: String = formulaText
-
-  override def cursor: Int = cursorPosition
+  override def cursor: Int     = cursorPosition
 
   override def character(c: Char): Unit =
     if inputMode == InputMode.Editing then
@@ -55,10 +55,12 @@ class FormulaInputModel(shouldExit: () => Unit) extends FormulaInputModel.Data, 
     inputMode match
       case InputMode.Normal   => ()
       case InputMode.Error(_) => inputMode = InputMode.Editing
-      case InputMode.Editing  =>
-        formulaText = ""
-        cursorPosition = 0
-        inputMode = InputMode.Normal
+      case InputMode.Editing  => inputMode = InputMode.Normal
+
+  override def clear(): Unit =
+    if inputMode == InputMode.Normal then
+      formulaText = ""
+      cursorPosition = 0
 
   override def submit(): Unit =
     Formula.parser.parse(formulaText) match
