@@ -49,7 +49,7 @@ class FormulaInputModel(navigation: FormulaInputModel.Navigation) extends Formul
       cursorPosition += 1
 
   override def backspace(): Unit =
-    if inputMode == InputMode.Editing then
+    if inputMode == InputMode.Editing && cursorPosition > 0 then
       formulaText = formulaText.patch(cursorPosition - 1, "", 1)
       cursorPosition -= 1
 

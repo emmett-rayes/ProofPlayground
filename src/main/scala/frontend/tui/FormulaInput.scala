@@ -51,7 +51,7 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
         Constraint.Length(2), // prompt
         Constraint.Length(3), // input
         Constraint.Min(0),    // spacer
-        Constraint.Length(2), // input
+        Constraint.Length(2), // footer
       ),
     ).split(frame.size)
 
