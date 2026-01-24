@@ -9,10 +9,10 @@ object ProofModeModel:
   trait Data:
     def proofTree: Tree[String]
 
-  trait Navigation:
-    def signalExit(): Unit
+  trait Signals:
+    def quit(): Unit
 
-class ProofModeModel extends ProofModeModel.Data:
+class ProofModeModel(navigation: Navigation) extends ProofModeModel.Data, ProofModeModel.Signals:
   override def proofTree: Tree[String] =
     Tree.Node(
       "A ∧ B",
@@ -33,3 +33,5 @@ class ProofModeModel extends ProofModeModel.Data:
         ),
       ),
     )
+
+  override def quit(): Unit = navigation.signalExit()

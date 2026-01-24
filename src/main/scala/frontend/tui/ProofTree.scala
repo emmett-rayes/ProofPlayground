@@ -2,16 +2,24 @@ package proofPlayground
 package frontend.tui
 
 import tui.*
-import tui.crossterm.Event
+import tui.crossterm.{Event, KeyCode}
 import tui.widgets.{BlockWidget, ParagraphWidget}
 
 object ProofTree:
-  def apply(): ProofTree =
-    val model = ProofModeModel()
-    new ProofTree(model)
+  def apply(navigation: Navigation): ProofTree =
+    val model = ProofModeModel(navigation)
+    new ProofTree(model)(model)
 
-class ProofTree(data: ProofModeModel.Data) extends Screen:
-  override def handleEvent(event: Event): Unit = ()
+class ProofTree(data: ProofModeModel.Data)(signals: ProofModeModel.Signals) extends Screen:
+  override def handleEvent(event: Event): Unit =
+    event match {
+      case key: tui.crossterm.Event.Key =>
+        key.keyEvent().code() match {
+          case c: KeyCode.Char if c.c == 'q' => signals.quit()
+          case _                             => ()
+        }
+      case _ => ()
+    }
 
   override def render(frame: Frame): Unit =
     val chunks = Layout(
@@ -26,7 +34,7 @@ class ProofTree(data: ProofModeModel.Data) extends Screen:
 
     val header = ParagraphWidget(
       text = Text.from(Span.styled("Proof Tree", Style.DEFAULT.fg(Color.Cyan))),
-      block = Some(BlockWidget(borders = Borders.BOTTOM)),
+      block = Some(BlockWidget(borders = Borders.BOTTOM, borderType = BlockWidget.BorderType.Double)),
     )
 
     val footer = ParagraphWidget(
@@ -35,7 +43,7 @@ class ProofTree(data: ProofModeModel.Data) extends Screen:
         Span.styled("q", Style.DEFAULT.addModifier(Modifier.BOLD)),
         Span.nostyle(" to exit.")
       ),
-      block = Some(BlockWidget(borders = Borders.TOP)),
+      block = Some(BlockWidget(borders = Borders.TOP, borderType = BlockWidget.BorderType.Double)),
     )
 
     frame.renderWidget(header, chunks(0))

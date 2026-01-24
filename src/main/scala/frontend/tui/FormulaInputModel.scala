@@ -28,11 +28,7 @@ object FormulaInputModel:
     def submit(): Unit
     def quit(): Unit
 
-  trait Navigation:
-    def signalExit(): Unit
-    def submitFormula(formula: Formula): Unit
-
-class FormulaInputModel(navigation: FormulaInputModel.Navigation) extends FormulaInputModel.Data,
+class FormulaInputModel(navigation: Navigation) extends FormulaInputModel.Data,
       FormulaInputModel.Signals:
 
   private var formulaText: String  = ""
@@ -70,7 +66,7 @@ class FormulaInputModel(navigation: FormulaInputModel.Navigation) extends Formul
   override def submit(): Unit =
     Formula.parser.parse(formulaText) match
       case Success(value) if value.remaining.isEmpty =>
-        navigation.submitFormula(value.parsed)
+        navigation.navigateTo(Navigation.Screen.ProofTree(value.parsed))
       case _ =>
         inputMode = InputMode.Error("Invalid formula.")
 
