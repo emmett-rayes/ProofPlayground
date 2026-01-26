@@ -10,11 +10,16 @@ enum Tree[+A]:
 object ProofModeModel:
   trait Data:
     def proofTree: Tree[String]
+    def selectedNode: Tree[String]
 
   trait Signals:
     def quit(): Unit
 
 class ProofModeModel(navigation: Navigation) extends ProofModeModel.Data, ProofModeModel.Signals:
+  private var currentNode = proofTree
+
+  override def selectedNode: Tree[String] = currentNode
+
   override def proofTree: Tree[String] =
     Tree.Node(
       "A ∧ B",

@@ -60,22 +60,27 @@ class ProofTree(data: ProofModeModel.Data)(signals: ProofModeModel.Signals) exte
       block = Some(BlockWidget(borders = Borders.TOP)),
     )
 
-    val nodeWidget = tree match
-      case Tree.Leaf(value) =>
-        ParagraphWidget(text = Text.from(Span.nostyle(value)), alignment = Alignment.Center)
+    val value = tree match
+      case Tree.Leaf(value)           => value
+      case Tree.Node(value, children) => value
 
-      case Tree.Node(value, children) =>
-        if children.nonEmpty then
-          val childrenLayout = Layout(
-            direction = Direction.Horizontal,
-            constraints = Array.fill(children.length)(Constraint.Ratio(1, children.length)),
-          ).split(nodeLayout(0))
-
-          for (child, idx) <- children.zipWithIndex do
-            renderTree(renderer, child, childrenLayout(idx))
-        end if
-
-        ParagraphWidget(text = Text.from(Span.nostyle(value)), alignment = Alignment.Center)
+    val nodeWidget = ParagraphWidget(
+      text = Text.from(Span.nostyle(value)),
+      alignment = Alignment.Center,
+      style = if tree == data.selectedNode then Style.DEFAULT.fg(Color.Yellow) else Style.DEFAULT,
+    )
 
     renderer.render(divider, nodeLayout(1))
     renderer.render(nodeWidget, nodeLayout.last)
+
+    // render children
+    tree match
+      case Tree.Node(_, children) if children.nonEmpty =>
+        val childrenLayout = Layout(
+          direction = Direction.Horizontal,
+          constraints = Array.fill(children.length)(Constraint.Ratio(1, children.length)),
+        ).split(nodeLayout(0))
+
+        for (child, idx) <- children.zipWithIndex do
+          renderTree(renderer, child, childrenLayout(idx))
+      case _ => ()
