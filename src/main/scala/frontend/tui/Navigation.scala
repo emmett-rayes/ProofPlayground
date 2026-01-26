@@ -11,3 +11,4 @@ object Navigation:
 trait Navigation:
   def signalExit(): Unit
   def navigateTo(screen: Navigation.Screen): Unit
+  def showPopup(message: String, title: Option[String] = None)(callback: () => Unit): Unit
