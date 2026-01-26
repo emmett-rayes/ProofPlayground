@@ -70,7 +70,7 @@ class FormulaInputModel(navigation: Navigation) extends FormulaInputModel.Data,
       case _ =>
         inputMode = InputMode.Error("Invalid formula.")
 
-  override def quit(): Unit = navigation.signalExit()
+  override def quit(): Unit = navigation.exit()
 
   override def cursorLeft(): Unit =
     if inputMode == InputMode.Editing && cursorPosition > 0 then

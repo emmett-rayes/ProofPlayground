@@ -9,6 +9,16 @@ class Popup(message: String, title: Option[String])(confirm: () => Unit, dismiss
   private val size       = 30
   private var confirming = false
 
+  override def headerText: Text =
+    Text.nostyle(title.getOrElse(""))
+
+  override def footerText: Text =
+    Text.from(
+      Span.nostyle("Press "),
+      Span.styled("Esc", Style.DEFAULT.addModifier(Modifier.BOLD)),
+      Span.nostyle(" to cancel."),
+    )
+
   override def handleEvent(event: Event): Unit =
     event match {
       case key: tui.crossterm.Event.Key =>
@@ -22,7 +32,7 @@ class Popup(message: String, title: Option[String])(confirm: () => Unit, dismiss
       case _ => ()
     }
 
-  override def render(frame: Frame): Unit =
+  override def render(renderer: Renderer, area: Rect): Unit =
     val yLayout = Layout(
       direction = Direction.Vertical,
       constraints = Array(
@@ -30,7 +40,7 @@ class Popup(message: String, title: Option[String])(confirm: () => Unit, dismiss
         Constraint.Percentage(size),
         Constraint.Percentage((100 - size) / 2)
       )
-    ).split(frame.size)
+    ).split(area)
 
     val xLayout = Layout(
       direction = Direction.Horizontal,
@@ -70,15 +80,15 @@ class Popup(message: String, title: Option[String])(confirm: () => Unit, dismiss
       )
     ).split(buttonsBarLayout(1))
 
-    val cancelButton  = ButtonWidget(" Cancel", () => !confirming)
+    val cancelButton  = ButtonWidget("Cancel", () => !confirming)
     val confirmButton = ButtonWidget("Confirm", () => confirming)
     val content       = ParagraphWidget(text = Text.nostyle(message), alignment = Alignment.Center)
     val border        = BlockWidget(title = title.map(Spans.nostyle), borders = Borders.ALL)
 
-    frame.renderWidget(border, xLayout(1))
-    frame.renderWidget(content, contentLayout(1))
-    frame.renderWidget(cancelButton, buttonsLayout(0))
-    frame.renderWidget(confirmButton, buttonsLayout(2))
+    renderer.renderWidget(border, xLayout(1))
+    renderer.renderWidget(content, contentLayout(1))
+    renderer.renderWidget(cancelButton, buttonsLayout(0))
+    renderer.renderWidget(confirmButton, buttonsLayout(2))
 
   private def ButtonWidget(label: String, active: () => Boolean) =
     ParagraphWidget(

@@ -11,6 +11,9 @@ object FormulaInput:
     new FormulaInput(model)(model)
 
 class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Signals) extends Screen:
+  override def headerText: Text =
+    Text.from(Span.styled("Proof Playground", Style.DEFAULT.fg(Color.Cyan).addModifier(Modifier.BOLD)))
+
   override def handleEvent(event: Event): Unit =
     event match {
       case key: tui.crossterm.Event.Key =>
@@ -41,7 +44,7 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
       case _ => ()
     }
 
-  override def render(frame: Frame): Unit =
+  override def render(renderer: Renderer, area: Rect): Unit =
     val chunks = Layout(
       direction = Direction.Vertical,
       margin = Margin(1),
@@ -53,12 +56,7 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
         Constraint.Min(0),    // spacer
         Constraint.Length(2), // footer
       ),
-    ).split(frame.size)
-
-    val header = ParagraphWidget(
-      text = Text.from(Span.styled("Proof Playground", Style.DEFAULT.fg(Color.Cyan).addModifier(Modifier.BOLD))),
-      block = Some(BlockWidget(borders = Borders.BOTTOM, borderType = BlockWidget.BorderType.Double)),
-    )
+    ).split(area)
 
     val prompt = ParagraphWidget(text = Text.from(Span.nostyle("Enter initial formula:")))
 
@@ -73,7 +71,21 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
       block = Some(BlockWidget(borders = Borders.ALL, title = Some(Spans.nostyle(" Formula ")))),
     )
 
-    val footerText = data.mode match
+    val footer = ParagraphWidget(
+      text = footerText,
+      block = Some(BlockWidget(borders = Borders.TOP, borderType = BlockWidget.BorderType.Double)),
+    )
+
+    renderer.renderWidget(prompt, chunks(2))
+    renderer.renderWidget(input, chunks(3))
+    data.mode match
+      case InputMode.Editing | InputMode.Error(_) =>
+        val cursorOffset = Grapheme(data.formula.take(data.cursor)).width
+        renderer.setCursor(x = chunks(3).x + cursorOffset + 1, y = chunks(3).y + 1)
+      case _ => ()
+
+  override def footerText: Text =
+    data.mode match
       case InputMode.Normal =>
         Text.from(
           Span.nostyle("Press "),
@@ -102,18 +114,3 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
           Span.styled("Esc", Style.DEFAULT.addModifier(Modifier.BOLD)),
           Span.nostyle(" to continue editing."),
         )
-
-    val footer = ParagraphWidget(
-      text = footerText,
-      block = Some(BlockWidget(borders = Borders.TOP, borderType = BlockWidget.BorderType.Double)),
-    )
-
-    frame.renderWidget(header, chunks(0))
-    frame.renderWidget(prompt, chunks(2))
-    frame.renderWidget(input, chunks(3))
-    frame.renderWidget(footer, chunks.last)
-    data.mode match
-      case InputMode.Editing | InputMode.Error(_) =>
-        val cursorOffset = Grapheme(data.formula.take(data.cursor)).width
-        frame.setCursor(x = chunks(3).x + cursorOffset + 1, y = chunks(3).y + 1)
-      case _ => ()

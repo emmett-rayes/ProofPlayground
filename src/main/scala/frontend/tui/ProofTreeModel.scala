@@ -36,5 +36,5 @@ class ProofModeModel(navigation: Navigation) extends ProofModeModel.Data, ProofM
 
   override def quit(): Unit =
     navigation.showPopup("Do you want to quit the proof mode?", Some("Quit")) { () =>
-      navigation.signalExit()
+      navigation.exit()
     }

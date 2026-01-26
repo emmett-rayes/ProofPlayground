@@ -11,6 +11,16 @@ object ProofTree:
     new ProofTree(model)(model)
 
 class ProofTree(data: ProofModeModel.Data)(signals: ProofModeModel.Signals) extends Screen:
+  override def headerText: Text =
+    Text.from(Span.styled("Proof Tree", Style.DEFAULT.fg(Color.Cyan)))
+
+  override def footerText: Text =
+    Text.from(
+      Span.nostyle("Press "),
+      Span.styled("q", Style.DEFAULT.addModifier(Modifier.BOLD)),
+      Span.nostyle(" to exit.")
+    )
+
   override def handleEvent(event: Event): Unit =
     event match {
       case key: tui.crossterm.Event.Key =>
@@ -21,7 +31,7 @@ class ProofTree(data: ProofModeModel.Data)(signals: ProofModeModel.Signals) exte
       case _ => ()
     }
 
-  override def render(frame: Frame): Unit =
+  override def render(renderer: Renderer, area: Rect): Unit =
     val chunks = Layout(
       direction = Direction.Vertical,
       margin = Margin(1),
@@ -30,27 +40,11 @@ class ProofTree(data: ProofModeModel.Data)(signals: ProofModeModel.Signals) exte
         Constraint.Min(0),    // proof tree
         Constraint.Length(2), // footer
       ),
-    ).split(frame.size)
+    ).split(area)
 
-    val header = ParagraphWidget(
-      text = Text.from(Span.styled("Proof Tree", Style.DEFAULT.fg(Color.Cyan))),
-      block = Some(BlockWidget(borders = Borders.BOTTOM, borderType = BlockWidget.BorderType.Double)),
-    )
+    renderTree(renderer, data.proofTree, chunks(1))
 
-    val footer = ParagraphWidget(
-      text = Text.from(
-        Span.nostyle("Press "),
-        Span.styled("q", Style.DEFAULT.addModifier(Modifier.BOLD)),
-        Span.nostyle(" to exit.")
-      ),
-      block = Some(BlockWidget(borders = Borders.TOP, borderType = BlockWidget.BorderType.Double)),
-    )
-
-    frame.renderWidget(header, chunks(0))
-    renderTree(frame, data.proofTree, chunks(1))
-    frame.renderWidget(footer, chunks.last)
-
-  private def renderTree(frame: Frame, tree: Tree[String], area: tui.Rect): Unit =
+  private def renderTree(renderer: Renderer, tree: Tree[String], area: tui.Rect): Unit =
     val nodeLayout = Layout(
       direction = Direction.Vertical,
       margin = Margin(0, 1),
@@ -78,10 +72,10 @@ class ProofTree(data: ProofModeModel.Data)(signals: ProofModeModel.Signals) exte
           ).split(nodeLayout(0))
 
           for (child, idx) <- children.zipWithIndex do
-            renderTree(frame, child, childrenLayout(idx))
+            renderTree(renderer, child, childrenLayout(idx))
         end if
 
         ParagraphWidget(text = Text.from(Span.nostyle(value)), alignment = Alignment.Center)
 
-    frame.renderWidget(divider, nodeLayout(1))
-    frame.renderWidget(nodeWidget, nodeLayout.last)
+    renderer.renderWidget(divider, nodeLayout(1))
+    renderer.renderWidget(nodeWidget, nodeLayout.last)

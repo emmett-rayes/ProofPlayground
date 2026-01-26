@@ -1,10 +1,9 @@
 package proofPlayground
-package frontend.tui
+package frontend
 
-import core.logic.propositional.{Formula, FormulaF}
 import core.catamorphism
-
 import core.logic.propositional
+import core.logic.propositional.{Formula, FormulaF}
 
 object Show:
   def show(formula: Formula): String =

@@ -8,6 +8,6 @@ def main(): Unit =
   val coordinator = Coordinator()
   withTerminal { (jni, terminal) =>
     while !coordinator.shouldExit do
-      terminal.draw(coordinator.currentScreen.render)
-      coordinator.currentScreen.handleEvent(jni.read())
+      terminal.draw(coordinator.render)
+      coordinator.handleEvent(jni.read())
   }

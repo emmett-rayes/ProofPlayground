@@ -9,6 +9,6 @@ object Navigation:
     case ProofTree(formula: Formula)
 
 trait Navigation:
-  def signalExit(): Unit
+  def exit(): Unit
   def navigateTo(screen: Navigation.Screen): Unit
   def showPopup(message: String, title: Option[String] = None)(callback: () => Unit): Unit
