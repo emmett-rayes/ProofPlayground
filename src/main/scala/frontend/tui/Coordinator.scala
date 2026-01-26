@@ -66,10 +66,7 @@ class Coordinator extends Navigation:
     val screen = destination match
       case Navigation.Screen.FormulaInput       => FormulaInput(this)
       case Navigation.Screen.ProofTree(formula) => ProofTree(this)
-    screens = screen :: tail
+    screens = screen :: List.empty
 
   override def showPopup(message: String, title: Option[String])(callback: () => Unit): Unit =
-    screens = Popup(message, title)(callback, { () => screens = tail }) :: screens
-
-  private def tail: List[Screen] =
-    if screens.isEmpty then List.empty else screens.tail
+    screens = Popup(message, title)(callback, { () => screens = screens.tail }) :: screens
