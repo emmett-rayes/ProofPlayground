@@ -33,23 +33,7 @@ class Popup(message: String, title: Option[String])(confirm: () => Unit, dismiss
     }
 
   override def render(renderer: Renderer, area: Rect): Unit =
-    val yLayout = Layout(
-      direction = Direction.Vertical,
-      constraints = Array(
-        Constraint.Percentage((100 - size) / 2),
-        Constraint.Percentage(size),
-        Constraint.Percentage((100 - size) / 2)
-      )
-    ).split(area)
-
-    val xLayout = Layout(
-      direction = Direction.Horizontal,
-      constraints = Array(
-        Constraint.Percentage((100 - size) / 2),
-        Constraint.Percentage(size),
-        Constraint.Percentage((100 - size) / 2),
-      )
-    ).split(yLayout(1))
+    val contentArea = Rectangle(size, area)
 
     val contentLayout = Layout(
       direction = Direction.Vertical,
@@ -60,7 +44,7 @@ class Popup(message: String, title: Option[String])(confirm: () => Unit, dismiss
         Constraint.Length(1),      // spacer (magic)
         Constraint.Min(1),         // spacer
       )
-    ).split(xLayout(1))
+    ).split(contentArea)
 
     val buttonsBarLayout = Layout(
       direction = Direction.Horizontal,
@@ -85,10 +69,31 @@ class Popup(message: String, title: Option[String])(confirm: () => Unit, dismiss
     val content       = ParagraphWidget(text = Text.nostyle(message), alignment = Alignment.Center)
     val border        = BlockWidget(title = title.map(Spans.nostyle), borders = Borders.ALL)
 
-    renderer.renderWidget(border, xLayout(1))
+    renderer.renderWidget(border, contentArea)
     renderer.renderWidget(content, contentLayout(1))
     renderer.renderWidget(cancelButton, buttonsLayout(0))
     renderer.renderWidget(confirmButton, buttonsLayout(2))
+
+  private def Rectangle(size: Int, area: Rect): Rect =
+    val yLayout = Layout(
+      direction = Direction.Vertical,
+      constraints = Array(
+        Constraint.Percentage((100 - size) / 2),
+        Constraint.Percentage(size),
+        Constraint.Percentage((100 - size) / 2)
+      )
+    ).split(area)
+
+    val xLayout = Layout(
+      direction = Direction.Horizontal,
+      constraints = Array(
+        Constraint.Percentage((100 - size) / 2),
+        Constraint.Percentage(size),
+        Constraint.Percentage((100 - size) / 2),
+      )
+    ).split(yLayout(1))
+
+    xLayout(1)
 
   private def ButtonWidget(label: String, active: () => Boolean) =
     ParagraphWidget(
