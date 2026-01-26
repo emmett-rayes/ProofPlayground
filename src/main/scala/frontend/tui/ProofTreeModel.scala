@@ -1,6 +1,8 @@
 package proofPlayground
 package frontend.tui
 
+import frontend.tui.Navigation.Screen
+
 enum Tree[+A]:
   case Leaf(value: A)
   case Node(value: A, children: List[Tree[A]])
@@ -36,5 +38,5 @@ class ProofModeModel(navigation: Navigation) extends ProofModeModel.Data, ProofM
 
   override def quit(): Unit =
     navigation.showPopup("Do you want to quit the proof mode?", Some("Quit")) { () =>
-      navigation.exit()
+      navigation.navigateTo(Screen.FormulaInput)
     }
