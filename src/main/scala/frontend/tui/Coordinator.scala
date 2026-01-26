@@ -21,10 +21,10 @@ class Coordinator extends Navigation:
 
   def render(frame: Frame): Unit =
     val renderer = new Renderer {
-      override def renderWidget(widget: Widget, area: Rect): Unit =
+      override def render(widget: Widget, area: Rect): Unit =
         frame.renderWidget(widget, area)
 
-      override def renderStatefulWidget[W <: StatefulWidget](widget: W, area: Rect)(state: widget.State): Unit =
+      override def render[W <: StatefulWidget](widget: W, area: Rect)(state: widget.State): Unit =
         frame.renderStatefulWidget(widget, area)(state)
 
       override def setCursor(x: Int, y: Int): Unit =

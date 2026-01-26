@@ -77,5 +77,5 @@ class ProofTree(data: ProofModeModel.Data)(signals: ProofModeModel.Signals) exte
 
         ParagraphWidget(text = Text.from(Span.nostyle(value)), alignment = Alignment.Center)
 
-    renderer.renderWidget(divider, nodeLayout(1))
-    renderer.renderWidget(nodeWidget, nodeLayout.last)
+    renderer.render(divider, nodeLayout(1))
+    renderer.render(nodeWidget, nodeLayout.last)

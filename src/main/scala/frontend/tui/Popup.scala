@@ -69,10 +69,10 @@ class Popup(message: String, title: Option[String])(confirm: () => Unit, dismiss
     val content       = ParagraphWidget(text = Text.nostyle(message), alignment = Alignment.Center)
     val border        = BlockWidget(title = title.map(Spans.nostyle), borders = Borders.ALL)
 
-    renderer.renderWidget(border, contentArea)
-    renderer.renderWidget(content, contentLayout(1))
-    renderer.renderWidget(cancelButton, buttonsLayout(0))
-    renderer.renderWidget(confirmButton, buttonsLayout(2))
+    renderer.render(border, contentArea)
+    renderer.render(content, contentLayout(1))
+    renderer.render(cancelButton, buttonsLayout(0))
+    renderer.render(confirmButton, buttonsLayout(2))
 
   private def Rectangle(size: Int, area: Rect): Rect =
     val yLayout = Layout(

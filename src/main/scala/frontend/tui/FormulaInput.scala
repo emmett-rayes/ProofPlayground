@@ -76,8 +76,8 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
       block = Some(BlockWidget(borders = Borders.TOP, borderType = BlockWidget.BorderType.Double)),
     )
 
-    renderer.renderWidget(prompt, chunks(2))
-    renderer.renderWidget(input, chunks(3))
+    renderer.render(prompt, chunks(2))
+    renderer.render(input, chunks(3))
     data.mode match
       case InputMode.Editing | InputMode.Error(_) =>
         val cursorOffset = Grapheme(data.formula.take(data.cursor)).width
