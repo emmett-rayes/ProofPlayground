@@ -40,3 +40,11 @@ trait Zipper[T[_]]:
       * @return the zipper at the right sibling, if possible, or None otherwise.
       */
     def right: Option[Self[A]]
+
+object Zipper:
+  extension [T[_], A](using z: Zipper[T])(zipper: z.Self[A])
+    @scala.annotation.tailrec
+    def root: T[A] =
+      zipper.up match
+        case None         => zipper.get
+        case Some(parent) => parent.root
