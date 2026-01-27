@@ -18,21 +18,21 @@ class ProofTreeModel(navigation: Navigation) extends ProofTreeModel.Data, ProofT
   override def selectedNode: Tree[String] = currentNode
 
   override def proofTree: Tree[String] =
-    Tree.Node(
+    Tree(
       "A ∧ B",
       List(
-        Tree.Node(
+        Tree(
           "A",
           List(
-            Tree.Leaf("..."),
-            Tree.Leaf("..."),
+            Tree("..."),
+            Tree("..."),
           ),
         ),
-        Tree.Node(
+        Tree(
           "B",
           List(
-            Tree.Leaf("..."),
-            Tree.Leaf("..."),
+            Tree("..."),
+            Tree("..."),
           ),
         ),
       ),
