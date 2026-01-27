@@ -38,17 +38,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
     }
 
   override def render(renderer: Renderer, area: Rect): Unit =
-    val chunks = Layout(
-      direction = Direction.Vertical,
-      margin = Margin(1),
-      constraints = Array(
-        Constraint.Length(2), // header
-        Constraint.Min(0),    // proof tree
-        Constraint.Length(2), // footer
-      ),
-    ).split(area)
-
-    renderTree(renderer, data.proofTree, chunks(1))
+    renderTree(renderer, data.proofTree, area)
 
   private def renderTree(renderer: Renderer, tree: Tree[String], area: tui.Rect): Unit =
     val nodeLayout = Layout(

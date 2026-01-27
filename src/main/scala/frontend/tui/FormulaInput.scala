@@ -45,16 +45,13 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
     }
 
   override def render(renderer: Renderer, area: Rect): Unit =
-    val chunks = Layout(
+    val layout = Layout(
       direction = Direction.Vertical,
       margin = Margin(1),
       constraints = Array(
-        Constraint.Length(2), // header
-        Constraint.Length(1), // spacer
         Constraint.Length(2), // prompt
         Constraint.Length(3), // input
         Constraint.Min(0),    // spacer
-        Constraint.Length(2), // footer
       ),
     ).split(area)
 
@@ -71,17 +68,12 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
       block = Some(BlockWidget(borders = Borders.ALL, title = Some(Spans.nostyle(" Formula ")))),
     )
 
-    val footer = ParagraphWidget(
-      text = footerText,
-      block = Some(BlockWidget(borders = Borders.TOP, borderType = BlockWidget.BorderType.Double)),
-    )
-
-    renderer.render(prompt, chunks(2))
-    renderer.render(input, chunks(3))
+    renderer.render(prompt, layout(0))
+    renderer.render(input, layout(1))
     data.mode match
       case InputMode.Editing | InputMode.Error(_) =>
         val cursorOffset = Grapheme(data.formula.take(data.cursor)).width
-        renderer.setCursor(x = chunks(3).x + cursorOffset + 1, y = chunks(3).y + 1)
+        renderer.setCursor(x = layout(1).x + cursorOffset + 1, y = layout(1).y + 1)
       case _ => ()
 
   override def footerText: Text =
