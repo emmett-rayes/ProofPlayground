@@ -1,16 +1,18 @@
 package proofPlayground
 package frontend.tui
 
+import tree.Tree
+
 import tui.*
 import tui.crossterm.{Event, KeyCode}
 import tui.widgets.{BlockWidget, ParagraphWidget}
 
 object ProofTree:
   def apply(navigation: Navigation): ProofTree =
-    val model = ProofModeModel(navigation)
+    val model = ProofTreeModel(navigation)
     new ProofTree(model)(model)
 
-class ProofTree(data: ProofModeModel.Data)(signals: ProofModeModel.Signals) extends Screen:
+class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) extends Screen:
   override def headerText: Text =
     Text.from(Span.styled("Proof Tree", Style.DEFAULT.fg(Color.Cyan)))
 

@@ -2,12 +2,9 @@ package proofPlayground
 package frontend.tui
 
 import frontend.tui.Navigation.Screen
+import tree.Tree
 
-enum Tree[+A]:
-  case Leaf(value: A)
-  case Node(value: A, children: List[Tree[A]])
-
-object ProofModeModel:
+object ProofTreeModel:
   trait Data:
     def proofTree: Tree[String]
     def selectedNode: Tree[String]
@@ -15,7 +12,7 @@ object ProofModeModel:
   trait Signals:
     def quit(): Unit
 
-class ProofModeModel(navigation: Navigation) extends ProofModeModel.Data, ProofModeModel.Signals:
+class ProofTreeModel(navigation: Navigation) extends ProofTreeModel.Data, ProofTreeModel.Signals:
   private var currentNode = proofTree
 
   override def selectedNode: Tree[String] = currentNode
