@@ -2,7 +2,9 @@ package proofPlayground
 package frontend.tui
 
 import frontend.tui.Navigation.Screen
-import tree.Tree
+import tree.{Tree, TreeZipper}
+import tree.TreeZipper.given
+import tree.Zipper.root
 
 object ProofTreeModel:
   trait Data:
@@ -10,33 +12,49 @@ object ProofTreeModel:
     def selectedNode: Tree[String]
 
   trait Signals:
+    def up(): Unit
+    def down(): Unit
+    def left(): Unit
+    def right(): Unit
     def quit(): Unit
 
 class ProofTreeModel(navigation: Navigation) extends ProofTreeModel.Data, ProofTreeModel.Signals:
-  private var currentNode = proofTree
-
-  override def selectedNode: Tree[String] = currentNode
-
-  override def proofTree: Tree[String] =
-    Tree(
-      "A ∧ B",
-      List(
-        Tree(
-          "A",
-          List(
-            Tree("..."),
-            Tree("..."),
-          ),
-        ),
-        Tree(
-          "B",
-          List(
-            Tree("..."),
-            Tree("..."),
-          ),
+  private val initial = Tree(
+    "A ∧ B",
+    List(
+      Tree(
+        "A",
+        List(
+          Tree("..."),
+          Tree("..."),
         ),
       ),
-    )
+      Tree(
+        "B",
+        List(
+          Tree("..."),
+          Tree("..."),
+        ),
+      ),
+    ),
+  )
+
+  private var zipper = TreeZipper(initial)
+
+  override def selectedNode: Tree[String] = zipper.subtree
+  override def proofTree: Tree[String]    = zipper.root
+
+  override def up(): Unit =
+    zipper = zipper.down.getOrElse(zipper) // proof trees are upside down
+
+  override def down(): Unit =
+    zipper = zipper.up.getOrElse(zipper) // proof trees are upside down
+
+  override def left(): Unit =
+    zipper = zipper.left.getOrElse(zipper)
+
+  override def right(): Unit =
+    zipper = zipper.right.getOrElse(zipper)
 
   override def quit(): Unit =
     navigation.showPopup("Do you want to quit the proof mode?", Some("Quit")) { () =>

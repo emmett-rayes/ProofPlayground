@@ -28,6 +28,10 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
       case key: tui.crossterm.Event.Key =>
         key.keyEvent().code() match {
           case c: KeyCode.Char if c.c == 'q' => signals.quit()
+          case c: KeyCode.Up                 => signals.up()
+          case c: KeyCode.Down               => signals.down()
+          case c: KeyCode.Left               => signals.left()
+          case c: KeyCode.Right              => signals.right()
           case _                             => ()
         }
       case _ => ()
@@ -65,7 +69,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
     val nodeWidget = ParagraphWidget(
       text = Text.from(Span.nostyle(tree.value)),
       alignment = Alignment.Center,
-      style = if tree == data.selectedNode then Style.DEFAULT.fg(Color.Yellow) else Style.DEFAULT,
+      style = if tree eq data.selectedNode then Style.DEFAULT.fg(Color.Yellow) else Style.DEFAULT,
     )
 
     renderer.render(divider, nodeLayout(1))
