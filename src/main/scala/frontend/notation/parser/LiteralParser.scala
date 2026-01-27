@@ -5,15 +5,13 @@ import frontend.notation.parser.{ParseError, Parser}
 
 import scala.util.Try
 
-type Literal[T] = Singleton & T
-
 object LiteralParser:
   /** Creates a parser that matches the given literal string.
     *
     * @tparam S the literal string to match.
     * @return a parser that produces the matched literal string.
     */
-  def parser[S <: Literal[String]](using expected: ValueOf[S]): Parser[Tokens, S] =
+  def parser[S <: String: Singleton](using expected: ValueOf[S]): Parser[Tokens, S] =
     input =>
       val trimmed = input.skipWhitespace
       Try {
