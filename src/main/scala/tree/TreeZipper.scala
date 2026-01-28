@@ -10,6 +10,9 @@ object TreeZipper:
     extension [A](self: TreeZipper[A])
       override def get: Tree[A] = self.subtree
 
+      override def down: Option[TreeZipper[A]] =
+        first
+
       override def up: Option[TreeZipper[A]] =
         self.context match
           case Nil =>
@@ -18,21 +21,29 @@ object TreeZipper:
             val node = Tree(value, siblings.patch(direction, List(self.subtree), 0))
             Some(TreeZipper(node, rest))
 
-      override def down: Option[TreeZipper[A]] = nth(0)
-
       override def left: Option[TreeZipper[A]] =
         self.context match
           case Nil =>
             None
           case TreeContext(value, direction, siblings) :: rest =>
-            self.up.flatMap(_.nth(direction - 1))
+            if direction > 0 then
+              self.up.flatMap(_.nth(direction - 1))
+            else
+              self.up.flatMap(_.left).flatMap(_.last)
 
       override def right: Option[TreeZipper[A]] =
         self.context match
           case Nil =>
             None
           case TreeContext(value, direction, siblings) :: rest =>
-            self.up.flatMap(_.nth(direction + 1))
+            if direction < siblings.length then
+              self.up.flatMap(_.nth(direction + 1))
+            else
+              self.up.flatMap(_.right).flatMap(_.first)
+
+      private def first: Option[TreeZipper[A]] = nth(0)
+
+      private def last: Option[TreeZipper[A]] = nth(self.subtree.children.length - 1)
 
       private def nth(direction: Int): Option[TreeZipper[A]] =
         if self.subtree.isLeaf then None
