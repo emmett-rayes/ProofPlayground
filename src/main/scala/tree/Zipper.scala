@@ -17,6 +17,13 @@ trait Zipper[T[_]]:
       */
     def get: T[A]
 
+    /** Replaces the underlying structure at the current position with the given value.
+      *
+      * @param value the new value to replace the underlying structure with.
+      * @return the zipper at the same position after replacing the underlying structure.
+      */
+    def replace(value: T[A]): Self[A]
+
     /** Moves the zipper one step up.
       *
       * @return the zipper at the parent position, if possible, or None otherwise.

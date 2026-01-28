@@ -62,3 +62,20 @@ class TestTreeZipper extends AnyFunSuite:
     val leaf   = zipper.down.get.down.get.right.get
     assert(leaf.root === zipper)
   }
+
+  test("replace replaces") {
+    val tree   = Tree("A", List(Tree("AA", List(Tree("AB"), Tree("AC"))), Tree("AA", List(Tree("BA"), Tree("CA")))))
+    val zipper = TreeZipper(tree)
+    val leaf   = zipper.down.get.down.get.right.get
+    val replaced = leaf.replace(Tree("X"))
+    val expected = Tree("A", List(Tree("AA", List(Tree("AB"), Tree("X"))), Tree("AA", List(Tree("BA"), Tree("CA")))))
+    assert(replaced.root.get === expected)
+  }
+
+  test("navigate after replace") {
+    val tree = Tree("A", List(Tree("AA", List(Tree("AB"), Tree("AC"))), Tree("AA", List(Tree("BA"), Tree("CA")))))
+    val zipper = TreeZipper(tree)
+    val leaf = zipper.down.get.down.get.right.get
+    val replaced = leaf.replace(Tree("X"))
+    assert(replaced.up.get.get === Tree("AA", List(Tree("AB"), Tree("X"))))
+  }
