@@ -64,8 +64,8 @@ class Popup(message: String, title: Option[String])(confirm: () => Unit, dismiss
       )
     ).split(buttonsBarLayout(1))
 
-    val cancelButton  = ButtonWidget("Cancel", () => !confirming)
-    val confirmButton = ButtonWidget("Confirm", () => confirming)
+    val cancelButton  = ButtonWidget("Cancel", !confirming)
+    val confirmButton = ButtonWidget("Confirm", confirming)
     val content       = ParagraphWidget(text = Text.nostyle(message), alignment = Alignment.Center)
     val border        = BlockWidget(title = title.map(Spans.nostyle), borders = Borders.ALL)
 
@@ -95,14 +95,14 @@ class Popup(message: String, title: Option[String])(confirm: () => Unit, dismiss
 
     xLayout(1)
 
-  private def ButtonWidget(label: String, active: () => Boolean) =
+  private def ButtonWidget(label: String, active: => Boolean) =
     ParagraphWidget(
       text = Text.nostyle(label),
       alignment = Alignment.Center,
       block = Some(
         BlockWidget(
           borders = Borders.ALL,
-          style = if active() then Style.DEFAULT.fg(Color.Yellow) else Style.DEFAULT
+          style = if active then Style.DEFAULT.fg(Color.Yellow) else Style.DEFAULT
         )
       )
     )

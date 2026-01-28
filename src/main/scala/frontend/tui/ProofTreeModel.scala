@@ -50,6 +50,6 @@ class ProofTreeModel(navigation: Navigation) extends ProofTreeModel.Data, ProofT
     zipper = zipper.replace(replacement)
 
   override def quit(): Unit =
-    navigation.showPopup("Do you want to quit the proof mode?", Some("Quit")) { () =>
+    navigation.showPopup("Do you want to quit the proof mode?", Some("Quit")) {
       navigation.navigateTo(Screen.FormulaInput)
     }

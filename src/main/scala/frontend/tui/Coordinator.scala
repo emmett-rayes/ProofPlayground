@@ -30,5 +30,5 @@ class Coordinator extends Navigation:
       case Navigation.Screen.ProofTree(formula) => ProofTree(this)
     screens = screen :: List.empty
 
-  override def showPopup(message: String, title: Option[String])(callback: () => Unit): Unit =
-    screens = Popup(message, title)(callback, { () => screens = screens.tail }) :: screens
+  override def showPopup(message: String, title: Option[String])(callback: => Unit): Unit =
+    screens = Popup(message, title)({ () => callback }, { () => screens = screens.tail }) :: screens
