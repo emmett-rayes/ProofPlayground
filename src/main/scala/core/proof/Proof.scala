@@ -1,16 +1,43 @@
 package proofPlayground
 package core.proof
 
+import tree.TreeZipper.given
+import tree.{Tree, TreeZipper, Zipper}
+
 /** Representation of a proof.
   *
   * A proof has a tree structure with judgements as nodes.
   * A proof is considered valid if each level in each branch of the tree
   * is justified by an inference rule.
   *
-  * TODO: Convert to a functor.
+  * @tparam J the type of judgements used in the proof.
+  */
+opaque type Proof[J] = Tree[J]
+
+/** A zipper over a proof.
+  *
+  * Allows for navigating the proof and modifying it.
   *
   * @tparam J the type of judgements used in the proof.
-  * @param root      the conclusion of this proof step.
-  * @param subproofs the recursive sub-derivations leading to the conclusion.
   */
-case class Proof[J](root: J, subproofs: Set[Proof[J]])
+opaque type ProofZipper[J] = TreeZipper[J]
+
+object Proof:
+  def apply[J](root: J, subproofs: List[Proof[J]]): Proof[J] = Tree(root, subproofs)
+
+  def unapply[J](proof: Proof[J]): Option[(J, List[Tree[J]])] = Some(proof.value, proof.children)
+
+  extension [J](proof: Proof[J])
+    /** Returns the conclusion of the proof. */
+    def conclusion: J = proof.value
+
+    /** Returns the recursive sub-derivations leading to the conclusion. */
+    def subproofs: List[Tree[J]] = proof.children
+
+    /** Returns a zipper over the proof tree. */
+    def zipper: ProofZipper[J] = ProofZipper(proof)
+
+object ProofZipper:
+  def apply[J](proof: Proof[J]): ProofZipper[J] = TreeZipper(proof)
+
+  given ProofZipper is Zipper[Proof] = summon[Zipper[Proof]]
