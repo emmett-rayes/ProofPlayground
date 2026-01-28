@@ -1,13 +1,13 @@
 package proofPlayground
 package tree
 
-/** A type class for zippers.
+/** A typeclass for zippers.
   *
   * @tparam T the type of the underlying structure to be zipped.
-  *         This should correspond to the antiderivative of the one-hole context type
-  *         used in the implementation of the zipper.
+  *         This should correspond to the antiderivative of `Self`.
   */
 trait Zipper[T[_]]:
+  /** The type of zippers for the underlying structure `T`. */
   type Self[_]
 
   extension [A](self: Self[A])
@@ -42,7 +42,13 @@ trait Zipper[T[_]]:
     def right: Option[Self[A]]
 
 object Zipper:
-  extension [T[_], A](using z: Zipper[T])(zipper: z.Self[A])
+  extension [T[_]: Zipper, A](zipper: T.Self[A])
+    /** Gets the root of the underlying structure reachable from the current position.
+      *
+      * A root is a node that has no parent.
+      *
+      * @return the root of the underlying structure.
+      */
     @scala.annotation.tailrec
     def root: T[A] =
       zipper.up match

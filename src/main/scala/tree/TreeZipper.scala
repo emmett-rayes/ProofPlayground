@@ -1,6 +1,12 @@
 package proofPlayground
 package tree
 
+/** A zipper for [[Tree]]s.
+  * 
+  * This is the derivative of the type constructor [[Tree]] with respect to `A`.
+  * 
+  * @tparam A the type of values stored in the tree.
+  */
 case class TreeZipper[+A](subtree: Tree[A], context: List[TreeContext[A]])
 
 object TreeZipper:
