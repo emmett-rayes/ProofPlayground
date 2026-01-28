@@ -19,6 +19,8 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
   override def footerText: Text =
     Text.from(
       Span.nostyle("Press "),
+      Span.styled("Enter", Style.DEFAULT.addModifier(Modifier.BOLD)),
+      Span.nostyle(" to select, "),
       Span.styled("q", Style.DEFAULT.addModifier(Modifier.BOLD)),
       Span.nostyle(" to exit.")
     )
@@ -32,6 +34,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
           case c: KeyCode.Down               => signals.down()
           case c: KeyCode.Left               => signals.left()
           case c: KeyCode.Right              => signals.right()
+          case c: KeyCode.Enter              => signals.select()
           case _                             => ()
         }
       case _ => ()

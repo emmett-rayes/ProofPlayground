@@ -16,27 +16,16 @@ object ProofTreeModel:
     def down(): Unit
     def left(): Unit
     def right(): Unit
+    def select(): Unit
     def quit(): Unit
 
 class ProofTreeModel(navigation: Navigation) extends ProofTreeModel.Data, ProofTreeModel.Signals:
   private val initial = Tree(
     "A ∧ B",
     List(
-      Tree(
-        "A",
-        List(
-          Tree("..."),
-          Tree("..."),
-        ),
-      ),
-      Tree(
-        "B",
-        List(
-          Tree("..."),
-          Tree("..."),
-        ),
-      ),
-    ),
+      Tree("A", List(Tree("..."), Tree("..."))),
+      Tree("B", List(Tree("..."), Tree("..."))),
+    )
   )
 
   private var zipper = TreeZipper(initial)
@@ -55,6 +44,10 @@ class ProofTreeModel(navigation: Navigation) extends ProofTreeModel.Data, ProofT
 
   override def right(): Unit =
     zipper = zipper.right.getOrElse(zipper)
+
+  override def select(): Unit =
+    val replacement = Tree("X", List(Tree("..."), Tree("...")))
+    zipper = zipper.replace(replacement)
 
   override def quit(): Unit =
     navigation.showPopup("Do you want to quit the proof mode?", Some("Quit")) { () =>
