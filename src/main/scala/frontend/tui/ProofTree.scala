@@ -70,9 +70,21 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
 
     // render children
     if !tree.isLeaf then
+      val childrenSizes = tree.children.map { tree =>
+        def width(tree: Tree[String]): Int =
+          if tree.isLeaf then 1
+          else
+            tree.children.foldLeft(tree.children.length) { (acc, child) =>
+              acc.max(width(child))
+            }
+        width(tree)
+      }
+
       val childrenLayout = Layout(
         direction = Direction.Horizontal,
-        constraints = Array.fill(tree.children.length)(Constraint.Ratio(1, tree.children.length)),
+        constraints = Array.tabulate(tree.children.length) { idx =>
+          Constraint.Ratio(childrenSizes(idx), childrenSizes.sum)
+        },
       ).split(nodeLayout(0))
 
       for (child, idx) <- tree.children.zipWithIndex do

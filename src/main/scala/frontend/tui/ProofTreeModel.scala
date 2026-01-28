@@ -24,7 +24,7 @@ class ProofTreeModel(navigation: Navigation) extends ProofTreeModel.Data, ProofT
     "A ∧ B",
     List(
       Tree("A", List(Tree("..."), Tree("..."))),
-      Tree("B", List(Tree("..."), Tree("..."))),
+      Tree("B", List(Tree("..."), Tree("..."), Tree("..."))),
     )
   )
 
