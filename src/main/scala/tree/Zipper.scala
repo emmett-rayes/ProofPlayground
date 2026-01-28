@@ -43,14 +43,14 @@ trait Zipper[T[_]]:
 
 object Zipper:
   extension [T[_]: Zipper, A](zipper: T.Self[A])
-    /** Gets the root of the underlying structure reachable from the current position.
+    /** Gets the zipper at the root of the underlying structure reachable from the current position.
       *
       * A root is a node that has no parent.
       *
-      * @return the root of the underlying structure.
+      * @return the root zipper of the underlying structure.
       */
     @scala.annotation.tailrec
-    def root: T[A] =
+    def root: T.Self[A] =
       zipper.up match
-        case None         => zipper.get
+        case None         => zipper
         case Some(parent) => parent.root

@@ -42,7 +42,7 @@ class ProofTreeModel(navigation: Navigation) extends ProofTreeModel.Data, ProofT
   private var zipper = TreeZipper(initial)
 
   override def selectedNode: Tree[String] = zipper.subtree
-  override def proofTree: Tree[String]    = zipper.root
+  override def proofTree: Tree[String]    = zipper.root.get
 
   override def up(): Unit =
     zipper = zipper.down.getOrElse(zipper) // proof trees are upside down
