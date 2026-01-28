@@ -43,7 +43,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
   override def render(renderer: Renderer, area: Rect): Unit =
     renderTree(renderer, data.proofTree, area)
 
-  private def renderTree(renderer: Renderer, tree: Tree[String], area: tui.Rect): Unit =
+  private def renderTree(renderer: Renderer, tree: Tree[ProofTreeModel.Data#ProofStep], area: tui.Rect): Unit =
     val nodeLayout = Layout(
       direction = Direction.Vertical,
       margin = Margin(0, 1),
@@ -56,11 +56,16 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
 
     val divider = ParagraphWidget(
       text = Text.from(Span.nostyle("")),
-      block = Some(BlockWidget(borders = Borders.TOP)),
+      block =
+        Some(BlockWidget(
+          borders = Borders.TOP,
+          title = Some(Spans.nostyle(s"[${tree.value.rule}]")),
+          titleAlignment = Alignment.Right,
+        )),
     )
 
     val nodeWidget = ParagraphWidget(
-      text = Text.from(Span.nostyle(tree.value)),
+      text = Text.from(Span.nostyle(tree.value.formula)),
       alignment = Alignment.Center,
       style = if tree eq data.selectedNode then Style.DEFAULT.fg(Color.Yellow) else Style.DEFAULT,
     )
@@ -71,7 +76,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
     // render children
     if !tree.isLeaf then
       val childrenSizes = tree.children.map { tree =>
-        def width(tree: Tree[String]): Int =
+        def width(tree: Tree[?]): Int =
           if tree.isLeaf then 1
           else
             tree.children.foldLeft(tree.children.length) { (acc, child) =>

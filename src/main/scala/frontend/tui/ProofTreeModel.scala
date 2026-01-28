@@ -2,14 +2,16 @@ package proofPlayground
 package frontend.tui
 
 import frontend.tui.Navigation.Screen
-import tree.{Tree, TreeZipper}
 import tree.TreeZipper.given
 import tree.Zipper.root
+import tree.{Tree, TreeZipper}
 
 object ProofTreeModel:
   trait Data:
-    def proofTree: Tree[String]
-    def selectedNode: Tree[String]
+    type ProofStep = (formula: String, rule: String)
+
+    def proofTree: Tree[ProofStep]
+    def selectedNode: Tree[ProofStep]
 
   trait Signals:
     def up(): Unit
@@ -21,17 +23,17 @@ object ProofTreeModel:
 
 class ProofTreeModel(navigation: Navigation) extends ProofTreeModel.Data, ProofTreeModel.Signals:
   private val initial = Tree(
-    "A ∧ B",
+    ("A ∧ B", "∧I"),
     List(
-      Tree("A", List(Tree("..."), Tree("..."))),
-      Tree("B", List(Tree("..."), Tree("..."), Tree("..."))),
+      Tree(("A", "AE"), List(Tree(("...", "Ax")), Tree(("...", "Ax")))),
+      Tree(("B", "BE"), List(Tree(("...", "Ax")), Tree(("...", "Ax")), Tree(("...", "Ax")))),
     )
   )
 
   private var zipper = TreeZipper(initial)
 
-  override def selectedNode: Tree[String] = zipper.subtree
-  override def proofTree: Tree[String]    = zipper.root.get
+  override def selectedNode: Tree[ProofStep] = zipper.subtree
+  override def proofTree: Tree[ProofStep]    = zipper.root.get
 
   override def up(): Unit =
     zipper = zipper.down.getOrElse(zipper) // proof trees are upside down
@@ -46,7 +48,7 @@ class ProofTreeModel(navigation: Navigation) extends ProofTreeModel.Data, ProofT
     zipper = zipper.right.getOrElse(zipper)
 
   override def select(): Unit =
-    val replacement = Tree("X", List(Tree("..."), Tree("...")))
+    val replacement = Tree(("X", "XE"), List(Tree(("...", "Ax")), Tree(("...", "Ax"))))
     zipper = zipper.replace(replacement)
 
   override def quit(): Unit =
