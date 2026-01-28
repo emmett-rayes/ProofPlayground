@@ -36,9 +36,16 @@ object TreeZipper:
             None
           case TreeContext(value, direction, siblings) :: rest =>
             if direction > 0 then
-              self.up.flatMap(_.nth(direction - 1))
+              for
+                parent  <- self.up
+                sibling <- parent.nth(direction - 1)
+              yield sibling
             else
-              self.up.flatMap(_.left).flatMap(_.last)
+              for
+                parent <- self.up
+                uncle  <- parent.left
+                cousin <- uncle.last
+              yield cousin
 
       override def right: Option[TreeZipper[A]] =
         self.context match
@@ -46,9 +53,16 @@ object TreeZipper:
             None
           case TreeContext(value, direction, siblings) :: rest =>
             if direction < siblings.length then
-              self.up.flatMap(_.nth(direction + 1))
+              for
+                parent  <- self.up
+                sibling <- parent.nth(direction + 1)
+              yield sibling
             else
-              self.up.flatMap(_.right).flatMap(_.first)
+              for
+                parent <- self.up
+                uncle  <- parent.right
+                cousin <- uncle.first
+              yield cousin
 
       private def first: Option[TreeZipper[A]] = nth(0)
 
