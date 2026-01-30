@@ -9,7 +9,7 @@ import core.meta.Pattern.given
 import core.meta.PatternF.meta
 import core.meta.PatternUtil.{asPattern, given}
 import core.meta.{Pattern, Unification}
-import core.meta.Unify.given
+import core.meta.Unify.{unify, given}
 
 import org.scalatest.funsuite.AnyFunSuite
 

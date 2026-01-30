@@ -13,15 +13,13 @@ import core.{Algebra, catamorphism}
   *
   * @tparam F The formula type used in substitution.
   */
-trait Substitute[F]:
+trait Substitute[F[_]]:
   type Self
 
-  extension (self: Self)
-    def substitute(unification: Unification[F]): Option[F]
+  extension (pattern: Pattern[F])
+    def substitute(unification: Unification[Self]): Option[Self]
 
 object Substitute:
-  type FormulaPattern = Pattern[FormulaF] // scalafmt has problems with type constructors in combination with `is`
-
   /** Substitution algebra for the [[PatternF]] functor with carrier `Option[T]`. */
   private def algebra[
     F[_],
@@ -43,7 +41,7 @@ object Substitute:
       case FormulaF.Disjunction(disjunction) => for lhs <- disjunction.lhs; rhs <- disjunction.rhs yield lhs \/ rhs
       case FormulaF.Implication(implication) => for lhs <- implication.lhs; rhs <- implication.rhs yield lhs --> rhs
 
-  given FormulaPattern is Substitute[Formula]:
+  given Formula is Substitute[FormulaF]:
     extension (pattern: Pattern[FormulaF])
       override def substitute(unification: Unification[Formula]): Option[Formula] =
         val subalgebra = algebra(unification)

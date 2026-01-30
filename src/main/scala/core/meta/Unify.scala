@@ -9,23 +9,19 @@ import core.{Algebra, catamorphism}
 /** A successful unifier mapping meta variables from a pattern to concrete values. */
 type Unification[T] = Map[PatternF.Meta[?, ?], T]
 
-trait Unify[F]:
+trait Unify[F[_]]:
   type Self
 
-  extension (self: Self)
+  extension (pattern: Pattern[F])
     /** Attempt to unify a pattern with a concrete value.
       * The result is a mapping from meta-variable appearing in the pattern to concrete values when a match exists.
       *
       * @param scrutinee the concrete value to match against the pattern
       * @return Some(unification) if a consistent unification exists; None otherwise
       */
-    def unify(scrutinee: F): Option[Unification[F]]
+    def unify(scrutinee: Self): Option[Unification[Self]]
 
 object Unify:
-  // scalafmt has problems with type constructors in combination with `is`
-  type FormulaPattern    = Pattern[FormulaF]
-  type FormulaPatternSeq = Seq[Pattern[FormulaF]]
-
   /** Type alias for a unification function that attempts to produce a unification.
     *
     * This is the carrier type for the algebras below.
@@ -41,7 +37,7 @@ object Unify:
     val intersection = fst.keySet.intersect(snd.keySet)
     if intersection.exists(key => fst(key) != snd(key)) then None else Some(fst ++ snd)
 
-  given FormulaPattern is Unify[Formula]:
+  given Formula is Unify[FormulaF]:
     extension (pattern: Pattern[FormulaF])
       /** Attempt to unify a formula pattern with a concrete formula.
         *
@@ -54,7 +50,7 @@ object Unify:
         * @param scrutinee concrete formula to check against
         * @return Some(unification) if a consistent unification exists; None otherwise
         */
-      override def unify(scrutinee: Formula): Option[Unification[Formula]] =
+      override def unify(scrutinee: Self): Option[Unification[Self]] =
         catamorphism(pattern)(algebra[FormulaF, Formula](algebra))(scrutinee)
 
     /** Unification algebra for the [[PatternF]] functor with carrier `Unifier[T]`. */
@@ -96,46 +92,55 @@ object Unify:
             yield merged
           case _ => None
 
-  given FormulaPatternSeq is Unify[Seq[Formula]]:
-    extension (patterns: Seq[Pattern[FormulaF]])
-      /** Attempt to unify a sequence of formula patterns with a sequence of concrete formulas.
-        *
-        * Rules:
-        * - Meta variables in the patterns can match any number of scrutinees (including zero).
-        * - Concrete patterns must match exactly one scrutinee.
-        * - The order of scrutinees must be preserved.
-        * - All unifications must be consistent across the entire sequence.
-        * - If a concrete pattern cannot be matched, unification fails.
-        * - Meta variables can match multiple scrutinees, and all matched scrutinees are collected.
-        *
-        * @note There might be multiple valid unifications that disagree on how adjacent meta-variables
-        *       are assigned scrutinees. This function returns the unification where the first meta-variable
-        *       is assigned as many scrutinees as possible. The following adjacent meta-variables are then assigned
-        *       an empty sequence until the next concrete pattern is matched.
-        * @param scrutinees the sequence of concrete formulas to check against
-        * @return Some(unification) if a consistent unification exists; None otherwise
-        */
-      override def unify(scrutinees: Seq[Formula]): Option[Unification[Seq[Formula]]] =
-        val emptyContext: (Unification[Formula], Map[Int, Int]) = (Map.empty, Map.empty)
-        val unificationConcrete = patterns.zipWithIndex.foldLeft(Option(emptyContext)) { (ctx, pWithIdx) =>
-          val (pattern, idx) = pWithIdx
-          pattern.unfix match
-            case PatternF.Meta(_)    => ctx
-            case PatternF.Formula(_) =>
-              for
-                (unificationAcc, idxMap) <- ctx
-                // we can alternatively track the last used index in the context
-                last = idxMap.maxByOption(_._2).map(_._2).getOrElse(0)
-                (unification, idxMatch) <-
-                  scrutinees.drop(last).map(pattern.unify).zipWithIndex.find(_._1.isDefined)
-                merged <- mergeUnification(unificationAcc, unification.get)
-              yield (merged, idxMap + (idx -> idxMatch))
-        }
+  extension [F[_], X: Unify[F]](patterns: Seq[Pattern[F]])
+    /** Attempt to unify a sequence of formula patterns with a sequence of concrete formulas.
+      *
+      * Rules:
+      * - Meta variables in the patterns can match any number of scrutinees (including zero).
+      * - Concrete patterns must match exactly one scrutinee.
+      * - The order of scrutinees must be preserved.
+      * - All unifications must be consistent across the entire sequence.
+      * - If a concrete pattern cannot be matched, unification fails.
+      * - Meta variables can match multiple scrutinees, and all matched scrutinees are collected.
+      *
+      * @note There might be multiple valid unifications that disagree on how adjacent meta-variables
+      *       are assigned scrutinees. This function returns the unification where the first meta-variable
+      *       is assigned as many scrutinees as possible. The following adjacent meta-variables are then assigned
+      *       an empty sequence until the next concrete pattern is matched.
+      *
+      * @param scrutinees the sequence of concrete formulas to check against
+      * @return Some(unification) if a consistent unification exists; None otherwise
+      */
+    def unify(scrutinees: Seq[X]): Option[Unification[Seq[X]]] =
+      val emptyContext: (Unification[X], Map[Int, Int]) = (Map.empty, Map.empty)
+      val unificationConcrete = patterns.zipWithIndex.foldLeft(Option(emptyContext)) { (ctx, pWithIdx) =>
+        val (pattern, idx) = pWithIdx
+        pattern.unfix match
+          case PatternF.Meta(_)    => ctx
+          case PatternF.Formula(_) =>
+            for
+              (unificationAcc, idxMap) <- ctx
+              // we can alternatively track the last used index in the context
+              last = idxMap.maxByOption(_._2).map(_._2).getOrElse(0)
+              (unification, idxMatch) <-
+                scrutinees.drop(last).map(pattern.unify).zipWithIndex.find(_._1.isDefined)
+              merged <- mergeUnification(unificationAcc, unification.get)
+            yield (merged, idxMap + (idx -> idxMatch))
+      }
 
-        for
-          (unification, idxMap) <- unificationConcrete
-        yield
-          val idxConcreteBefore = patterns.zipWithIndex.foldLeft((Map.empty[Int, Int], 0)) { (ctx, pWithIdx) =>
+      for
+        (unification, idxMap) <- unificationConcrete
+      yield
+        val idxConcreteBefore = patterns.zipWithIndex.foldLeft((Map.empty[Int, Int], 0)) { (ctx, pWithIdx) =>
+          val (map, lastConcreteIdx) = ctx
+          val (pattern, idx)         = pWithIdx
+          pattern.unfix match
+            case PatternF.Meta(_)    => (map + (idx -> lastConcreteIdx), lastConcreteIdx)
+            case PatternF.Formula(_) => (map + (idx -> idx), idx)
+        }._1
+
+        val idxConcreteAfter =
+          patterns.zipWithIndex.reverse.foldLeft((Map.empty[Int, Int], patterns.size - 1)) { (ctx, pWithIdx) =>
             val (map, lastConcreteIdx) = ctx
             val (pattern, idx)         = pWithIdx
             pattern.unfix match
@@ -143,26 +148,17 @@ object Unify:
               case PatternF.Formula(_) => (map + (idx -> idx), idx)
           }._1
 
-          val idxConcreteAfter =
-            patterns.zipWithIndex.reverse.foldLeft((Map.empty[Int, Int], patterns.size - 1)) { (ctx, pWithIdx) =>
-              val (map, lastConcreteIdx) = ctx
-              val (pattern, idx)         = pWithIdx
-              pattern.unfix match
-                case PatternF.Meta(_)    => (map + (idx -> lastConcreteIdx), lastConcreteIdx)
-                case PatternF.Formula(_) => (map + (idx -> idx), idx)
-            }._1
+        val idxStutteringMeta = patterns.map(_.unfix).zip(patterns.map(_.unfix).drop(1)).zipWithIndex.collect {
+          case ((PatternF.Meta(_), PatternF.Meta(_)), idx) => idx + 1
+        }
 
-          val idxStutteringMeta = patterns.map(_.unfix).zip(patterns.map(_.unfix).drop(1)).zipWithIndex.collect {
-            case ((PatternF.Meta(_), PatternF.Meta(_)), idx) => idx + 1
-          }
-
-          val unificationSeq = unification.map(p => p._1 -> Seq(p._2)).withDefaultValue(Seq.empty)
-          patterns.zipWithIndex.foldLeft(unificationSeq) { (unification, pWithIdx) =>
-            val (pattern, idx) = pWithIdx
-            pattern.unfix match
-              case p @ PatternF.Meta(_) if !idxStutteringMeta.contains(idx) =>
-                val before = idxConcreteBefore.get(idx).flatMap(idxMap.get).getOrElse(-1)
-                val after  = idxConcreteAfter.get(idx).flatMap(idxMap.get).getOrElse(scrutinees.size)
-                unification + (p -> scrutinees.slice(before + 1, after))
-              case _ => unification
-          }
+        val unificationSeq = unification.map(p => p._1 -> Seq(p._2)).withDefaultValue(Seq.empty)
+        patterns.zipWithIndex.foldLeft(unificationSeq) { (unification, pWithIdx) =>
+          val (pattern, idx) = pWithIdx
+          pattern.unfix match
+            case p @ PatternF.Meta(_) if !idxStutteringMeta.contains(idx) =>
+              val before = idxConcreteBefore.get(idx).flatMap(idxMap.get).getOrElse(-1)
+              val after  = idxConcreteAfter.get(idx).flatMap(idxMap.get).getOrElse(scrutinees.size)
+              unification + (p -> scrutinees.slice(before + 1, after))
+            case _ => unification
+        }
