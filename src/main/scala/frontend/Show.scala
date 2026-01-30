@@ -5,10 +5,15 @@ import core.catamorphism
 import core.logic.propositional
 import core.logic.propositional.{Formula, FormulaF}
 
-object Show:
-  def show(formula: Formula): String =
-    catamorphism(formula)(algebra)
+/** A typeclass for showing a value of type `Self` as a string. */
+trait Show:
+  type Self
 
+  extension (self: Self)
+    /** Returns a string representation of `self`. */
+    def show: String
+
+object Show:
   private def algebra(formula: FormulaF[String]): String =
     formula match
       case propositional.FormulaF.Variable(variable)       => variable.id
@@ -18,3 +23,8 @@ object Show:
       case propositional.FormulaF.Conjunction(conjunction) => s"(${conjunction.lhs} ∧ ${conjunction.rhs})"
       case propositional.FormulaF.Disjunction(disjunction) => s"(${disjunction.lhs} ∨ ${disjunction.rhs})"
       case propositional.FormulaF.Implication(implication) => s"(${implication.lhs} → ${implication.rhs})"
+
+  given Formula is Show:
+    extension (formula: Self)
+      override def show: String =
+        catamorphism(formula)(algebra)
