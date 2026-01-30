@@ -6,12 +6,21 @@ import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
 import core.meta.{Pattern, PatternF}
 import core.{Algebra, catamorphism}
-import scala.language.implicitConversions
 
-object Substitution:
-  def substitute(pattern: Pattern[FormulaF], unification: Unification[Formula]): Option[Formula] =
-    val subalgebra = algebra(unification)
-    catamorphism(pattern)(algebra(subalgebra)(unification))
+/** A typeclass for substituting a pattern with a concrete value.
+  *
+  * @note `Self` is meant to be the pattern type.
+  *
+  * @tparam F The formula type used in substitution.
+  */
+trait Substitute[F]:
+  type Self
+
+  extension (self: Self)
+    def substitute(unification: Unification[F]): Option[F]
+
+object Substitute:
+  type FormulaPattern = Pattern[FormulaF] // scalafmt has problems with type constructors in combination with `is`
 
   /** Substitution algebra for the [[PatternF]] functor with carrier `Option[T]`. */
   private def algebra[
@@ -33,3 +42,9 @@ object Substitution:
       case FormulaF.Conjunction(conjunction) => for lhs <- conjunction.lhs; rhs <- conjunction.rhs yield lhs /\ rhs
       case FormulaF.Disjunction(disjunction) => for lhs <- disjunction.lhs; rhs <- disjunction.rhs yield lhs \/ rhs
       case FormulaF.Implication(implication) => for lhs <- implication.lhs; rhs <- implication.rhs yield lhs --> rhs
+
+  given FormulaPattern is Substitute[Formula]:
+    extension (pattern: Pattern[FormulaF])
+      override def substitute(unification: Unification[Formula]): Option[Formula] =
+        val subalgebra = algebra(unification)
+        catamorphism(pattern)(algebra(subalgebra)(unification))
