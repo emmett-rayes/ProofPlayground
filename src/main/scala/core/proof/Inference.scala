@@ -8,4 +8,4 @@ package core.proof
   * @param hypotheses The set of hypotheses above the line.
   * @param conclusion The conclusion below the line.
   */
-case class Inference[J](label: String)(hypotheses: Set[J], conclusion: J)
+case class Inference[J](label: String, hypotheses: Set[J], conclusion: J)

@@ -39,7 +39,8 @@ case object InferenceRules:
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
 
-      Inference("∧I")(
+      Inference(
+        "∧I",
         Set(
           gamma |- phi,
           gamma |- psi,
@@ -56,7 +57,8 @@ case object InferenceRules:
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
 
-      Inference("∧E₁")(
+      Inference(
+        "∧E₁",
         Set(
           gamma |- phi /\ psi,
         ),
@@ -72,7 +74,8 @@ case object InferenceRules:
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
 
-      Inference("∧E₂")(
+      Inference(
+        "∧E₂",
         Set(
           gamma |- phi /\ psi,
         ),
@@ -88,7 +91,8 @@ case object InferenceRules:
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
 
-      Inference("∨I₁")(
+      Inference(
+        "∨I₁",
         Set(
           gamma |- phi,
         ),
@@ -104,7 +108,8 @@ case object InferenceRules:
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
 
-      Inference("∨I₂")(
+      Inference(
+        "∨I₂",
         Set(
           gamma |- psi,
         ),
@@ -121,7 +126,8 @@ case object InferenceRules:
       val psi   = Pattern[FormulaF]("psi")
       val rho   = Pattern[FormulaF]("rho")
 
-      Inference("∨E")(
+      Inference(
+        "∨E",
         Set(
           gamma |- phi \/ psi,
           gamma :: phi |- rho,
@@ -139,7 +145,8 @@ case object InferenceRules:
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
 
-      Inference("→I")(
+      Inference(
+        "→I",
         Set(
           gamma :: phi |- psi,
         ),
@@ -155,7 +162,8 @@ case object InferenceRules:
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
 
-      Inference("→E")(
+      Inference(
+        "→E",
         Set(
           gamma |- phi --> psi,
           gamma |- phi,
@@ -171,7 +179,8 @@ case object InferenceRules:
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
 
-      Inference("¬I")(
+      Inference(
+        "¬I",
         Set(
           gamma :: phi |- fls,
         ),
@@ -186,7 +195,8 @@ case object InferenceRules:
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
 
-      Inference("¬E")(
+      Inference(
+        "¬E",
         Set(
           gamma |- ~phi,
           gamma |- phi,
@@ -203,7 +213,8 @@ case object InferenceRules:
     val TrueIntroduction: InferenceRule[Judgement, FormulaF] =
       val gamma = Pattern[FormulaF]("Gamma")
 
-      Inference("⊤I")(
+      Inference(
+        "⊤I",
         Set(),
         gamma |- tru,
       )
@@ -218,7 +229,8 @@ case object InferenceRules:
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
 
-      Inference("⊥E")(
+      Inference(
+        "⊥E",
         Set(
           gamma |- fls
         ),
