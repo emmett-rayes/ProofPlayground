@@ -1,18 +1,12 @@
 package proofPlayground
-package core.system.natural
+package core.proof.natural
 
 import core.meta.PatternF.concrete
-import core.meta.{Inference, Pattern, PatternF}
-import core.system.natural.Judgement.*
-import scala.language.implicitConversions
+import core.meta.{Pattern, PatternF}
+import core.proof.{Inference, InferenceRule}
+import core.proof.natural.Judgement.*
 
-/** An inference rule for natural deduction judgements.
-  *
-  * Inference rules contain judgements over patterns, i.e. judgement schemas.
-  *
-  * @tparam F The formula functor used in the judgements.
-  */
-type InferenceRule[F[_]] = Inference[Judgement[Pattern[F]]]
+import scala.language.implicitConversions
 
 /** Collection of inference rules for natural deduction. */
 case object InferenceRules:
@@ -33,7 +27,6 @@ case object InferenceRules:
   /** Inference rules for intuitionistic propositional logic. */
   // noinspection DuplicatedCode
   case object IntuitionisticPropositional:
-
     import core.logic.propositional.FormulaF
     import core.logic.propositional.FormulaF.*
 
@@ -41,12 +34,12 @@ case object InferenceRules:
       *
       * If Γ ⊢ A and Γ ⊢ B, then Γ ⊢ A ∧ B.
       */
-    val ConjunctionIntroduction: InferenceRule[FormulaF] =
+    val ConjunctionIntroduction: InferenceRule[Judgement, FormulaF] =
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
 
-      Inference(
+      Inference("∧I")(
         Set(
           gamma |- phi,
           gamma |- psi,
@@ -58,12 +51,12 @@ case object InferenceRules:
       *
       * If Γ ⊢ A ∧ B, then Γ ⊢ A.
       */
-    val ConjunctionElimination1: InferenceRule[FormulaF] =
+    val ConjunctionElimination1: InferenceRule[Judgement, FormulaF] =
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
 
-      Inference(
+      Inference("∧E₁")(
         Set(
           gamma |- phi /\ psi,
         ),
@@ -74,12 +67,12 @@ case object InferenceRules:
       *
       * If Γ ⊢ A ∧ B, then Γ ⊢ B.
       */
-    val ConjunctionElimination2: InferenceRule[FormulaF] =
+    val ConjunctionElimination2: InferenceRule[Judgement, FormulaF] =
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
 
-      Inference(
+      Inference("∧E₂")(
         Set(
           gamma |- phi /\ psi,
         ),
@@ -90,12 +83,12 @@ case object InferenceRules:
       *
       * If Γ ⊢ A, then Γ ⊢ A ∨ B.
       */
-    val DisjunctionIntroduction1: InferenceRule[FormulaF] =
+    val DisjunctionIntroduction1: InferenceRule[Judgement, FormulaF] =
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
 
-      Inference(
+      Inference("∨I₁")(
         Set(
           gamma |- phi,
         ),
@@ -106,12 +99,12 @@ case object InferenceRules:
       *
       * If Γ ⊢ B, then Γ ⊢ A ∨ B.
       */
-    val DisjunctionIntroduction2: InferenceRule[FormulaF] =
+    val DisjunctionIntroduction2: InferenceRule[Judgement, FormulaF] =
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
 
-      Inference(
+      Inference("∨I₂")(
         Set(
           gamma |- psi,
         ),
@@ -122,13 +115,13 @@ case object InferenceRules:
       *
       * If Γ ⊢ A ∨ B, Γ,A ⊢ C and Γ,B ⊢ C, then Γ ⊢ C.
       */
-    val DisjunctionElimination: InferenceRule[FormulaF] =
+    val DisjunctionElimination: InferenceRule[Judgement, FormulaF] =
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
       val rho   = Pattern[FormulaF]("rho")
 
-      Inference(
+      Inference("∨E")(
         Set(
           gamma |- phi \/ psi,
           gamma :: phi |- rho,
@@ -141,12 +134,12 @@ case object InferenceRules:
       *
       * If Γ,A ⊢ B, then Γ ⊢ A → B.
       */
-    val ImplicationIntroduction: InferenceRule[FormulaF] =
+    val ImplicationIntroduction: InferenceRule[Judgement, FormulaF] =
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
 
-      Inference(
+      Inference("→I")(
         Set(
           gamma :: phi |- psi,
         ),
@@ -157,12 +150,12 @@ case object InferenceRules:
       *
       * If Γ ⊢ A → B and Γ ⊢ A, then Γ ⊢ B.
       */
-    val ImplicationElimination: InferenceRule[FormulaF] =
+    val ImplicationElimination: InferenceRule[Judgement, FormulaF] =
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
 
-      Inference(
+      Inference("→E")(
         Set(
           gamma |- phi --> psi,
           gamma |- phi,
@@ -174,11 +167,11 @@ case object InferenceRules:
       *
       * If Γ,A ⊢ ⊥, then Γ ⊢ ¬A.
       */
-    val NegationIntroduction: InferenceRule[FormulaF] =
+    val NegationIntroduction: InferenceRule[Judgement, FormulaF] =
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
 
-      Inference(
+      Inference("¬I")(
         Set(
           gamma :: phi |- fls,
         ),
@@ -189,11 +182,11 @@ case object InferenceRules:
       *
       * If Γ ⊢ ¬A and Γ ⊢ A, then Γ ⊢ ⊥.
       */
-    val NegationElimination: InferenceRule[FormulaF] =
+    val NegationElimination: InferenceRule[Judgement, FormulaF] =
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
 
-      Inference(
+      Inference("¬E")(
         Set(
           gamma |- ~phi,
           gamma |- phi,
@@ -207,10 +200,10 @@ case object InferenceRules:
       *
       * Γ ⊢ ⊤.
       */
-    val TrueIntroduction: InferenceRule[FormulaF] =
+    val TrueIntroduction: InferenceRule[Judgement, FormulaF] =
       val gamma = Pattern[FormulaF]("Gamma")
 
-      Inference(
+      Inference("⊤I")(
         Set(),
         gamma |- tru,
       )
@@ -221,11 +214,11 @@ case object InferenceRules:
       *
       * If Γ ⊢ ⊥, then Γ ⊢ A.
       */
-    val FalseElimination: InferenceRule[FormulaF] =
+    val FalseElimination: InferenceRule[Judgement, FormulaF] =
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
 
-      Inference(
+      Inference("⊥E")(
         Set(
           gamma |- fls
         ),

@@ -1,5 +1,5 @@
 package proofPlayground
-package core.system.natural
+package core.proof.natural
 
 /** Representation of a judgement in natural deduction.
   *
