@@ -1,6 +1,7 @@
 package proofPlayground
 package frontend.tui
 
+import frontend.tui.models.ProofTreeModel
 import tree.Tree
 
 import tui.*

@@ -1,8 +1,9 @@
 package proofPlayground
-package frontend.tui
+package frontend.tui.models
 
 import core.logic.propositional.Formula
 import frontend.notation.logic.FormulaParser.parser
+import frontend.tui.Navigation
 
 import scala.util.Success
 

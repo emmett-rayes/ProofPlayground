@@ -1,6 +1,7 @@
 package proofPlayground
-package frontend.tui
+package frontend.tui.models
 
+import frontend.tui.Navigation
 import frontend.tui.Navigation.Screen
 import tree.TreeZipper.given
 import tree.Zipper.root

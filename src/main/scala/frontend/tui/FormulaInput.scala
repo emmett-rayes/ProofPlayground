@@ -1,6 +1,8 @@
 package proofPlayground
 package frontend.tui
 
+import frontend.tui.models.{FormulaInputModel, InputMode}
+
 import tui.*
 import tui.crossterm.{Event, KeyCode}
 import tui.widgets.{BlockWidget, ParagraphWidget}
