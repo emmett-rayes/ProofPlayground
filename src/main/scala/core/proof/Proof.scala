@@ -34,6 +34,9 @@ object Proof:
     /** Returns the recursive sub-derivations leading to the conclusion. */
     def subproofs: List[Proof[J]] = proof.children
 
+    /** Returns the proof tree representation of the proof. */
+    def asTree: Tree[J] = proof
+
     /** Returns a zipper over the proof tree. */
     def zipper: ProofZipper[J] = ProofZipper(proof)
 
