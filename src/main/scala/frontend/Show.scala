@@ -4,6 +4,7 @@ package frontend
 import core.catamorphism
 import core.logic.propositional
 import core.logic.propositional.{Formula, FormulaF}
+import core.proof.natural.Judgement
 
 /** A typeclass for showing a value of type `Self` as a string. */
 trait Show:
@@ -24,7 +25,14 @@ object Show:
       case propositional.FormulaF.Disjunction(disjunction) => s"(${disjunction.lhs} ∨ ${disjunction.rhs})"
       case propositional.FormulaF.Implication(implication) => s"(${implication.lhs} → ${implication.rhs})"
 
+  /** [[Show]] instance for [[Formula]]. */
   given Formula is Show:
     extension (formula: Self)
       override def show: String =
         catamorphism(formula)(algebra)
+
+  /** [[Show]] instance for [[Judgement]]. */
+  given [F: Show] => Judgement[F] is Show:
+    extension (judgement: Judgement[F])
+      override def show: String =
+        s"${judgement.assumptions.map(_.show).mkString(",")} |- ${judgement.assertion.show}"
