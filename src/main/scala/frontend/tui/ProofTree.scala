@@ -1,7 +1,8 @@
 package proofPlayground
 package frontend.tui
 
-import frontend.tui.models.ProofTreeModel
+import core.logic.propositional.Formula
+import frontend.tui.models.{ProofStep, ProofTreeModel}
 import tree.Tree
 
 import tui.*
@@ -9,8 +10,8 @@ import tui.crossterm.{Event, KeyCode}
 import tui.widgets.{BlockWidget, ParagraphWidget}
 
 object ProofTree:
-  def apply(navigation: Navigation): ProofTree =
-    val model = ProofTreeModel(navigation)
+  def apply(navigation: Navigation)(formula: Formula): ProofTree =
+    val model = ProofTreeModel(navigation)(formula)
     new ProofTree(model)(model)
 
 class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) extends Screen:
@@ -44,7 +45,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
   override def render(renderer: Renderer, area: Rect): Unit =
     renderTree(renderer, data.proofTree, area)
 
-  private def renderTree(renderer: Renderer, tree: Tree[ProofTreeModel.Data#ProofStep], area: tui.Rect): Unit =
+  private def renderTree(renderer: Renderer, tree: Tree[ProofStep], area: tui.Rect): Unit =
     val nodeLayout = Layout(
       direction = Direction.Vertical,
       margin = Margin(0, 1),
@@ -68,7 +69,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
     val nodeWidget = ParagraphWidget(
       text = Text.from(Span.nostyle(tree.value.formula)),
       alignment = Alignment.Center,
-      style = if tree eq data.selectedNode then Style.DEFAULT.fg(Color.Yellow) else Style.DEFAULT,
+      style = if data.nodeSelected(tree) then Style.DEFAULT.fg(Color.Yellow) else Style.DEFAULT,
     )
 
     renderer.render(divider, nodeLayout(1))
