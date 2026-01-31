@@ -6,20 +6,34 @@ import core.meta.PatternF.meta
 import core.meta.{Pattern, PatternF}
 import core.{Algebra, catamorphism}
 
-/** A successful unifier mapping meta variables from a pattern to concrete values. */
+/** A successful unifier mapping meta-variables from a pattern to concrete values. */
 type Unification[T] = Map[PatternF.Meta[?, ?], T]
 
+/** A typeclass for unifying concrete formulas with patterns. */
 trait Unify:
+  /** The type of the concrete formula used in unification. */
   type Self
+
+  /** The type of the formula functor used in the pattern. */
   type Functor[_]
 
   extension (pattern: Pattern[Functor])
-    /** Attempt to unify a pattern with a concrete value.
+    /** Attempt to unify a pattern with a concrete formula.
+      *
       * The result is a mapping from meta-variable appearing in the pattern to concrete values when a match exists.
       *
-      * @param scrutinee the concrete value to match against the pattern
+      * Rules:
+      * - Meta variables in the pattern match any formula and are bound to it.
+      * - Concrete constructors must structurally match and recursively unify.
+      * - Leaf cases (e.g. Variable, True, False) succeed only if equal; otherwise fail.
+      * - For unary connectives (e.g. ¬), the argument must unify.
+      * - For binary connectives (e.g. ∧, ∨, →), both sides must unify and their substitutions must be consistent.
+      *
+      * @param pattern   the pattern to unify with the scrutinee
+      * @param scrutinee the concrete formula to match against the pattern
       * @return Some(unification) if a consistent unification exists; None otherwise
       */
+    // noinspection ScalaDocUnknownParameter
     def unify(scrutinee: Self): Option[Unification[Self]]
 
 object Unify:
@@ -32,27 +46,19 @@ object Unify:
 
   /** Merge two unifications if they agree on shared variables, otherwise fail.
     *
+    * @param fst the first unification to merge
+    * @param snd the second unification to merge
+    *
     * @return Some(merged) when consistent; None on conflict
     */
-  private def mergeUnification[T](fst: Unification[T], snd: Unification[T]): Option[Unification[T]] =
+  def merge[T](fst: Unification[T], snd: Unification[T]): Option[Unification[T]] =
     val intersection = fst.keySet.intersect(snd.keySet)
     if intersection.exists(key => fst(key) != snd(key)) then None else Some(fst ++ snd)
 
+  /** [[Unify]] instance for [[Formula]]. */
   given Formula is Unify:
     override type Functor = FormulaF
-
     extension (pattern: Pattern[FormulaF])
-      /** Attempt to unify a formula pattern with a concrete formula.
-        *
-        * Rules:
-        * - Meta variables in the pattern match any formula and are bound to it.
-        * - Concrete constructors must structurally match and recursively unify.
-        * - Leaf cases (Variable, True, False) succeed only if equal; otherwise fail.
-        * - For binary connectives (∧, ∨, →), both sides must unify and their substitutions must be consistent.
-        *
-        * @param scrutinee concrete formula to check against
-        * @return Some(unification) if a consistent unification exists; None otherwise
-        */
       override def unify(scrutinee: Formula): Option[Unification[Formula]] =
         catamorphism(pattern)(algebra[FormulaF, Formula](algebra))(scrutinee)
 
@@ -79,23 +85,23 @@ object Unify:
             for
               lhs    <- pattern.lhs(conjunction.lhs)
               rhs    <- pattern.rhs(conjunction.rhs)
-              merged <- mergeUnification(lhs, rhs)
+              merged <- merge(lhs, rhs)
             yield merged
           case (FormulaF.Disjunction(disjunction), FormulaF.Disjunction(pattern)) =>
             for
               lhs    <- pattern.lhs(disjunction.lhs)
               rhs    <- pattern.rhs(disjunction.rhs)
-              merged <- mergeUnification(lhs, rhs)
+              merged <- merge(lhs, rhs)
             yield merged
           case (FormulaF.Implication(implication), FormulaF.Implication(pattern)) =>
             for
               lhs    <- pattern.lhs(implication.lhs)
               rhs    <- pattern.rhs(implication.rhs)
-              merged <- mergeUnification(lhs, rhs)
+              merged <- merge(lhs, rhs)
             yield merged
           case _ => None
 
-  extension [T: Unify](patterns: Seq[Pattern[T.Functor]])
+  extension [F[_], T: Unify { type Functor = F }](patterns: Seq[Pattern[F]])
     /** Attempt to unify a sequence of formula patterns with a sequence of concrete formulas.
       *
       * Rules:
@@ -111,9 +117,13 @@ object Unify:
       *       is assigned as many scrutinees as possible. The following adjacent meta-variables are then assigned
       *       an empty sequence until the next concrete pattern is matched.
       *
+      * @tparam F The type of the formula functor used in the pattern.
+      * @tparam T The type of the concrete formula used in unification.
+      * @param patterns   the sequence of patterns to unify with the scrutinees
       * @param scrutinees the sequence of concrete formulas to check against
       * @return Some(unification) if a consistent unification exists; None otherwise
       */
+    // noinspection ScalaDocUnknownParameter
     def unify(scrutinees: Seq[T]): Option[Unification[Seq[T]]] =
       val emptyContext: (Unification[T], Map[Int, Int]) = (Map.empty, Map.empty)
       val unificationConcrete = patterns.zipWithIndex.foldLeft(Option(emptyContext)) { (ctx, pWithIdx) =>
@@ -127,7 +137,7 @@ object Unify:
               last = idxMap.maxByOption(_._2).map(_._2).getOrElse(0)
               (unification, idxMatch) <-
                 scrutinees.drop(last).map(pattern.unify).zipWithIndex.find(_._1.isDefined)
-              merged <- mergeUnification(unificationAcc, unification.get)
+              merged <- merge(unificationAcc, unification.get)
             yield (merged, idxMap + (idx -> idxMatch))
       }
 

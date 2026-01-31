@@ -4,7 +4,10 @@ package core.proof
 import scala.quoted.{Expr, Quotes, Type}
 
 object ObjectSeq:
-  /** Extracts inference rules from an object. */
+  /** A macro that extracts all inference rules defined as values in an object.
+    *
+    * This is a helper macro that saves us from manually listing all inference rules in the proof system twice.
+    */
   inline def objectSeq[J[_], F[_]](obj: Any): Seq[InferenceRule[J, F]] =
     ${ objectSeqImpl('obj) }
 

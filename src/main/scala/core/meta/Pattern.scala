@@ -47,13 +47,13 @@ case object PatternF:
   /** Implicit conversion from a meta-variable name to a meta-variable pattern. */
   given [F[_], T] => Conversion[String, PatternF[F, T]] = meta(_)
 
-  /** Create a meta-variable pattern with a given name. */
+  /** Creates a meta-variable pattern with a given name. */
   def meta[F[_], T](name: String): PatternF.Meta[F, T] = PatternF.Meta(name)
 
   /** Implicit conversion from a concrete formula to a formula pattern. */
   given [F[_], T] => Conversion[F[T], PatternF.Formula[F, T]] = concrete(_)
 
-  /** Create a formula pattern from a concrete formula. */
+  /** Creates a formula pattern from a concrete formula. */
   def concrete[F[_], T](formula: F[T]): PatternF.Formula[F, T] = PatternF.Formula(formula)
 
   /** [[Functor]] instance for [[PatternF]]. */

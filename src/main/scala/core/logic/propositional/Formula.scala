@@ -16,8 +16,6 @@ object Formula:
   /** Implicit conversion from a formula functor to a formula.
     *
     * Enables using a [[FormulaF]] directly where a [[Formula]] is expected.
-    *
-    * @return a conversion that constructs a `Formula`.
     */
   given Conversion[FormulaF[Formula], Formula] = Formula(_)
 

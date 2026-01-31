@@ -7,13 +7,22 @@ import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
 import core.{Algebra, catamorphism}
 
-/** A typeclass for substituting a pattern with a concrete value. */
+/** A typeclass for substituting concrete formulas for meta-variables within a pattern. */
 trait Substitute:
-  /** The type of the pattern to substitute. */
+  /** The type of the concrete formula used in substitution. */
   type Self
+
+  /** The type of the formula functor used in the pattern. */
   type Functor[_]
 
   extension (pattern: Pattern[Functor])
+    /** Substitutes meta-variables in the pattern according to the provided unification.
+      *
+      * @param pattern     The pattern in which to perform the substitution.
+      * @param unification The unification mapping meta-variables to concrete formulas.
+      * @return Some(substituted) if the substitution is successful; None otherwise.
+      */
+    // noinspection ScalaDocUnknownParameter
     def substitute(unification: Unification[Self]): Option[Self]
 
 object Substitute:
@@ -38,6 +47,7 @@ object Substitute:
       case FormulaF.Disjunction(disjunction) => for lhs <- disjunction.lhs; rhs <- disjunction.rhs yield lhs \/ rhs
       case FormulaF.Implication(implication) => for lhs <- implication.lhs; rhs <- implication.rhs yield lhs --> rhs
 
+  /** [[Substitute]] instance for [[Formula]]. */
   given Formula is Substitute:
     override type Functor = FormulaF
     extension (pattern: Pattern[FormulaF])
@@ -45,10 +55,22 @@ object Substitute:
         val subalgebra = algebra(unification)
         catamorphism(pattern)(algebra(subalgebra)(unification))
 
-  extension [F[_], T: {Substitute { type Functor = F }, Unpattern { type Functor = F }}](patterns: Seq[Pattern[F]])
+  extension [F[_], T: {Substitute { type Functor = F }, AsFormula { type Functor = F }}](patterns: Seq[Pattern[F]])
+    /** Substitutes meta-variables in the sequence of patterns according to the provided unification.
+      *
+      * The substitution is performed in the order of the patterns.
+      * The meta-variables are replaced by a sequence of concrete formulas.
+      *
+      * @tparam F The type of the formula functor used in the pattern.
+      * @tparam T The type of the concrete formula used in substitution.
+      * @param patterns    The sequence of patterns in which to perform the substitution.
+      * @param unification The unification mapping meta-variables to concrete formulas.
+      * @return Some(substituted) if the substitution is successful; None otherwise.
+      */
+    // noinspection ScalaDocUnknownParameter
     def substitute(unification: Unification[Seq[T]]): Option[Seq[T]] =
       patterns.traverse { pattern =>
         pattern.unfix match
           case pattern @ PatternF.Meta(name) => Some(unification(pattern))
-          case PatternF.Formula(formula)     => pattern.unpattern.map(Seq(_))
+          case PatternF.Formula(formula)     => pattern.asFormula.map(Seq(_))
       }.map(_.flatten)
