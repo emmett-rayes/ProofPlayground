@@ -3,7 +3,9 @@ package core.meta
 
 import core.logic.propositional.FormulaF
 import core.meta.Pattern
-import core.{Algebra, catamorphism}
+import core.proof.{Inference, InferenceRule}
+import core.proof.natural.Judgement
+import core.{Algebra, Fix, catamorphism, meta}
 
 /** A typeclass for extracting meta-variables from a pattern (container). */
 trait MetaVars:
@@ -32,7 +34,20 @@ object MetaVars:
       case pattern @ PatternF.Meta(_) => Set(pattern)
       case PatternF.Formula(formula)  => subalgebra(formula)
 
+  /** Instance of [[MetaVars]] for [[FormulaPattern]]. */
   given FormulaPattern is MetaVars:
     extension (pattern: Pattern[FormulaF])
       override def metavariables: Set[MetaVariable] =
         catamorphism(pattern)(algebra(algebra))
+
+  /** Instance of [[MetaVars]] for [[Judgement]]. */
+  given [F: MetaVars] => Judgement[F] is MetaVars:
+    extension (judgement: Judgement[F])
+      override def metavariables: Set[MetaVariable] =
+        judgement.assertion.metavariables ++ judgement.assumptions.flatMap(_.metavariables)
+
+  /** Instance of [[MetaVars]] for [[Inference]]. */
+  given [J: MetaVars] => Inference[J] is MetaVars:
+    extension (inference: Inference[J])
+      override def metavariables: Set[MetaVariable] =
+        inference.conclusion.metavariables ++ inference.hypotheses.flatMap(_.metavariables)
