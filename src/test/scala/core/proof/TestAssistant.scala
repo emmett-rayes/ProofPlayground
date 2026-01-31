@@ -26,3 +26,13 @@ class TestAssistant extends AnyFunSuite:
     assert(proof.get.conclusion == judgement)
     assert(hypotheses == Set(Set.empty |- A, Set.empty |- B))
   }
+
+  test("disjunction elimination fails for two propositional variables") {
+    val A         = variable[Formula]("A")
+    val B         = variable[Formula]("B")
+    val judgement = Set.empty |- (A /\ B)
+    val rule      = DisjunctionElimination
+
+    val proof = Assistant.proof(judgement, rule)
+    assert(proof.isEmpty)
+  }
