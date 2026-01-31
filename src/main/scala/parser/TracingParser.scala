@@ -13,14 +13,14 @@ object TracingParser:
         val childIndent        = "|--" * level + "|--"
         val childIndentPlusOne = "|--" * (level + 1)
         val output             = summon[ClassTag[Output]].runtimeClass.getSimpleName
-        println(s"${indent}Attempting to parse ${output} on input \"$input\"")
+        println(s"${indent}Attempting to parse $output on input \"$input\"")
         val result = self.parse(input)
         if result.isSuccess then
-          println(s"${childIndent}Successfully parsed ${output}")
+          println(s"${childIndent}Successfully parsed $output")
           println(s"${childIndentPlusOne}Remaining: \"${result.get.remaining}\"")
           println(s"${childIndentPlusOne}Parsed:    ${result.get.parsed}")
         else
-          println(s"${childIndent}Failed to parse ${output}")
+          println(s"${childIndent}Failed to parse $output")
           println(s"${childIndentPlusOne}Reason: ${result.failed.get.getMessage}")
         level -= 1
         result

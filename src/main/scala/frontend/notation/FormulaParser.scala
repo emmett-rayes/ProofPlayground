@@ -1,5 +1,5 @@
 package proofPlayground
-package frontend.notation.logic
+package frontend.notation
 
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.*
@@ -7,7 +7,7 @@ import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
 import parser.Combinators.*
 import parser.{LiteralParser, Parser, Tokens}
-import frontend.notation.logic.SymbolParser.*
+import frontend.notation.SymbolParser.*
 
 import scala.language.{implicitConversions, postfixOps}
 import scala.reflect.ClassTag

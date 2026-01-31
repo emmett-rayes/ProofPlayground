@@ -1,5 +1,5 @@
 package proofPlayground
-package frontend.notation.logic
+package frontend.notation
 
 import core.logic.symbol.*
 import parser.Combinators.*

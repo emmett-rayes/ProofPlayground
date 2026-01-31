@@ -1,5 +1,5 @@
 package proofPlayground
-package frontend.notation.logic
+package frontend.notation
 
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.*
