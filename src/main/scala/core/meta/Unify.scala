@@ -7,7 +7,7 @@ import core.meta.{Pattern, PatternF}
 import core.{Algebra, catamorphism}
 
 /** A successful unifier mapping meta-variables from a pattern to concrete values. */
-type Unification[T] = Map[PatternF.Meta[?, ?], T]
+type Unification[T] = Map[MetaVariable, T]
 
 /** A typeclass for unifying concrete formulas with patterns. */
 trait Unify:

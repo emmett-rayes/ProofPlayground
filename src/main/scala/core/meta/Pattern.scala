@@ -3,6 +3,8 @@ package core.meta
 
 import core.{Fix, Functor}
 
+type MetaVariable = PatternF.Meta[?, ?]
+
 /** Pattern for matching formulas in proof structures.
   *
   * A pattern is defined as a fixed point over the functor [[PatternF]].
