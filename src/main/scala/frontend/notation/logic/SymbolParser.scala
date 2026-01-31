@@ -2,8 +2,8 @@ package proofPlayground
 package frontend.notation.logic
 
 import core.logic.symbol.*
-import frontend.notation.parser.Combinators.*
-import frontend.notation.parser.{LiteralParser, Parser, RegexParser, Tokens}
+import parser.Combinators.*
+import parser.{LiteralParser, Parser, RegexParser, Tokens}
 
 import scala.reflect.ClassTag
 

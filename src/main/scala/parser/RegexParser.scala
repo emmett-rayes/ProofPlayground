@@ -1,7 +1,5 @@
 package proofPlayground
-package frontend.notation.parser
-
-import frontend.notation.parser.{ParseError, Parser}
+package parser
 
 import scala.util.Try
 import scala.util.matching.Regex

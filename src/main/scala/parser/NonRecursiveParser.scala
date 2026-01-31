@@ -1,7 +1,5 @@
 package proofPlayground
-package frontend.notation.parser
-
-import frontend.notation.parser.{ParseError, Parser, ParserResult}
+package parser
 
 import scala.collection.mutable
 import scala.language.reflectiveCalls

@@ -1,5 +1,5 @@
 package proofPlayground
-package frontend.notation.parser
+package parser
 
 object Combinators:
   extension [Input, Output](self: Parser[Input, Output])

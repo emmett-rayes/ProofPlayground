@@ -5,9 +5,9 @@ import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
+import parser.Combinators.*
+import parser.{LiteralParser, Parser, Tokens}
 import frontend.notation.logic.SymbolParser.*
-import frontend.notation.parser.Combinators.*
-import frontend.notation.parser.{LiteralParser, Parser, Tokens}
 
 import scala.language.{implicitConversions, postfixOps}
 import scala.reflect.ClassTag

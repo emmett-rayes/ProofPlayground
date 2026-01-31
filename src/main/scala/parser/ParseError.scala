@@ -1,5 +1,5 @@
 package proofPlayground
-package frontend.notation.parser
+package parser
 
 /** An error that occurred during parsing.
   *

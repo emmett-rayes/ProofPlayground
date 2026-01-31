@@ -1,7 +1,5 @@
 package proofPlayground
-package frontend.notation.parser
-
-import frontend.notation.parser.Parser
+package parser
 
 import scala.reflect.ClassTag
 

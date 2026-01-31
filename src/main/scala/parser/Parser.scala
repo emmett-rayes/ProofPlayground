@@ -1,5 +1,5 @@
 package proofPlayground
-package frontend.notation.parser
+package parser
 
 import scala.util.{Failure, Success, Try}
 
