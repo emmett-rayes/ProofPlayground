@@ -4,19 +4,15 @@ package core.meta
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
-import core.meta.{Pattern, PatternF}
 import core.{Algebra, catamorphism}
 
-/** A typeclass for substituting a pattern with a concrete value.
-  *
-  * @note `Self` is meant to be the pattern type.
-  *
-  * @tparam F The formula type used in substitution.
-  */
-trait Substitute[F[_]]:
+/** A typeclass for substituting a pattern with a concrete value. */
+trait Substitute:
+  /** The type of the pattern to substitute. */
   type Self
+  type Functor[_]
 
-  extension (pattern: Pattern[F])
+  extension (pattern: Pattern[Functor])
     def substitute(unification: Unification[Self]): Option[Self]
 
 object Substitute:
@@ -41,7 +37,8 @@ object Substitute:
       case FormulaF.Disjunction(disjunction) => for lhs <- disjunction.lhs; rhs <- disjunction.rhs yield lhs \/ rhs
       case FormulaF.Implication(implication) => for lhs <- implication.lhs; rhs <- implication.rhs yield lhs --> rhs
 
-  given Formula is Substitute[FormulaF]:
+  given Formula is Substitute:
+    override type Functor = FormulaF
     extension (pattern: Pattern[FormulaF])
       override def substitute(unification: Unification[Formula]): Option[Formula] =
         val subalgebra = algebra(unification)

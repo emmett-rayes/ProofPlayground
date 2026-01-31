@@ -9,10 +9,11 @@ import core.{Algebra, catamorphism}
 /** A successful unifier mapping meta variables from a pattern to concrete values. */
 type Unification[T] = Map[PatternF.Meta[?, ?], T]
 
-trait Unify[F[_]]:
+trait Unify:
   type Self
+  type Functor[_]
 
-  extension (pattern: Pattern[F])
+  extension (pattern: Pattern[Functor])
     /** Attempt to unify a pattern with a concrete value.
       * The result is a mapping from meta-variable appearing in the pattern to concrete values when a match exists.
       *
@@ -37,7 +38,9 @@ object Unify:
     val intersection = fst.keySet.intersect(snd.keySet)
     if intersection.exists(key => fst(key) != snd(key)) then None else Some(fst ++ snd)
 
-  given Formula is Unify[FormulaF]:
+  given Formula is Unify:
+    override type Functor = FormulaF
+
     extension (pattern: Pattern[FormulaF])
       /** Attempt to unify a formula pattern with a concrete formula.
         *
@@ -50,7 +53,7 @@ object Unify:
         * @param scrutinee concrete formula to check against
         * @return Some(unification) if a consistent unification exists; None otherwise
         */
-      override def unify(scrutinee: Self): Option[Unification[Self]] =
+      override def unify(scrutinee: Formula): Option[Unification[Formula]] =
         catamorphism(pattern)(algebra[FormulaF, Formula](algebra))(scrutinee)
 
     /** Unification algebra for the [[PatternF]] functor with carrier `Unifier[T]`. */
@@ -92,7 +95,7 @@ object Unify:
             yield merged
           case _ => None
 
-  extension [F[_], X: Unify[F]](patterns: Seq[Pattern[F]])
+  extension [T: Unify](patterns: Seq[Pattern[T.Functor]])
     /** Attempt to unify a sequence of formula patterns with a sequence of concrete formulas.
       *
       * Rules:
@@ -111,8 +114,8 @@ object Unify:
       * @param scrutinees the sequence of concrete formulas to check against
       * @return Some(unification) if a consistent unification exists; None otherwise
       */
-    def unify(scrutinees: Seq[X]): Option[Unification[Seq[X]]] =
-      val emptyContext: (Unification[X], Map[Int, Int]) = (Map.empty, Map.empty)
+    def unify(scrutinees: Seq[T]): Option[Unification[Seq[T]]] =
+      val emptyContext: (Unification[T], Map[Int, Int]) = (Map.empty, Map.empty)
       val unificationConcrete = patterns.zipWithIndex.foldLeft(Option(emptyContext)) { (ctx, pWithIdx) =>
         val (pattern, idx) = pWithIdx
         pattern.unfix match
