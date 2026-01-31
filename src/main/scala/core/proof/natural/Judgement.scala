@@ -20,4 +20,4 @@ case object Judgement:
     */
   extension [F](assumptions: Set[F])
     /** Judgement infix constructor. */
-    def |-(assertion: F) = Judgement(assumptions, assertion)
+    def |-(assertion: F): Judgement[F] = Judgement(assumptions, assertion)
