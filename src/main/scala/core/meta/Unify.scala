@@ -6,6 +6,8 @@ import core.meta.PatternF.meta
 import core.meta.{Pattern, PatternF}
 import core.{Algebra, catamorphism}
 
+import scala.annotation.targetName
+
 /** A successful unifier mapping meta-variables from a pattern to concrete values. */
 type Unification[T] = Map[MetaVariable, T]
 
@@ -48,12 +50,29 @@ object Unify:
     *
     * @param fst the first unification to merge
     * @param snd the second unification to merge
-    *
+    * @tparam T the type of the values produced by the unifications
     * @return Some(merged) when consistent; None on conflict
     */
   def merge[T](fst: Unification[T], snd: Unification[T]): Option[Unification[T]] =
     val intersection = fst.keySet.intersect(snd.keySet)
     if intersection.exists(key => fst(key) != snd(key)) then None else Some(fst ++ snd)
+
+  /** Merge two unifications if they agree on shared variables, otherwise fail.
+    *
+    * This overload allows for unifications over sequences to be merged.
+    *
+    * If both unifications share a meta-variable, the values of the meta-variable in the second unification
+    * must be already contained in the first unification.
+    *
+    * @param fst the first unification to merge
+    * @param snd the second unification to merge
+    * @tparam T the type of the values produced by the unifications
+    * @return Some(merged) when consistent; None on conflict
+    */
+  @targetName("mergeSeq")
+  def merge[T](fst: Unification[Seq[T]], snd: Unification[T]): Option[Unification[Seq[T]]] =
+    val intersection = fst.keySet.intersect(snd.keySet)
+    if intersection.exists(key => !fst(key).contains(snd(key))) then None else Some(fst ++ snd.view.mapValues(Seq(_)))
 
   /** [[Unify]] instance for [[Formula]]. */
   given Formula is Unify:
