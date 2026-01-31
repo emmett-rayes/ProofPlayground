@@ -1,6 +1,7 @@
 package proofPlayground
 package core.meta
 
+import core.Traverse.traverse
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
@@ -43,3 +44,11 @@ object Substitute:
       override def substitute(unification: Unification[Formula]): Option[Formula] =
         val subalgebra = algebra(unification)
         catamorphism(pattern)(algebra(subalgebra)(unification))
+
+  extension [F[_], T: {Substitute { type Functor = F }, Unpattern { type Functor = F }}](patterns: Seq[Pattern[F]])
+    def substitute(unification: Unification[Seq[T]]): Option[Seq[T]] =
+      patterns.traverse { pattern =>
+        pattern.unfix match
+          case pattern @ PatternF.Meta(name) => Some(unification(pattern))
+          case PatternF.Formula(formula)     => pattern.unpattern.map(Seq(_))
+      }.map(_.flatten)

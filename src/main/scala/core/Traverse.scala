@@ -1,5 +1,5 @@
 package proofPlayground
-package core.meta
+package core
 
 object Traverse:
   extension [A](seq: Seq[A])
