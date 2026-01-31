@@ -25,14 +25,14 @@ opaque type ProofZipper[J] = TreeZipper[J]
 object Proof:
   def apply[J](root: J, subproofs: List[Proof[J]]): Proof[J] = Tree(root, subproofs)
 
-  def unapply[J](proof: Proof[J]): Option[(J, List[Tree[J]])] = Some(proof.value, proof.children)
+  def unapply[J](proof: Proof[J]): Option[(J, List[Proof[J]])] = Some(proof.value, proof.children)
 
   extension [J](proof: Proof[J])
     /** Returns the conclusion of the proof. */
     def conclusion: J = proof.value
 
     /** Returns the recursive sub-derivations leading to the conclusion. */
-    def subproofs: List[Tree[J]] = proof.children
+    def subproofs: List[Proof[J]] = proof.children
 
     /** Returns a zipper over the proof tree. */
     def zipper: ProofZipper[J] = ProofZipper(proof)
