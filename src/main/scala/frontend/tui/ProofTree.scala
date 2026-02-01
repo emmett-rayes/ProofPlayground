@@ -2,7 +2,7 @@ package proofPlayground
 package frontend.tui
 
 import core.logic.propositional.Formula
-import frontend.tui.models.{ProofStep, ProofTreeModel}
+import frontend.tui.models.{ProofRule, ProofStep, ProofTreeModel}
 import tree.Tree
 
 import tui.*
@@ -80,10 +80,10 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
     renderRules(renderer, data.rules, layout(0))
     renderTree(renderer, data.proofTree, layout(1))
 
-  private def renderRules(renderer: Renderer, rules: Vector[String], area: Rect): Unit =
+  private def renderRules(renderer: Renderer, rules: Vector[ProofRule], area: Rect): Unit =
     val items = data.rules.toArray.map { rule =>
-      val label = Text.nostyle(rule)
-      ListWidget.Item(label, Style(fg = Some(Color.White), bg = Some(Color.Reset)))
+      val label = Text.nostyle(rule.rule)
+      ListWidget.Item(label, Style(bg = Some(Color.Reset), fg = Some(if rule.active then Color.Green else Color.Gray)))
     }
 
     val list = ListWidget(
@@ -96,8 +96,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
       )),
       highlightStyle = Style(
         bg = Some(Color.LightYellow),
-        fg = Some(Color.Black),
-        addModifier = Modifier.BOLD
+        addModifier = Modifier.BOLD,
       ),
     )
 

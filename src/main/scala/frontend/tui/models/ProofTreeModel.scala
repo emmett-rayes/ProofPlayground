@@ -13,11 +13,12 @@ import tree.Zipper.root
 import scala.compiletime.uninitialized
 
 case class ProofStep(formula: String, rule: String)
+case class ProofRule(active: Boolean, rule: String)
 
 object ProofTreeModel:
   trait Data:
     def proofTree: Tree[ProofStep]
-    def rules: Vector[String]
+    def rules: Vector[ProofRule]
     def focusOnRules: Boolean
     def isNodeSelected(node: Tree[ProofStep]): Boolean
 
@@ -38,8 +39,11 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
   private var selected: ProofStep = uninitialized
   private var rulesInFocus        = false
 
-  override def rules: Vector[String] = inferenceRules.map(_.label)
-  override def focusOnRules: Boolean = rulesInFocus
+  override def focusOnRules: Boolean    = rulesInFocus
+  override def rules: Vector[ProofRule] = inferenceRules.map { rule =>
+    val proof = Assistant.proof(zipper.get.conclusion, rule)
+    ProofRule(proof.isDefined, rule.label)
+  }
 
   override def proofTree: Tree[ProofStep] =
     zipper.root.get.asTree.map { judgement =>
