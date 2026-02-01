@@ -18,7 +18,7 @@ class Coordinator extends Navigation:
 
   def render(frame: Frame): Unit =
     val renderer = FrameRenderer(frame)
-    val screen   = MainScreen(screens.head)
+    val screen = MainScreen(screens)
     screen.render(renderer, frame.size)
 
   override def exit(): Unit =
