@@ -28,8 +28,8 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
       Span.styled("Enter", Style.DEFAULT.addModifier(Modifier.BOLD)),
       Span.nostyle(if data.focusOnRules then " to apply rule" else " to select node"),
       Span.nostyle(", "),
-      Span.styled("q", Style.DEFAULT.addModifier(Modifier.BOLD)),
-      Span.nostyle(" to exit."),
+      Span.styled(if data.focusOnRules then "Esc" else "q", Style.DEFAULT.addModifier(Modifier.BOLD)),
+      Span.nostyle(" to " + (if data.focusOnRules then "cancel" else "exit") + "."),
     )
 
   override def handleEvent(event: Event): Unit =
@@ -41,6 +41,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
           case c: KeyCode.Right => signals.right()
           case c: KeyCode.Up    => if treeFocus then signals.up() else previousRule()
           case c: KeyCode.Down  => if treeFocus then signals.down() else nextRule()
+          case c: KeyCode.Esc   => if !treeFocus then signals.selectRule(None)
           case c: KeyCode.Enter =>
             if treeFocus then signals.selectNode() else signals.selectRule(rulesListState.selected)
           case c: KeyCode.Char if c.c == 'q' =>
