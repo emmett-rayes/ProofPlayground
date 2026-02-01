@@ -20,7 +20,10 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
 
   override def footerText: Text =
     Text.from(
-      Span.nostyle("Press "),
+      Span.nostyle("Use "),
+      Span.styled("Arrow Keys", Style.DEFAULT.addModifier(Modifier.BOLD)),
+      Span.nostyle(" to navigate, "),
+      Span.nostyle("press "),
       Span.styled("Enter", Style.DEFAULT.addModifier(Modifier.BOLD)),
       Span.nostyle(" to select, "),
       Span.styled("q", Style.DEFAULT.addModifier(Modifier.BOLD)),
