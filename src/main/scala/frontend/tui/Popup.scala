@@ -3,11 +3,11 @@ package frontend.tui
 
 import tui.*
 import tui.crossterm.{Event, KeyCode}
-import tui.widgets.{BlockWidget, ParagraphWidget}
+import tui.widgets.{BlockWidget, ClearWidget, ParagraphWidget}
 
 class Popup(message: String, title: Option[String])(confirm: () => Unit, dismiss: () => Unit) extends Screen:
-  private val ySize       = 40
-  private val xSize       = 30
+  private val ySize      = 40
+  private val xSize      = 30
   private var confirming = false
 
   override def headerText: Text =
@@ -68,8 +68,10 @@ class Popup(message: String, title: Option[String])(confirm: () => Unit, dismiss
     val cancelButton  = ButtonWidget("Cancel", !confirming)
     val confirmButton = ButtonWidget("Confirm", confirming)
     val content       = ParagraphWidget(text = Text.nostyle(message), alignment = Alignment.Center)
+    val background    = ClearWidget
     val border        = BlockWidget(title = title.map(Spans.nostyle), borders = Borders.ALL)
 
+    renderer.render(background, contentArea)
     renderer.render(border, contentArea)
     renderer.render(content, contentLayout(1))
     renderer.render(cancelButton, buttonsLayout(0))
