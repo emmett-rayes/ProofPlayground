@@ -1,13 +1,12 @@
 package proofPlayground
 package frontend.tui.models
 
-import core.logic.propositional.Formula
+import core.logic.propositional.{Formula, FormulaF}
 import core.proof.ProofZipper.given
 import core.proof.natural.Judgement
 import core.proof.{Assistant, Proof, ProofSystem}
 import frontend.Show.given
 import frontend.tui.Navigation
-import frontend.tui.Navigation.Screen
 import tree.Tree
 import tree.Zipper.root
 
@@ -18,22 +17,29 @@ case class ProofStep(formula: String, rule: String)
 object ProofTreeModel:
   trait Data:
     def proofTree: Tree[ProofStep]
-    def nodeSelected(node: Tree[ProofStep]): Boolean
+    def rules: Vector[String]
+    def focusOnRules: Boolean
+    def isNodeSelected(node: Tree[ProofStep]): Boolean
 
   trait Signals:
+    def quit(): Unit
     def up(): Unit
     def down(): Unit
     def left(): Unit
     def right(): Unit
-    def select(): Unit
-    def quit(): Unit
+    def selectNode(): Unit
+    def selectRule(index: Option[Int]): Unit
 
 class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTreeModel.Data, ProofTreeModel.Signals:
-  private val system  = ProofSystem.IntuitionisticPropositionalNaturalDeduction
-  private val initial = Proof(Judgement(Set.empty, formula), List.empty)
+  private val proofSystem    = ProofSystem.IntuitionisticPropositionalNaturalDeduction
+  private val inferenceRules = proofSystem.rules.toVector.sortBy(_.label)
 
-  private var zipper              = initial.zipper
+  private var zipper              = Proof(Judgement(Set.empty, formula), List.empty).zipper
   private var selected: ProofStep = uninitialized
+  private var rulesInFocus        = false
+
+  override def rules: Vector[String] = inferenceRules.map(_.label)
+  override def focusOnRules: Boolean = rulesInFocus
 
   override def proofTree: Tree[ProofStep] =
     zipper.root.get.asTree.map { judgement =>
@@ -43,7 +49,7 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
       result
     }
 
-  override def nodeSelected(node: Tree[ProofStep]): Boolean =
+  override def isNodeSelected(node: Tree[ProofStep]): Boolean =
     selected eq node.value
 
   override def up(): Unit =
@@ -58,12 +64,19 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
   override def right(): Unit =
     zipper = zipper.right.getOrElse(zipper)
 
-  override def select(): Unit =
-    import core.proof.natural.InferenceRules.IntuitionisticPropositional.ConjunctionIntroduction
-    val replacement = Assistant.proof(zipper.get.conclusion, ConjunctionIntroduction).getOrElse(zipper.get)
-    zipper = zipper.replace(replacement)
+  override def selectNode(): Unit =
+    rulesInFocus = true
+
+  override def selectRule(index: Option[Int]): Unit =
+    rulesInFocus = false
+    for
+      idx  <- index
+      rule <- inferenceRules.lift(idx)
+    yield
+      val replacement = Assistant.proof(zipper.get.conclusion, rule).getOrElse(zipper.get)
+      zipper = zipper.replace(replacement)
 
   override def quit(): Unit =
     navigation.showPopup("Do you want to quit the proof mode?", Some("Quit")) {
-      navigation.navigateTo(Screen.FormulaInput)
+      navigation.navigateTo(Navigation.Screen.FormulaInput)
     }

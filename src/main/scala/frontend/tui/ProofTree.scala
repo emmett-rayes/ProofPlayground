@@ -7,7 +7,7 @@ import tree.Tree
 
 import tui.*
 import tui.crossterm.{Event, KeyCode}
-import tui.widgets.{BlockWidget, ParagraphWidget}
+import tui.widgets.{BlockWidget, ListWidget, ParagraphWidget}
 
 object ProofTree:
   def apply(navigation: Navigation)(formula: Formula): ProofTree =
@@ -15,6 +15,8 @@ object ProofTree:
     new ProofTree(model)(model)
 
 class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) extends Screen:
+  private val rulesListState = ListWidget.State()
+
   override def headerText: Text =
     Text.from(Span.styled("Proof Tree", Style.DEFAULT.fg(Color.Cyan)))
 
@@ -23,30 +25,82 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
       Span.nostyle("Use "),
       Span.styled("Arrow Keys", Style.DEFAULT.addModifier(Modifier.BOLD)),
       Span.nostyle(" to navigate, "),
-      Span.nostyle("press "),
       Span.styled("Enter", Style.DEFAULT.addModifier(Modifier.BOLD)),
-      Span.nostyle(" to select, "),
+      Span.nostyle(if data.focusOnRules then " to apply rule" else " to select node"),
+      Span.nostyle(", "),
       Span.styled("q", Style.DEFAULT.addModifier(Modifier.BOLD)),
-      Span.nostyle(" to exit.")
+      Span.nostyle(" to exit."),
     )
 
   override def handleEvent(event: Event): Unit =
+    val treeFocus = !data.focusOnRules
     event match {
       case key: tui.crossterm.Event.Key =>
         key.keyEvent().code() match {
-          case c: KeyCode.Char if c.c == 'q' => signals.quit()
-          case c: KeyCode.Up                 => signals.up()
-          case c: KeyCode.Down               => signals.down()
-          case c: KeyCode.Left               => signals.left()
-          case c: KeyCode.Right              => signals.right()
-          case c: KeyCode.Enter              => signals.select()
-          case _                             => ()
+          case c: KeyCode.Left  => signals.left()
+          case c: KeyCode.Right => signals.right()
+          case c: KeyCode.Up    => if treeFocus then signals.up() else previousRule()
+          case c: KeyCode.Down  => if treeFocus then signals.down() else nextRule()
+          case c: KeyCode.Enter =>
+            if treeFocus then signals.selectNode() else signals.selectRule(rulesListState.selected)
+          case c: KeyCode.Char if c.c == 'q' =>
+            signals.quit()
+          case _ => ()
         }
       case _ => ()
     }
 
+  private def previousRule(): Unit =
+    val i = rulesListState.selected match {
+      case Some(i) => if i == 0 then data.rules.length - 1 else i - 1
+      case None    => 0
+    }
+    rulesListState.select(Some(i))
+
+  private def nextRule(): Unit =
+    val i = rulesListState.selected match {
+      case Some(i) => if i >= data.rules.length - 1 then 0 else i + 1
+      case None    => 0
+    }
+    rulesListState.select(Some(i))
+
   override def render(renderer: Renderer, area: Rect): Unit =
-    renderTree(renderer, data.proofTree, area)
+    val layout = Layout(
+      direction = Direction.Horizontal,
+      constraints = Array(
+        Constraint.Min(25),
+        Constraint.Min(0),
+      )
+    ).split(area)
+
+    if !data.focusOnRules then deselectRule()
+    else if rulesListState.selected.isEmpty then nextRule()
+
+    renderRules(renderer, data.rules, layout(0))
+    renderTree(renderer, data.proofTree, layout(1))
+
+  private def renderRules(renderer: Renderer, rules: Vector[String], area: Rect): Unit =
+    val items = data.rules.toArray.map { rule =>
+      val label = Text.nostyle(rule)
+      ListWidget.Item(label, Style(fg = Some(Color.White), bg = Some(Color.Reset)))
+    }
+
+    val list = ListWidget(
+      items = items,
+      block = Some(BlockWidget(
+        title = Some(Spans.nostyle("Inference Rules")),
+        titleAlignment = Alignment.Center,
+        borders = Borders.ALL,
+        borderStyle = if data.focusOnRules then Style(fg = Some(Color.Yellow)) else Style.DEFAULT
+      )),
+      highlightStyle = Style(
+        bg = Some(Color.LightYellow),
+        fg = Some(Color.Black),
+        addModifier = Modifier.BOLD
+      ),
+    )
+
+    renderer.render(list, area)(rulesListState)
 
   private def renderTree(renderer: Renderer, tree: Tree[ProofStep], area: tui.Rect): Unit =
     val nodeLayout = Layout(
@@ -72,7 +126,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
     val nodeWidget = ParagraphWidget(
       text = Text.from(Span.nostyle(tree.value.formula)),
       alignment = Alignment.Center,
-      style = if data.nodeSelected(tree) then Style.DEFAULT.fg(Color.Yellow) else Style.DEFAULT,
+      style = if data.isNodeSelected(tree) then Style.DEFAULT.fg(Color.Yellow) else Style.DEFAULT,
     )
 
     renderer.render(divider, nodeLayout(1))
@@ -99,3 +153,6 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
 
       for (child, idx) <- tree.children.zipWithIndex do
         renderTree(renderer, child, childrenLayout(idx))
+
+  private def deselectRule(): Unit =
+    rulesListState.select(None)
