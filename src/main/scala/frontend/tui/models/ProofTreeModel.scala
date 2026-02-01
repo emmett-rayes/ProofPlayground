@@ -10,6 +10,7 @@ import frontend.tui.Navigation
 import tree.Tree
 import tree.Zipper.root
 
+import java.util
 import scala.compiletime.uninitialized
 
 case class ProofStep(formula: String, rule: String)
@@ -39,6 +40,10 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
   private var selected: ProofStep = uninitialized
   private var rulesInFocus        = false
 
+  // hack to remember the label of the proof step for each judgement
+  // Uses `IdentityHashMap` which compares keys by reference equality (eq) instead of structural equality
+  private val proofStepLabels = util.IdentityHashMap[Judgement[Formula], String]()
+
   override def focusOnRules: Boolean    = rulesInFocus
   override def rules: Vector[ProofRule] = inferenceRules.map { rule =>
     val proof = Assistant.proof(zipper.get.conclusion, rule)
@@ -47,7 +52,7 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
 
   override def proofTree: Tree[ProofStep] =
     zipper.root.get.asTree.map { judgement =>
-      val result = ProofStep(judgement.show, "")
+      val result = ProofStep(judgement.show, proofStepLabels.getOrDefault(judgement, "?"))
       // remember the current position for `nodeSelected`
       if judgement eq zipper.get.conclusion then selected = result
       result
@@ -79,6 +84,7 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
     yield
       val replacement = Assistant.proof(zipper.get.conclusion, rule).getOrElse(zipper.get)
       zipper = zipper.replace(replacement)
+      proofStepLabels.put(zipper.get.conclusion, rule.label)
 
   override def quit(): Unit =
     navigation.showPopup("Do you want to quit the proof mode?", Some("Quit")) {
