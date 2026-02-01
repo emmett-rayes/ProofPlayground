@@ -2,6 +2,7 @@ package proofPlayground
 package frontend.tui.models
 
 import core.logic.propositional.{Formula, FormulaF}
+import core.proof.Assistant.ProofResult
 import core.proof.ProofZipper.given
 import core.proof.natural.Judgement
 import core.proof.{Assistant, Proof, ProofSystem}
@@ -36,18 +37,21 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
   private val proofSystem    = ProofSystem.IntuitionisticPropositionalNaturalDeduction
   private val inferenceRules = proofSystem.rules.toVector.sortBy(_.label)
 
-  private var zipper              = Proof(Judgement(Set.empty, formula), List.empty).zipper
-  private var selected: ProofStep = uninitialized
-  private var rulesInFocus        = false
-
   // hack to remember the label of the proof step for each judgement
   // Uses `IdentityHashMap` which compares keys by reference equality (eq) instead of structural equality
   private val proofStepLabels = util.IdentityHashMap[Judgement[Formula], String]()
 
+  private var rulesInFocus        = false
+  private var zipper              = Proof(Judgement(Set.empty, formula), List.empty).zipper
+  private var selected: ProofStep = uninitialized
+
   override def focusOnRules: Boolean    = rulesInFocus
   override def rules: Vector[ProofRule] = inferenceRules.map { rule =>
-    val proof = Assistant.proof(zipper.get.conclusion, rule)
-    ProofRule(proof.isDefined, rule.label)
+    val active = Assistant.proof(zipper.get.conclusion, rule) match
+      case ProofResult.UnificationFailure()               => false
+      case ProofResult.Success(proof)                     => true
+      case ProofResult.SubstitutionFailure(metavariables) => true // substitution failures can be fixed by user input
+    ProofRule(active, rule.label)
   }
 
   override def proofTree: Tree[ProofStep] =
@@ -82,7 +86,12 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
       idx  <- index
       rule <- inferenceRules.lift(idx)
     yield
-      val replacement = Assistant.proof(zipper.get.conclusion, rule).getOrElse(zipper.get)
+      val replacement = Assistant.proof(zipper.get.conclusion, rule) match
+        case ProofResult.UnificationFailure()               => zipper.get
+        case ProofResult.Success(proof)                     => proof
+        case ProofResult.SubstitutionFailure(metavariables) =>
+          zipper.get // TODO handle substitution error via user input
+
       zipper = zipper.replace(replacement)
       proofStepLabels.put(zipper.get.conclusion, rule.label)
 

@@ -3,6 +3,8 @@ package core.proof
 
 import core.Traverse.traverse
 import core.meta.*
+import core.{Fix, Functor}
+import core.meta.MetaVars.given
 import core.meta.Substitute.substitute
 import core.meta.Unify.{merge, unify}
 import core.proof.natural.Judgement
@@ -16,28 +18,67 @@ object Assistant:
     * Thus producing new hypotheses as given by the inference rule.
     *
     * @tparam F The type of the formula functor used in patterns in the inference rule.
-    * @tparam T The type of the concrete formula used in the judgement.
     * @param judgement The judgement to be proved.
     * @param rule The inference rule to be applied.
-    * @param unification A unification for the meta-variables appearing in the hypotheses but not in the conclusion.
+    * @param auxUnification A unification for the meta-variables appearing in the hypotheses but not in the conclusion.
     * @return Some(proof) if it is constructible, None otherwise.
     */
-  def proof[F[_], T: {Unify { type Functor = F }, Substitute { type Functor = F }, AsFormula { type Functor = F }}](
-    judgement: Judgement[T],
+  def proof[F[_]: Functor](using
+    Unify { type Self = Fix[F]; type Functor = F },
+    Substitute { type Self = Fix[F]; type Functor = F },
+    MetaVars { type Self = Fix[F]; type Functor = F },
+    AsFormula { type Self = Fix[F]; type Functor = F },
+  )(
+    judgement: Judgement[Fix[F]],
     rule: InferenceRule[Judgement, F],
-    unification: Unification[T] = Map.empty
-  ): Option[Proof[Judgement[T]]] =
-    for
-      assertionUnification   <- rule.conclusion.assertion.unify(judgement.assertion): Option[Unification[T]]
-      assumptionsUnification <- rule.conclusion.assumptions.toSeq.unify(judgement.assumptions.toSeq)
-      totalUnification       <- merge(assertionUnification, unification)
-      totalSeqUnification    <- merge(assumptionsUnification, totalUnification)
-      conclusion             <- rule.conclusion.assertion.substitute(totalUnification)
-      assumptions            <- rule.conclusion.assumptions.toSeq.substitute(totalSeqUnification)
-      hypotheses             <- rule.hypotheses.toSeq.traverse { hypothesis =>
+    auxUnification: Unification[Fix[F]] = Map.empty[MetaVariable, Fix[F]]
+  ): ProofResult[Judgement[Fix[F]]] =
+    val unificationOpt =
+      for
+        assertionUnification   <- rule.conclusion.assertion.unify(judgement.assertion): Option[Unification[Fix[F]]]
+        assumptionsUnification <- rule.conclusion.assumptions.toSeq.unify(judgement.assumptions.toSeq)
+        totalUnification       <- merge(assertionUnification, auxUnification)
+        totalSeqUnification    <- merge(assumptionsUnification, totalUnification)
+      yield (totalUnification, totalSeqUnification)
+
+    if unificationOpt.isEmpty then ProofResult.UnificationFailure()
+    else
+      val (unification, seqUnification) = unificationOpt.get
+
+      val proof =
         for
-          assertion   <- hypothesis.assertion.substitute(totalUnification)
-          assumptions <- hypothesis.assumptions.toSeq.substitute(totalSeqUnification)
-        yield Judgement(assumptions.toSet, assertion)
-      }
-    yield Proof(Judgement(assumptions.toSet, conclusion), hypotheses.map(Proof(_, List.empty)).toList)
+          conclusion  <- rule.conclusion.assertion.substitute(unification)
+          assumptions <- rule.conclusion.assumptions.toSeq.substitute(seqUnification)
+          hypotheses  <- rule.hypotheses.toSeq.traverse { hypothesis =>
+            for
+              assertion   <- hypothesis.assertion.substitute(unification)
+              assumptions <- hypothesis.assumptions.toSeq.substitute(seqUnification)
+            yield Judgement(assumptions.toSet, assertion)
+          }
+        yield Proof(Judgement(assumptions.toSet, conclusion), hypotheses.map(Proof(_, List.empty)).toList)
+
+      if proof.isDefined then ProofResult.Success(proof.get)
+      else
+        val conclusionMetaVars = rule.conclusion.metavariables: Set[MetaVariable]
+        val criticalMetaVars   = rule.metavariables.diff(conclusionMetaVars)
+        ProofResult.SubstitutionFailure(criticalMetaVars.toSeq)
+
+  /** Result of attempting to construct a proof. */
+  enum ProofResult[J]:
+    /** Successful proof construction.
+      *
+      * @param proof the constructed proof.
+      */
+    case Success(proof: Proof[J])
+
+    /** Unification failure during proof construction. */
+    case UnificationFailure()
+
+    /** Substitution failure during proof construction.
+      *
+      * @param metavariables The meta-variables that could not be substituted.
+      *
+      * @note currently, `metavariables` contains *all* meta-variables that appear in
+      *       the hypotheses of the rule but not in the conclusion, i.e. a superset of all the meta-variables.
+      */
+    case SubstitutionFailure(metavariables: Seq[MetaVariable])
