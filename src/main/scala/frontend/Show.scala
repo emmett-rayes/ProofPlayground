@@ -35,4 +35,4 @@ object Show:
   given [F: Show] => Judgement[F] is Show:
     extension (judgement: Judgement[F])
       override def show: String =
-        s"${judgement.assumptions.map(_.show).mkString(",")} |- ${judgement.assertion.show}"
+        s"${judgement.assumptions.map(_.show).mkString(",")} ⊢ ${judgement.assertion.show}"
