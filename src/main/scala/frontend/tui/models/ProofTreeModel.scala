@@ -1,8 +1,9 @@
 package proofPlayground
 package frontend.tui.models
 
-import core.logic.propositional.{Formula, FormulaF}
 import core.logic.propositional.Formula.given
+import core.logic.propositional.{Formula, FormulaF}
+import core.meta.Unify.given
 import core.proof.Assistant.ProofResult
 import core.proof.ProofZipper.given
 import core.proof.natural.Judgement

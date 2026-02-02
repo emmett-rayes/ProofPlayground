@@ -1,12 +1,13 @@
 package proofPlayground
 package core.proof
 
-import core.{Algebra, Fix, Functor, Sequence, traverse}
 import core.meta.*
 import core.meta.MetaVars.given
 import core.meta.Substitute.substitute
-import core.meta.Unify.{merge, unify}
+import core.meta.Unification.merge
+import core.meta.Unify.{Unifier, unify}
 import core.proof.natural.Judgement
+import core.{Algebra, Fix, Functor, Sequence, traverse}
 
 object Assistant:
   type SequenceOption = [X[_]] =>> Sequence[X, Option]
@@ -26,9 +27,8 @@ object Assistant:
     */
   def proof[F[_]: {Functor, SequenceOption}](using
     Algebra[F, Fix[F]],
+    Algebra[F, Unifier[Fix[F]]],
     Algebra[F, Set[MetaVariable]],
-  )(using
-    Unify { type Self = Fix[F]; type Functor = F },
   )(
     judgement: Judgement[Fix[F]],
     rule: InferenceRule[Judgement, F],
@@ -36,8 +36,8 @@ object Assistant:
   ): ProofResult[Judgement[Fix[F]]] =
     val unificationOpt =
       for
-        assertionUnification   <- rule.conclusion.assertion.unify(judgement.assertion): Option[Unification[Fix[F]]]
-        assumptionsUnification <- rule.conclusion.assumptions.toSeq.unify(judgement.assumptions.toSeq)
+        assertionUnification   <- unify(rule.conclusion.assertion, judgement.assertion): Option[Unification[Fix[F]]]
+        assumptionsUnification <- unify[Fix[F], F](rule.conclusion.assumptions.toSeq, judgement.assumptions.toSeq)
         totalUnification       <- merge(assertionUnification, auxUnification)
         totalSeqUnification    <- merge(assumptionsUnification, totalUnification)
       yield (totalUnification, totalSeqUnification)

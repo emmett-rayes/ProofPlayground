@@ -38,13 +38,14 @@ object Substitute:
   def substitute[T, F[_]: {Functor, SequenceOption}](using
     Algebra[F, T]
   )(pattern: Pattern[F], unification: Unification[T]): Option[T] =
+    given Algebra[F, Option[T]] = _.sequence.map(summon)
     catamorphism(pattern)(algebra(unification))
 
   /** Substitution algebra for the [[PatternF]] functor with carrier `Option[T]`. */
-  private def algebra[T, F[_]: {Functor, SequenceOption}](
-    using subalgebra: Algebra[F, T]
+  private def algebra[T, F[_]: Functor](
+    using subalgebra: Algebra[F, Option[T]]
   )(unification: Unification[T])(pattern: PatternF[F, Option[T]])
     : Option[T] =
     pattern match
       case pattern @ PatternF.Meta(name) => unification.get(pattern)
-      case PatternF.Formula(formula)     => formula.sequence.map(subalgebra)
+      case PatternF.Formula(formula)     => subalgebra(formula)
