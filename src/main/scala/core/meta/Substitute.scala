@@ -59,10 +59,25 @@ object Substitute:
     * @return The pattern with meta-variables substituted where possible.
     */
   def substitutePartial[T: AsPattern[F], F[_]: Functor](pattern: Pattern[F], unification: Unification[T]): Pattern[F] =
+    def substitute(pattern: Pattern[F], unification: Unification[Pattern[F]]): Pattern[F] =
+      pattern.unfix match
+        case pattern @ PatternF.Meta(_) => unification.getOrElse(pattern, pattern)
+        case PatternF.Formula(formula)  => concrete(formula.map(substitute(_, unification)))
     val patternUnification = unification.view.mapValues(_.asPattern).toMap
-    pattern.unfix match
-      case pattern @ PatternF.Meta(name) => patternUnification.getOrElse(pattern, pattern)
-      case PatternF.Formula(formula)     => concrete(formula.map(substitutePartial(_, unification)))
+    substitute(pattern, patternUnification)
+
+  def substitutePartial[T: AsPattern[F], F[_]: Functor](
+    patterns: Seq[Pattern[F]],
+    unification: Unification[Seq[T]]
+  ): Seq[Pattern[F]] =
+    def substitute(patterns: Seq[Pattern[F]], unification: Unification[Seq[Pattern[F]]]): Seq[Pattern[F]] =
+      patterns.flatMap { pattern =>
+        pattern.unfix match
+          case pattern @ PatternF.Meta(_) => unification.getOrElse(pattern, Seq(pattern)): Seq[Pattern[F]]
+          case pattern @ PatternF.Formula(formula) => substitute(Seq(concrete(formula)), unification)
+      }
+    val patternUnification: Unification[Seq[Pattern[F]]] = unification.view.mapValues(_.map(_.asPattern)).toMap
+    substitute(patterns, patternUnification)
 
   /** An algebra for collapsing a [[Formula]] into an `Option[Formula]`. */
   given Algebra[FormulaF, Option[Formula]]:
