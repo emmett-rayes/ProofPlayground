@@ -8,8 +8,7 @@ import core.logic.symbol
 import core.meta.Pattern.given
 import core.meta.PatternF.meta
 import core.meta.PatternUtil.{asPattern, given}
-import core.meta.Substitute
-import core.meta.Substitute.given
+import core.meta.Substitute.substitute
 import core.meta.{Pattern, Unification}
 
 import org.scalatest.funsuite.AnyFunSuite
@@ -25,7 +24,7 @@ class TestSubstitution extends AnyFunSuite:
     val pattern      = metavariable: Pattern[FormulaF]
     val formula      = formulaGenerator.arbitrary.sample.get
     val unification  = Map(metavariable -> formula): Unification[Formula]
-    val result       = pattern.substitute(unification)
+    val result       = substitute[Formula, FormulaF](pattern, unification)
 
     assert(result.isDefined)
     assert(result.get === formula)
@@ -34,7 +33,7 @@ class TestSubstitution extends AnyFunSuite:
   test("substitution fails for unbound meta-variables") {
     val metavariable = meta[FormulaF, Pattern[FormulaF]]("phi")
     val pattern      = metavariable: Pattern[FormulaF]
-    val result       = pattern.substitute(Map.empty)
+    val result       = substitute[Formula, FormulaF](pattern, Map.empty)
 
     assert(result.isEmpty)
   }
@@ -42,7 +41,7 @@ class TestSubstitution extends AnyFunSuite:
   test("concrete patterns are not affected by substitution") {
     val formula = formulaGenerator.arbitrary.sample.get
     val pattern = formula.asPattern
-    val result  = pattern.substitute(Map.empty)
+    val result  = substitute[Formula, FormulaF](pattern, Map.empty)
 
     assert(result.isDefined)
     assert(result.get === formula)
@@ -51,7 +50,7 @@ class TestSubstitution extends AnyFunSuite:
   test("variable pattern is not affected by substitution") {
     val variableSymbol = symbol.Variable[FormulaF.Propositional]("A")
     val pattern        = variable[Pattern[FormulaF]](variableSymbol)
-    val result         = pattern.substitute(Map.empty)
+    val result         = substitute[Formula, FormulaF](pattern, Map.empty)
 
     assert(result.isDefined)
     assert(result.get === Formula(FormulaF.Variable(variableSymbol)))
@@ -59,7 +58,7 @@ class TestSubstitution extends AnyFunSuite:
 
   test("true pattern is not affected by substitution") {
     val pattern = tru[Pattern[FormulaF]]
-    val result  = pattern.substitute(Map.empty)
+    val result  = substitute[Formula, FormulaF](pattern, Map.empty)
 
     assert(result.isDefined)
     assert(result.get === tru[Formula])
@@ -67,7 +66,7 @@ class TestSubstitution extends AnyFunSuite:
 
   test("false pattern is not affected by substitution") {
     val pattern = fls[Pattern[FormulaF]]
-    val result  = pattern.substitute(Map.empty)
+    val result  = substitute[Formula, FormulaF](pattern, Map.empty)
 
     assert(result.isDefined)
     assert(result.get === fls[Formula])
@@ -80,7 +79,7 @@ class TestSubstitution extends AnyFunSuite:
     val formula1    = formulaGenerator.arbitrary.sample.get
     val formula2    = formulaGenerator.arbitrary.sample.get
     val unification = Map(phi -> formula1, psi -> formula2): Unification[Formula]
-    val result      = pattern.substitute(unification)
+    val result      = substitute[Formula, FormulaF](pattern, unification)
 
     assert(result.isDefined)
     assert(result.get === formula1 /\ formula2)
@@ -93,7 +92,7 @@ class TestSubstitution extends AnyFunSuite:
     val formula1    = formulaGenerator.arbitrary.sample.get
     val formula2    = formulaGenerator.arbitrary.sample.get
     val unification = Map(phi -> formula1, psi -> formula2): Unification[Formula]
-    val result      = pattern.substitute(unification)
+    val result      = substitute[Formula, FormulaF](pattern, unification)
 
     assert(result.isDefined)
     assert(result.get === formula1 \/ formula2)
@@ -106,7 +105,7 @@ class TestSubstitution extends AnyFunSuite:
     val formula1    = formulaGenerator.arbitrary.sample.get
     val formula2    = formulaGenerator.arbitrary.sample.get
     val unification = Map(phi -> formula1, psi -> formula2): Unification[Formula]
-    val result      = pattern.substitute(unification)
+    val result      = substitute[Formula, FormulaF](pattern, unification)
 
     assert(result.isDefined)
     assert(result.get === formula1 --> formula2)

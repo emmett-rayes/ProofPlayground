@@ -2,7 +2,7 @@ package proofPlayground
 package core.logic.propositional
 
 import core.logic.symbol
-import core.{Fix, Functor}
+import core.{Algebra, Fix, Functor}
 
 import scala.language.implicitConversions
 
@@ -21,6 +21,9 @@ object Formula:
 
   /** Construct a formula from its functor representation. */
   def apply(formula: FormulaF[Formula]): Formula = Fix(formula)
+
+  /** [[Fix]] is the initial algebra for [[FormulaF]]. */
+  given Algebra[FormulaF, Fix[FormulaF]] = Fix(_)
 
 /** The functor representing the structure of a propositional logic formula.
   *

@@ -1,15 +1,16 @@
 package proofPlayground
 package core.proof
 
-import core.Traverse.traverse
+import core.{Algebra, Fix, Functor, Sequence, traverse}
 import core.meta.*
-import core.{Fix, Functor}
 import core.meta.MetaVars.given
-import core.meta.Substitute.substitute
+import core.meta.Substitute.{substitute, substituteSeq, given}
 import core.meta.Unify.{merge, unify}
 import core.proof.natural.Judgement
 
 object Assistant:
+  type SequenceOption = [X[_]] =>> Sequence[X, Option]
+
   /** Attempts to produce a proof for the given judgement by applying the given inference rule.
     *
     * The proof is constructible if the judgement can be proved by applying the inference rule to the judgement.
@@ -23,11 +24,11 @@ object Assistant:
     * @param auxUnification A unification for the meta-variables appearing in the hypotheses but not in the conclusion.
     * @return Some(proof) if it is constructible, None otherwise.
     */
-  def proof[F[_]: Functor](using
+  def proof[F[_]: {Functor, SequenceOption}](using
+    Algebra[F, Fix[F]]
+  )(using
     Unify { type Self = Fix[F]; type Functor = F },
-    Substitute { type Self = Fix[F]; type Functor = F },
     MetaVars { type Self = Fix[F]; type Functor = F },
-    AsFormula { type Self = Fix[F]; type Functor = F },
   )(
     judgement: Judgement[Fix[F]],
     rule: InferenceRule[Judgement, F],
@@ -47,12 +48,12 @@ object Assistant:
 
       val proof =
         for
-          conclusion  <- rule.conclusion.assertion.substitute(unification)
-          assumptions <- rule.conclusion.assumptions.toSeq.substitute(seqUnification)
+          conclusion  <- substitute(rule.conclusion.assertion, unification)
+          assumptions <- substituteSeq(rule.conclusion.assumptions.toSeq, seqUnification)
           hypotheses  <- rule.hypotheses.toSeq.traverse { hypothesis =>
             for
-              assertion   <- hypothesis.assertion.substitute(unification)
-              assumptions <- hypothesis.assumptions.toSeq.substitute(seqUnification)
+              assertion   <- substitute(hypothesis.assertion, unification)
+              assumptions <- substituteSeq(hypothesis.assumptions.toSeq, seqUnification)
             yield Judgement(assumptions.toSet, assertion)
           }
         yield Proof(Judgement(assumptions.toSet, conclusion), hypotheses.map(Proof(_, List.empty)).toList)

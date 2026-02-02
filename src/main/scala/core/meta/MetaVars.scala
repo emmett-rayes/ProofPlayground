@@ -22,7 +22,7 @@ trait MetaVars extends MetaVarsWithoutFunctor:
   /** The functor of the fixed point. */
   type Functor[_]
 
-  /** The algebra for extracting meta-variables from a functor. */
+  /** The algebra for extracting meta-variables for [[Functor]] with carrier type `Set[MetaVariable]`. */
   def algebra(functor: Functor[Set[MetaVariable]]): Set[MetaVariable]
 
 object MetaVars:
