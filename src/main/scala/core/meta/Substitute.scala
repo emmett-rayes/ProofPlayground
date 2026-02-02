@@ -17,13 +17,13 @@ object Substitute:
     * @param unification The unification mapping meta-variables to concrete formulas.
     * @return Some(substituted) if the substitution is successful; None otherwise.
     */
-  def substituteSeq[T, F[_]: {Functor, SequenceOption}](using
+  def substitute[T, F[_]: {Functor, SequenceOption}](using
     Algebra[F, T]
   )(patterns: Seq[Pattern[F]], unification: Unification[Seq[T]]): Option[Seq[T]] =
     patterns.traverse { pattern =>
       pattern.unfix match
         case pattern @ PatternF.Meta(name) => unification.get(pattern)
-        case PatternF.Formula(formula)     => substitute(pattern, Map.empty).map(Seq(_))
+        case PatternF.Formula(formula)     => substitute[T, F](pattern, Map.empty).map(Seq(_))
       // substituting with the empty unification converts a pattern without variables to a formula
     }.map(_.flatten)
 

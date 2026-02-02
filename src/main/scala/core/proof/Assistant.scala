@@ -4,7 +4,7 @@ package core.proof
 import core.{Algebra, Fix, Functor, Sequence, traverse}
 import core.meta.*
 import core.meta.MetaVars.given
-import core.meta.Substitute.{substitute, substituteSeq, given}
+import core.meta.Substitute.substitute
 import core.meta.Unify.{merge, unify}
 import core.proof.natural.Judgement
 
@@ -49,11 +49,11 @@ object Assistant:
       val proof =
         for
           conclusion  <- substitute[Fix[F], F](rule.conclusion.assertion, unification)
-          assumptions <- substituteSeq[Fix[F], F](rule.conclusion.assumptions.toSeq, seqUnification)
+          assumptions <- substitute[Fix[F], F](rule.conclusion.assumptions.toSeq, seqUnification)
           hypotheses  <- rule.hypotheses.toSeq.traverse { hypothesis =>
             for
               assertion   <- substitute[Fix[F], F](hypothesis.assertion, unification)
-              assumptions <- substituteSeq[Fix[F], F](hypothesis.assumptions.toSeq, seqUnification)
+              assumptions <- substitute[Fix[F], F](hypothesis.assumptions.toSeq, seqUnification)
             yield Judgement(assumptions.toSet, assertion)
           }
         yield Proof(Judgement(assumptions.toSet, conclusion), hypotheses.map(Proof(_, List.empty)).toList)
