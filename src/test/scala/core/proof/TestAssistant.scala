@@ -1,14 +1,18 @@
 package proofPlayground
 package core.proof
 
-import core.logic.propositional.Formula
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.*
-import core.meta.PatternF.meta
+import core.logic.propositional.{Formula, FormulaF}
+import core.meta.AsPattern.given
+import core.meta.MetaVars.given
+import core.meta.Pattern
+import core.meta.Pattern.given
+import core.meta.PatternF.{concrete, meta}
 import core.meta.Substitute.given
 import core.meta.Unify.given
-import core.meta.MetaVars.given
 import core.proof.Assistant
+import core.proof.Assistant.ProofResult
 import core.proof.natural.Judgement.*
 import core.proof.natural.{InferenceRules, Judgement}
 
@@ -18,10 +22,23 @@ import scala.language.implicitConversions
 
 class TestAssistant extends AnyFunSuite:
   import InferenceRules.IntuitionisticPropositional.*
-  import Assistant.ProofResult
 
   /** Implicit conversion from a formula to a singleton set containing that formula. */
   private given Conversion[Formula, Set[Formula]] = Set(_)
+
+  /** Implicit conversion from a formula over patterns to a pattern. */
+  private given [F[_]] => Conversion[F[Pattern[F]], Pattern[F]] = f => Pattern(concrete(f))
+
+  /** Implicit conversion from a pattern to a singleton set containing that pattern. */
+  private given [F[_]] => Conversion[Pattern[F], Set[Pattern[F]]] = Set(_)
+
+  extension [F[_]](pattern: Pattern[F])
+    /** Add a pattern to a set of patterns.
+      *
+      * @param other The set of patterns to add to.
+      * @return A new set containing the original patterns and the added pattern.
+      */
+    private def ::(other: Set[Pattern[F]]) = other + pattern
 
   test("conjunction introduction for two propositional variables") {
     val A         = variable[Formula]("A")
@@ -45,7 +62,7 @@ class TestAssistant extends AnyFunSuite:
     val rule      = DisjunctionElimination
 
     val result = Assistant.proof(judgement, rule)
-    assert(!result.isInstanceOf[ProofResult.Success[?]])
+    assert(!result.isInstanceOf[ProofResult.Success[?, ?]])
   }
 
   test("disjunction introduction for two propositional variables (left)") {
@@ -95,13 +112,24 @@ class TestAssistant extends AnyFunSuite:
   }
 
   test("disjunction elimination for a single propositional variable") {
+    val phi       = meta("phi"): Pattern[FormulaF]
+    val psi       = meta("psi"): Pattern[FormulaF]
     val A         = variable[Formula]("A")
     val judgement = Set.empty |- A
     val rule      = DisjunctionElimination
 
     val result = Assistant.proof(judgement, rule)
     result match
-      case ProofResult.SubstitutionFailure(metavariables) =>
-        assert(metavariables === Seq(meta("phi"), meta("psi")))
+      case ProofResult.SubstitutionFailure(partiallySubstitutedRule) =>
+        val expected = Inference(
+          rule.label,
+          Set(
+            Set.empty |- phi \/ psi,
+            phi |- A.asPattern,
+            psi |- A.asPattern,
+          ),
+          Set.empty |- A.asPattern,
+        )
+        assert(partiallySubstitutedRule === expected)
       case _ => fail("Expected substitution error during proof construction")
   }

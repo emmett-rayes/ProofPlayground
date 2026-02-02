@@ -1,11 +1,10 @@
 package proofPlayground
 package core.proof
 
-import core.meta.*
-import core.meta.MetaVars.given
-import core.meta.Substitute.substitute
+import core.meta.Substitute.{substitute, substitutePartial}
 import core.meta.Unification.merge
 import core.meta.Unify.{Unifier, unify}
+import core.meta.{AsPattern, MetaVariable, Unification}
 import core.proof.natural.Judgement
 import core.{Algebra, Fix, Functor, traverse}
 
@@ -27,11 +26,12 @@ object Assistant:
     Algebra[F, Option[Fix[F]]],
     Algebra[F, Unifier[Fix[F]]],
     Algebra[F, Set[MetaVariable]],
+    AsPattern[F] { type Self = Fix[F] },
   )(
     judgement: Judgement[Fix[F]],
     rule: InferenceRule[Judgement, F],
     auxUnification: Unification[Fix[F]] = Map.empty[MetaVariable, Fix[F]]
-  ): ProofResult[Judgement[Fix[F]]] =
+  ): ProofResult[Judgement, F] =
     val unificationOpt =
       for
         assertionUnification   <- unify(rule.conclusion.assertion, judgement.assertion): Option[Unification[Fix[F]]]
@@ -46,7 +46,7 @@ object Assistant:
 
       val proof =
         for
-          conclusion  <- substitute[Fix[F], F](rule.conclusion.assertion, unification)
+          assertion   <- substitute[Fix[F], F](rule.conclusion.assertion, unification)
           assumptions <- substitute[Fix[F], F](rule.conclusion.assumptions.toSeq, seqUnification)
           hypotheses  <- rule.hypotheses.toSeq.traverse { hypothesis =>
             for
@@ -54,30 +54,33 @@ object Assistant:
               assumptions <- substitute[Fix[F], F](hypothesis.assumptions.toSeq, seqUnification)
             yield Judgement(assumptions.toSet, assertion)
           }
-        yield Proof(Judgement(assumptions.toSet, conclusion), hypotheses.map(Proof(_, List.empty)).toList)
+        yield Proof(Judgement(assumptions.toSet, assertion), hypotheses.map(Proof(_, List.empty)).toList)
 
       if proof.isDefined then ProofResult.Success(proof.get)
       else
-        val conclusionMetaVars = rule.conclusion.metavariables: Set[MetaVariable]
-        val criticalMetaVars   = rule.metavariables.diff(conclusionMetaVars)
-        ProofResult.SubstitutionFailure(criticalMetaVars.toSeq)
+        val assertion   = substitutePartial(rule.conclusion.assertion, unification)
+        val assumptions = substitutePartial(rule.conclusion.assumptions.toSeq, seqUnification)
+        val hypotheses  = rule.hypotheses.map { hypothesis =>
+          val assertion   = substitutePartial(hypothesis.assertion, unification)
+          val assumptions = substitutePartial(hypothesis.assumptions.toSeq, seqUnification)
+          Judgement(assumptions.toSet, assertion)
+        }
+        val conclusion  = Judgement(assumptions.toSet, assertion)
+        ProofResult.SubstitutionFailure(Inference(rule.label, hypotheses, conclusion))
 
   /** Result of attempting to construct a proof. */
-  enum ProofResult[J]:
+  enum ProofResult[J[_], F[_]]:
     /** Successful proof construction.
       *
       * @param proof the constructed proof.
       */
-    case Success(proof: Proof[J])
+    case Success(proof: Proof[J[Fix[F]]])
 
     /** Unification failure during proof construction. */
     case UnificationFailure()
 
     /** Substitution failure during proof construction.
       *
-      * @param metavariables The meta-variables that could not be substituted.
-      *
-      * @note currently, `metavariables` contains *all* meta-variables that appear in
-      *       the hypotheses of the rule but not in the conclusion, i.e. a superset of all the meta-variables.
+      * @param partiallySubstitutedRule the inference rule that could not be fully substituted.
       */
-    case SubstitutionFailure(metavariables: Seq[MetaVariable])
+    case SubstitutionFailure(partiallySubstitutedRule: InferenceRule[J, F])
