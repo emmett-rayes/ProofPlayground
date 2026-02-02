@@ -1,8 +1,14 @@
 package proofPlayground
 package core.meta
 
-import core.{Algebra, Functor, catamorphism, traverse}
+import core.logic.propositional.Formula.given
+import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
+import core.meta.Pattern.given
+import core.meta.PatternF.concrete
+import core.{Algebra, Functor, catamorphism, traverse}
+
+import scala.language.implicitConversions
 
 object Substitute:
   /** Substitutes meta-variables in the sequence of patterns according to the provided unification.
@@ -37,14 +43,29 @@ object Substitute:
   def substitute[T, F[_]: Functor](using
     Algebra[F, Option[T]]
   )(pattern: Pattern[F], unification: Unification[T]): Option[T] =
-    val algebra = Pattern.algebra[Option[T], F](summon)(unification.get(_))
+    val algebra = Pattern.algebra[Option[T], F](summon)(unification.get)
     catamorphism(pattern)(algebra)
+
+  /** Substitutes meta-variables in the pattern according to the provided unification.
+    *
+    * Meta-variables are replaced by concrete formulas if they are present in the unification.
+    * Otherwise, the meta-variable is left unchanged.
+    *
+    * @tparam T The type of the concrete formula used in substitution.
+    * @tparam F The type of the formula functor used in the pattern.
+    * @param pattern     The pattern in which to perform the substitution.
+    * @param unification The unification mapping meta-variables to concrete formulas.
+    *
+    * @return The pattern with meta-variables substituted where possible.
+    */
+  def substitutePartial[T: AsPattern[F], F[_]: Functor](pattern: Pattern[F], unification: Unification[T]): Pattern[F] =
+    val patternUnification = unification.view.mapValues(_.asPattern).toMap
+    pattern.unfix match
+      case pattern @ PatternF.Meta(name) => patternUnification.getOrElse(pattern, pattern)
+      case PatternF.Formula(formula)     => concrete(formula.map(substitutePartial(_, unification)))
 
   /** An algebra for collapsing a [[Formula]] into an `Option[Formula]`. */
   given Algebra[FormulaF, Option[Formula]]:
-    import core.logic.propositional.Formula.given
-    import core.logic.propositional.FormulaF.*
-
     override def apply(formula: FormulaF[Option[Formula]]): Option[Formula] = {
       formula match
         case FormulaF.Variable(sym)            => Some(variable(sym))

@@ -7,7 +7,7 @@ import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
 import core.meta.Pattern.given
 import core.meta.PatternF.meta
-import core.meta.PatternUtil.{asPattern, given}
+import core.meta.AsPattern.given
 import core.meta.{Pattern, Unification}
 import core.meta.Unify.{unify, given}
 
