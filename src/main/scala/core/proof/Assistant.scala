@@ -25,10 +25,10 @@ object Assistant:
     * @return Some(proof) if it is constructible, None otherwise.
     */
   def proof[F[_]: {Functor, SequenceOption}](using
-    Algebra[F, Fix[F]]
+    Algebra[F, Fix[F]],
+    Algebra[F, Set[MetaVariable]],
   )(using
     Unify { type Self = Fix[F]; type Functor = F },
-    MetaVars { type Self = Fix[F]; type Functor = F },
   )(
     judgement: Judgement[Fix[F]],
     rule: InferenceRule[Judgement, F],
@@ -48,12 +48,12 @@ object Assistant:
 
       val proof =
         for
-          conclusion  <- substitute(rule.conclusion.assertion, unification)
-          assumptions <- substituteSeq(rule.conclusion.assumptions.toSeq, seqUnification)
+          conclusion  <- substitute[Fix[F], F](rule.conclusion.assertion, unification)
+          assumptions <- substituteSeq[Fix[F], F](rule.conclusion.assumptions.toSeq, seqUnification)
           hypotheses  <- rule.hypotheses.toSeq.traverse { hypothesis =>
             for
-              assertion   <- substitute(hypothesis.assertion, unification)
-              assumptions <- substituteSeq(hypothesis.assumptions.toSeq, seqUnification)
+              assertion   <- substitute[Fix[F], F](hypothesis.assertion, unification)
+              assumptions <- substituteSeq[Fix[F], F](hypothesis.assumptions.toSeq, seqUnification)
             yield Judgement(assumptions.toSet, assertion)
           }
         yield Proof(Judgement(assumptions.toSet, conclusion), hypotheses.map(Proof(_, List.empty)).toList)

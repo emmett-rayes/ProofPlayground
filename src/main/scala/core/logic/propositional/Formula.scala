@@ -25,6 +25,20 @@ object Formula:
   /** [[Fix]] is the initial algebra for [[FormulaF]]. */
   given Algebra[FormulaF, Fix[FormulaF]] = Fix(_)
 
+  /** Algebra for reducing [[FormulaF]] to a set of values without producing any information at the leaves.
+    *
+    * @tparam T The type of values produced by the algebra.
+    */
+  given [T] => Algebra[FormulaF, Set[T]] = {
+    case FormulaF.Variable(variable)       => Set.empty
+    case FormulaF.True(tru)                => Set.empty
+    case FormulaF.False(fls)               => Set.empty
+    case FormulaF.Negation(negation)       => negation.arg
+    case FormulaF.Conjunction(conjunction) => conjunction.lhs ++ conjunction.rhs
+    case FormulaF.Disjunction(disjunction) => disjunction.lhs ++ disjunction.rhs
+    case FormulaF.Implication(implication) => implication.lhs ++ implication.rhs
+  }
+
 /** The functor representing the structure of a propositional logic formula.
   *
   * @tparam T the type used for recursive positions.
