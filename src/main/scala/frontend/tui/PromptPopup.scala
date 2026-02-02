@@ -5,7 +5,8 @@ import tui.*
 import tui.crossterm.{Event, KeyCode}
 import tui.widgets.{BlockWidget, ClearWidget, ParagraphWidget}
 
-class Popup(message: String, title: Option[String])(confirm: () => Unit, dismiss: () => Unit) extends Screen:
+class PromptPopup(message: String, title: Option[String] = None)(confirm: () => Unit, dismiss: () => Unit)
+    extends Screen:
   private val ySize      = 40
   private val xSize      = 30
   private var confirming = false

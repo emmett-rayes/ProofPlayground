@@ -5,10 +5,11 @@ import core.logic.propositional.{Formula, FormulaF}
 import core.meta.MetaVars.given
 import core.meta.Substitute.given
 import core.meta.Unify.given
+import core.meta.{MetaVariable, Unification}
 import core.proof.Assistant.ProofResult
 import core.proof.ProofZipper.given
 import core.proof.natural.Judgement
-import core.proof.{Assistant, Proof, ProofSystem}
+import core.proof.{Assistant, InferenceRule, Proof, ProofSystem}
 import frontend.Show.given
 import frontend.tui.Navigation
 import tree.Tree
@@ -51,9 +52,9 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
   override def focusOnRules: Boolean    = rulesInFocus
   override def rules: Vector[ProofRule] = inferenceRules.map { rule =>
     val active = Assistant.proof(zipper.get.conclusion, rule) match
-      case ProofResult.UnificationFailure()               => false
-      case ProofResult.Success(proof)                     => true
-      case ProofResult.SubstitutionFailure(metavariables) => true // substitution failures can be fixed by user input
+      case ProofResult.Success(_)             => true
+      case ProofResult.SubstitutionFailure(_) => true // substitution failures can be fixed by user input
+      case ProofResult.UnificationFailure()   => false
     ProofRule(active, rule.label)
   }
 
@@ -89,16 +90,35 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
       idx  <- index
       rule <- inferenceRules.lift(idx)
     yield
-      val replacement = Assistant.proof(zipper.get.conclusion, rule) match
-        case ProofResult.UnificationFailure()               => zipper.get
-        case ProofResult.Success(proof)                     => proof
-        case ProofResult.SubstitutionFailure(metavariables) =>
-          zipper.get // TODO handle substitution error via user input
+      def replace(replacement: Proof[Judgement[Formula]]) =
+        zipper = zipper.replace(replacement)
+        proofStepLabels.put(zipper.get.conclusion, rule.label)
 
-      zipper = zipper.replace(replacement)
-      proofStepLabels.put(zipper.get.conclusion, rule.label)
+      Assistant.proof(zipper.get.conclusion, rule) match
+        case ProofResult.UnificationFailure()                          => ()
+        case ProofResult.Success(proof)                                => replace(proof)
+        case ProofResult.SubstitutionFailure(partiallySubstitutedRule) =>
+          val metavariables = partiallySubstitutedRule.metavariables: Set[MetaVariable]
+          handleMissingMetaVariables(partiallySubstitutedRule, metavariables.toSeq)(Map.empty) { unification =>
+            val proof = Assistant.proof(zipper.get.conclusion, partiallySubstitutedRule, unification)
+          }
 
   override def quit(): Unit =
-    navigation.showPopup("Do you want to quit the proof mode?", Some("Quit")) {
+    navigation.showPopup(Navigation.Popup.Prompt("Do you want to quit the proof mode?", Some("Quit"))) { () =>
       navigation.navigateTo(Navigation.Screen.FormulaInput)
     }
+
+  private def handleMissingMetaVariables(
+    rule: InferenceRule[Judgement, FormulaF],
+    metavariables: Seq[MetaVariable]
+  )(unification: Unification[Formula])(
+    callback: Unification[Formula] => Unit
+  ): Unit =
+    if metavariables.isEmpty then
+      callback(unification)
+    else
+      navigation.showPopup(Navigation.Popup.MissingMetaVariable(metavariables.head, rule)) {
+        formula =>
+          val updated = unification.updated(metavariables.head, formula)
+          handleMissingMetaVariables(rule, metavariables.tail)(updated)(callback)
+      }

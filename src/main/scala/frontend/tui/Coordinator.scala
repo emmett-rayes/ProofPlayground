@@ -30,5 +30,18 @@ class Coordinator extends Navigation:
       case Navigation.Screen.ProofTree(formula) => ProofTree(this)(formula)
     screens = screen :: List.empty
 
-  override def showPopup(message: String, title: Option[String])(callback: => Unit): Unit =
-    screens = Popup(message, title)({ () => callback }, { () => screens = screens.tail }) :: screens
+  override def showPopup(popup: Navigation.Popup)(callback: popup.Callback): Unit =
+    val screen = popup match
+      case p@Navigation.Popup.Prompt(message, title) =>
+        PromptPopup(message, title)(callback.asInstanceOf[p.Callback], { () => screens = screens.tail })
+
+      case p@Navigation.Popup.MissingMetaVariable(metavariable, _, _) =>
+        import core.logic.propositional.Formula.given
+        import core.logic.propositional.{Formula, FormulaF}
+
+        PromptPopup(s"Enter formula for meta-variable ${metavariable.name}")(
+          { () => callback.asInstanceOf[p.Callback](FormulaF.variable[Formula]("X")) },
+          { () => screens = screens.tail }
+        )
+
+    screens = screen :: screens
