@@ -5,7 +5,9 @@ import core.logic.propositional.Formula
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.*
 import core.meta.PatternF.meta
+import core.meta.Substitute.given
 import core.meta.Unify.given
+import core.meta.MetaVars.given
 import core.proof.Assistant
 import core.proof.natural.Judgement.*
 import core.proof.natural.{InferenceRules, Judgement}

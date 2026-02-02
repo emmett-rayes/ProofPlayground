@@ -8,7 +8,7 @@ import core.logic.symbol
 import core.meta.Pattern.given
 import core.meta.PatternF.meta
 import core.meta.PatternUtil.{asPattern, given}
-import core.meta.Substitute.substitute
+import core.meta.Substitute.{substitute, given}
 import core.meta.{Pattern, Unification}
 
 import org.scalatest.funsuite.AnyFunSuite

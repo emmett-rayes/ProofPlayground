@@ -1,6 +1,7 @@
 package proofPlayground
 package core.meta
 
+import core.logic.propositional.FormulaF
 import core.meta.Pattern
 import core.proof.Inference
 import core.proof.natural.Judgement
@@ -23,15 +24,22 @@ object MetaVars:
     * @return The set of meta-variables appearing in `pattern`.
     */
   def metavariables[F[_]: Functor](using Algebra[F, Set[MetaVariable]])(pattern: Pattern[F]): Set[MetaVariable] =
+    val algebra = Pattern.algebra[Set[MetaVariable], F](summon)(Set(_))
     catamorphism(pattern)(algebra)
 
-  /** Algebra for extracting meta-variables from a [[PatternF]] with carrier `Set[MetaVariable]`. */
-  private def algebra[F[_]: Functor](using
-    subalgebra: Algebra[F, Set[MetaVariable]]
-  )(pattern: PatternF[F, Set[MetaVariable]]): Set[MetaVariable] =
-    pattern match
-      case pattern @ PatternF.Meta(_) => Set(pattern)
-      case PatternF.Formula(formula)  => subalgebra(formula)
+  /** Algebra for collapsing a [[FormulaF]] to a [[Set]] of values without producing any information at the leaves.
+    *
+    * @tparam T The type of values produced by the algebra.
+    */
+  given [T] => Algebra[FormulaF, Set[T]] = {
+    case FormulaF.Variable(variable)       => Set.empty
+    case FormulaF.True(tru)                => Set.empty
+    case FormulaF.False(fls)               => Set.empty
+    case FormulaF.Negation(negation)       => negation.arg
+    case FormulaF.Conjunction(conjunction) => conjunction.lhs ++ conjunction.rhs
+    case FormulaF.Disjunction(disjunction) => disjunction.lhs ++ disjunction.rhs
+    case FormulaF.Implication(implication) => implication.lhs ++ implication.rhs
+  }
 
   /** Instance of [[MetaVars]] for [[Pattern]]. */
   given [F[_]: Functor] => (Algebra[F, Set[MetaVariable]]) => Pattern[F] is MetaVars:

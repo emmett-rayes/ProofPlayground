@@ -1,7 +1,7 @@
 package proofPlayground
 package core.meta
 
-import core.{Fix, Functor}
+import core.{Algebra, Fix, Functor}
 
 type MetaVariable = PatternF.Meta[?, ?]
 
@@ -23,6 +23,21 @@ object Pattern:
 
   /** Construct a pattern from its functor representation. */
   def apply[F[_]](pattern: PatternF[F, Pattern[F]]): Pattern[F] = Fix(pattern)
+
+  /** Construct an algebra for a pattern functor using a subalgebra for the contained formula functor.
+    *
+    * @tparam T the carrier type of the algebra.
+    * @tparam F the formula functor of the referenced formulas in the pattern.
+    *
+    * @param meta a function that maps a meta-variable pattern to a value of type `T`.
+    * @param subalgebra the subalgebra for the contained formula functor.
+    *
+    * @return an algebra for a pattern functor that maps patterns to values of type `T`.
+    */
+  def algebra[T, F[_]: Functor](subalgebra: Algebra[F, T])(meta: PatternF.Meta[F, T] => T): PatternF[F, T] => T = {
+    case pattern @ PatternF.Meta(_) => meta(pattern)
+    case PatternF.Formula(formula)  => subalgebra(formula)
+  }
 
 /** The functor representing patterns.
   *

@@ -7,11 +7,9 @@ import core.meta.Substitute.substitute
 import core.meta.Unification.merge
 import core.meta.Unify.{Unifier, unify}
 import core.proof.natural.Judgement
-import core.{Algebra, Fix, Functor, Sequence, traverse}
+import core.{Algebra, Fix, Functor, traverse}
 
 object Assistant:
-  type SequenceOption = [X[_]] =>> Sequence[X, Option]
-
   /** Attempts to produce a proof for the given judgement by applying the given inference rule.
     *
     * The proof is constructible if the judgement can be proved by applying the inference rule to the judgement.
@@ -25,8 +23,8 @@ object Assistant:
     * @param auxUnification A unification for the meta-variables appearing in the hypotheses but not in the conclusion.
     * @return Some(proof) if it is constructible, None otherwise.
     */
-  def proof[F[_]: {Functor, SequenceOption}](using
-    Algebra[F, Fix[F]],
+  def proof[F[_]: Functor](using
+    Algebra[F, Option[Fix[F]]],
     Algebra[F, Unifier[Fix[F]]],
     Algebra[F, Set[MetaVariable]],
   )(

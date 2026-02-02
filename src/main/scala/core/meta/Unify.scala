@@ -147,15 +147,12 @@ object Unify:
     unify(pattern)(scrutinee)
 
   def unify[T, F[_]: Functor](using Algebra[F, Unifier[T]])(pattern: Pattern[F]): Unifier[T] =
+    val algebra = Pattern.algebra[Unifier[T], F](summon) { pattern => scrutinee =>
+      Some(Map(meta(pattern.name) -> scrutinee))
+    }
     catamorphism(pattern)(algebra)
 
-  /** Unification algebra for the [[PatternF]] functor with carrier `Unifier[T]`. */
-  private def algebra[T, F[_]](using subalgebra: Algebra[F, Unifier[T]])(pattern: PatternF[F, Unifier[T]]): Unifier[T] =
-    pattern match
-      case PatternF.Meta(name)       => (scrutinee: T) => Some(Map(meta(name) -> scrutinee))
-      case PatternF.Formula(formula) => subalgebra(formula)
-
-  /** An algebra that reduces a [[FormulaF]] to a `Unifier[Formula]`. */
+  /** An algebra that reduces a [[Formula]] to a `Unifier[Formula]`. */
   given Algebra[FormulaF, Unifier[Formula]] = {
     formula =>
       // noinspection DuplicatedCode
