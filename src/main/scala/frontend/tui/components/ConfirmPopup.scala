@@ -32,7 +32,7 @@ class ConfirmPopup(message: String, title: Option[String] = None)(confirm: () =>
       case key: tui.crossterm.Event.Key =>
         key.keyEvent().code() match {
           case c: KeyCode.Esc   => dismiss()
-          case c: KeyCode.Enter => if confirming then confirm(); dismiss()
+          case c: KeyCode.Enter => dismiss(); if confirming then confirm()
           case c: KeyCode.Left  => confirming = false
           case c: KeyCode.Right => confirming = true
           case _                => EventResult.NotHandled

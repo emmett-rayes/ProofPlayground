@@ -54,6 +54,6 @@ class InputPopup(message: String, title: Option[String] = None, inputTitle: Opti
     textInput.render(renderer, layout(2))
 
   private def callback(input: String) =
-    val result = confirm(input)
-    if result == Left(()) then dismiss()
-    result
+    dismiss()
+    confirm(input)
+
