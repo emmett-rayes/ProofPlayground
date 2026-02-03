@@ -3,7 +3,7 @@ package frontend.tui.views
 
 import core.logic.propositional.Formula
 import frontend.tui.Screen.EventResult
-import frontend.tui.models.{ProofRule, ProofStep, ProofTreeModel}
+import frontend.tui.models.ProofTreeModel
 import frontend.tui.{Navigation, Renderer, Screen}
 import tree.Tree
 
@@ -84,7 +84,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
     renderRules(renderer, data.rules, layout(0))
     renderTree(renderer, data.proofTree, layout(1))
 
-  private def renderRules(renderer: Renderer, rules: Vector[ProofRule], area: Rect): Unit =
+  private def renderRules(renderer: Renderer, rules: Vector[ProofTreeModel.ProofRule], area: Rect): Unit =
     val items = data.rules.toArray.map { rule =>
       val label = Text.nostyle(rule.rule)
       ListWidget.Item(label, Style(bg = Some(Color.Reset), fg = Some(if rule.active then Color.Green else Color.Gray)))
@@ -106,7 +106,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
 
     renderer.render(list, area)(rulesListState)
 
-  private def renderTree(renderer: Renderer, tree: Tree[ProofStep], area: tui.Rect): Unit =
+  private def renderTree(renderer: Renderer, tree: Tree[ProofTreeModel.ProofStep], area: tui.Rect): Unit =
     val nodeLayout = Layout(
       direction = Direction.Vertical,
       margin = Margin(0, 1),

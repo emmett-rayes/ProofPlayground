@@ -17,10 +17,6 @@ import tree.Zipper.root
 
 import java.util
 import scala.compiletime.uninitialized
-import scala.util.{Failure, Success}
-
-case class ProofStep(formula: String, rule: String)
-case class ProofRule(active: Boolean, rule: String)
 
 object ProofTreeModel:
   trait Data:
@@ -38,6 +34,9 @@ object ProofTreeModel:
     def selectNode(): Unit
     def selectRule(index: Option[Int]): Unit
 
+  case class ProofStep(formula: String, rule: String)
+  case class ProofRule(active: Boolean, rule: String)
+
 class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTreeModel.Data, ProofTreeModel.Signals:
   private val proofSystem    = ProofSystem.IntuitionisticPropositionalNaturalDeduction
   private val inferenceRules = proofSystem.rules.toVector.sortBy(_.label)
@@ -46,28 +45,30 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
   // Uses `IdentityHashMap` which compares keys by reference equality (eq) instead of structural equality
   private val proofStepLabels = util.IdentityHashMap[Judgement[Formula], String]()
 
-  private var rulesInFocus        = false
-  private var zipper              = Proof(Judgement(Set.empty, formula), List.empty).zipper
-  private var selected: ProofStep = uninitialized
+  private var selected: ProofTreeModel.ProofStep = uninitialized
 
-  override def focusOnRules: Boolean    = rulesInFocus
-  override def rules: Vector[ProofRule] = inferenceRules.map { rule =>
+  private var rulesInFocus = false
+  private var zipper       = Proof(Judgement(Set.empty, formula), List.empty).zipper
+
+  override def focusOnRules: Boolean = rulesInFocus
+
+  override def rules: Vector[ProofTreeModel.ProofRule] = inferenceRules.map { rule =>
     val active = Assistant.proof(zipper.get.conclusion, rule) match
       case ProofResult.Success(_)             => true
       case ProofResult.SubstitutionFailure(_) => true // substitution failures can be fixed by user input
       case ProofResult.UnificationFailure()   => false
-    ProofRule(active, rule.label)
+    ProofTreeModel.ProofRule(active, rule.label)
   }
 
-  override def proofTree: Tree[ProofStep] =
+  override def proofTree: Tree[ProofTreeModel.ProofStep] =
     zipper.root.get.asTree.map { judgement =>
-      val result = ProofStep(judgement.show, proofStepLabels.getOrDefault(judgement, "?"))
+      val result = ProofTreeModel.ProofStep(judgement.show, proofStepLabels.getOrDefault(judgement, "?"))
       // remember the current position for `nodeSelected`
       if judgement eq zipper.get.conclusion then selected = result
       result
     }
 
-  override def isNodeSelected(node: Tree[ProofStep]): Boolean =
+  override def isNodeSelected(node: Tree[ProofTreeModel.ProofStep]): Boolean =
     selected eq node.value
 
   override def up(): Unit =
