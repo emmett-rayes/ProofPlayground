@@ -32,11 +32,11 @@ class MissingMetaVariableModel(confirm: Formula => Unit, dismiss: () => Unit)(
 
   override def inputHandler: String => Either[Unit, String] =
     input =>
-      dismiss()
       Formula.parser.parse(input) match
-        case Failure(_)     => Right("invalid formula")
-        case Success(value) =>
+        case Success(value) if value.remaining.isEmpty =>
+          dismiss()
           confirm(value.parsed); Left(())
+        case _ => Right("invalid formula")
 
   override def exit(): Unit =
     dismiss()
