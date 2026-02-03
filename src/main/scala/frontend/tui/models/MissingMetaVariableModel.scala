@@ -7,13 +7,16 @@ import core.proof.InferenceRule
 import core.proof.natural.Judgement
 import tree.Tree
 import frontend.notation.FormulaParser.parser
+import frontend.Show.given
 
 import scala.util.{Failure, Success}
 
 object MissingMetaVariableModel:
+  type InferenceRuleString = (label: String, conclusion: String, hypotheses: Vector[String])
+
   trait Data:
     def variable: String
-    def inferenceRule: Tree[String]
+    def inferenceRule: InferenceRuleString
 
     def inputHandler: String => Either[Unit, String]
     def exitHandler: () => Unit
@@ -22,8 +25,10 @@ class MissingMetaVariableModel(confirm: Formula => Unit, dismiss: () => Unit)(
   metavariable: MetaVariable,
   rule: InferenceRule[Judgement, FormulaF]
 ) extends MissingMetaVariableModel.Data:
-  override def variable: String            = metavariable.name
-  override def inferenceRule: Tree[String] = ???
+  override def variable: String = metavariable.name
+
+  override def inferenceRule: MissingMetaVariableModel.InferenceRuleString =
+    (rule.label, rule.conclusion.show, rule.hypotheses.map(_.show).toVector)
 
   override def inputHandler: String => Either[Unit, String] =
     input =>

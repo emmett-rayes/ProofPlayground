@@ -10,12 +10,11 @@ import tui.widgets.{BlockWidget, ClearWidget, ParagraphWidget}
 
 class InputPopup(message: String, title: Option[String] = None, inputTitle: Option[String] = None)(
   confirm: String => Either[Unit, String],
-  dismiss: () => Unit
+  dismiss: () => Unit,
+  ySize: Int = 40,
+  xSize: Int = 30,
 ) extends Screen:
   private val textInput = TextInput(callback, inputTitle, startInEditMode = true)
-
-  private val ySize = 40
-  private val xSize = 30
 
   override def headerText: Text = Text.nostyle(title.getOrElse(""))
 
@@ -38,7 +37,7 @@ class InputPopup(message: String, title: Option[String] = None, inputTitle: Opti
       margin = Margin(0, 2),
       constraints = Array(
         Constraint.Percentage(30), // spacer
-        Constraint.Length(1),      // message
+        Constraint.Min(1),         // message
         Constraint.Length(6),      // input
         Constraint.Length(1),      // spacer (magic)
         Constraint.Min(1),         // spacer
