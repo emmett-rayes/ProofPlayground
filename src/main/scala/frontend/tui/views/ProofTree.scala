@@ -44,12 +44,12 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
         key.keyEvent().code() match {
           case c: KeyCode.Enter =>
             if treeFocus then signals.selectNode() else signals.selectRule(rulesListState.selected)
-          case c: KeyCode.Esc                => if !treeFocus then signals.selectRule(None)
-          case c: KeyCode.Left               => signals.left()
-          case c: KeyCode.Right              => signals.right()
+          case c: KeyCode.Esc                => if treeFocus then EventResult.NotHandled else signals.selectRule(None)
+          case c: KeyCode.Left               => if treeFocus then signals.left() else EventResult.NotHandled
+          case c: KeyCode.Right              => if treeFocus then signals.right() else EventResult.NotHandled
           case c: KeyCode.Up                 => if treeFocus then signals.up() else previousRule()
           case c: KeyCode.Down               => if treeFocus then signals.down() else nextRule()
-          case c: KeyCode.Char if c.c == 'q' => signals.quit()
+          case c: KeyCode.Char if c.c == 'q' => if treeFocus then signals.quit() else EventResult.NotHandled
           case _                             => EventResult.NotHandled
         }
       case _ => EventResult.NotHandled

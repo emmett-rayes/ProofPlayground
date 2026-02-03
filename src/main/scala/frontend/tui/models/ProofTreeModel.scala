@@ -89,6 +89,7 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
     rulesInFocus = true
 
   override def selectRule(index: Option[Int]): Unit =
+    if index.isEmpty then rulesInFocus = false
     for
       idx  <- index
       rule <- inferenceRules.lift(idx)
