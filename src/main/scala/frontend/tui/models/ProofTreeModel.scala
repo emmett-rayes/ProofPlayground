@@ -63,7 +63,8 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
   override def proofTree: Tree[ProofTreeModel.ProofStep] =
     zipper.root.get.asTree.map { judgement =>
       val label =
-        if judgement.assumptions.contains(judgement.assertion) then " " else proofStepLabels.getOrDefault(judgement, "?")
+        if judgement.assumptions.contains(judgement.assertion) then " "
+        else proofStepLabels.getOrDefault(judgement, "?")
       val result = ProofTreeModel.ProofStep(judgement.show, label)
       // remember the current position for `isNodeSelected`
       if judgement eq zipper.get.conclusion then selected = result
@@ -94,10 +95,11 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
       idx  <- index
       rule <- inferenceRules.lift(idx)
     yield
-      def replace(replacement: Proof[Judgement[Formula]]) =
+      def replace(replacement: Proof[Judgement[Formula]]): Unit =
         rulesInFocus = false
         zipper = zipper.replace(replacement)
         proofStepLabels.put(zipper.get.conclusion, rule.label)
+        zipper = zipper.down.getOrElse(zipper)
 
       Assistant.proof(zipper.get.conclusion, rule) match
         case ProofResult.UnificationFailure() =>
