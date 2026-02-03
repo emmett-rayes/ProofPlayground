@@ -58,8 +58,12 @@ class MissingMetaVariable(data: MissingMetaVariableModel.Data)(signals: MissingM
     ).split(contentArea)
 
     val message = ParagraphWidget(
-      text = Text.nostyle(s"Enter formula for missing meta-variable ${data.variable}"),
       alignment = Alignment.Center,
+      text =
+        Text.from(
+          Span.nostyle("Enter formula for missing meta-variable "),
+          Span.styled(data.variable, Style.DEFAULT.fg(Color.Red))
+        ),
     )
 
     val border =
