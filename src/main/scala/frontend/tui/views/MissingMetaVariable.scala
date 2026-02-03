@@ -107,8 +107,29 @@ class MissingMetaVariable(data: MissingMetaVariableModel.Data)(signals: MissingM
     renderer.render(conclusion, layout(2))
 
     rule.hypotheses.zipWithIndex.foreach { (h, idx) =>
-      val spacer     = if idx == rule.hypotheses.length - 1 then "" else "  "
-      val style      = if h.contains(data.variable) then Style.DEFAULT.fg(Color.Red) else Style.DEFAULT
-      val hypothesis = ParagraphWidget(text = Text.nostyle(h + spacer), alignment = Alignment.Center, style = style)
+      val spacer = if idx == rule.hypotheses.length - 1 then "" else "  "
+      val text   = findVariable(h) match {
+        case None =>
+          Text.nostyle(h + spacer)
+        case Some(index) =>
+          val before = h.substring(0, index)
+          val after  = h.substring(index + data.variable.length)
+          Text.from(
+            Span.nostyle(before),
+            Span.styled(data.variable, Style.DEFAULT.fg(Color.Red)),
+            Span.nostyle(after + spacer)
+          )
+      }
+      val hypothesis = ParagraphWidget(text = text, alignment = Alignment.Center)
       renderer.render(hypothesis, hypothesesLayout(idx))
     }
+
+  private def findVariable(text: String): Option[Int] =
+    text.indexOf(data.variable) match
+      case -1       => None
+      case varIndex =>
+        val charBefore = if varIndex == 0 then ' ' else text(varIndex - 1)
+        val charAfter  =
+          if varIndex + data.variable.length >= text.length then ' ' else text(varIndex + data.variable.length)
+        val isBoundary = (charBefore.isWhitespace || charBefore == '(') && (charAfter.isWhitespace || charAfter == ')')
+        Option.when(isBoundary)(varIndex)
