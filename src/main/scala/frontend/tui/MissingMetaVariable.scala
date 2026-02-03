@@ -50,7 +50,7 @@ class MissingMetaVariable(data: MissingMetaVariableModel.Data) extends Screen:
     ).split(contentArea)
 
     val border =
-      BlockWidget(borders = Borders.LEFT | Borders.RIGHT | Borders.TOP, borderType = BlockWidget.BorderType.Rounded)
+      BlockWidget(borders = Borders.ALL, borderType = BlockWidget.BorderType.Rounded)
     val background = ClearWidget
 
     renderer.render(background, contentArea)
