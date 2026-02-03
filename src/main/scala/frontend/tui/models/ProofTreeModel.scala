@@ -97,14 +97,18 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
         proofStepLabels.put(zipper.get.conclusion, rule.label)
 
       Assistant.proof(zipper.get.conclusion, rule) match
-        case ProofResult.UnificationFailure()                          => ()
-        case ProofResult.Success(proof)                                => replace(proof)
+        case ProofResult.UnificationFailure() =>
+          ()
+        case ProofResult.Success(proof) =>
+          replace(proof)
         case ProofResult.SubstitutionFailure(partiallySubstitutedRule) =>
           val metavariables = partiallySubstitutedRule.metavariables: Set[MetaVariable]
           handleMissingMetaVariables(partiallySubstitutedRule, metavariables.toSeq)(Map.empty) { unification =>
             Assistant.proof(zipper.get.conclusion, partiallySubstitutedRule, unification) match
-              case Assistant.ProofResult.Success(proof)                                => replace(proof)
-              case Assistant.ProofResult.UnificationFailure()                          => ()
+              case Assistant.ProofResult.UnificationFailure() =>
+                ()
+              case Assistant.ProofResult.Success(proof) =>
+                replace(proof)
               case Assistant.ProofResult.SubstitutionFailure(partiallySubstitutedRule) =>
                 throw RuntimeException("Substitution failure after user input")
           }
@@ -124,7 +128,7 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
       callback(unification)
     else
       navigation.showPopup(Navigation.Popup.MissingMetaVariable(metavariables.head, rule)) {
-        Formula =>
+        formula =>
           val updated = unification.updated(metavariables.head, formula)
           handleMissingMetaVariables(rule, metavariables.tail)(updated)(callback)
       }

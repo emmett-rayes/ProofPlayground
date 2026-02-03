@@ -5,7 +5,6 @@ import core.logic.propositional.{Formula, FormulaF}
 import core.meta.MetaVariable
 import core.proof.InferenceRule
 import core.proof.natural.Judgement
-import tree.Tree
 import frontend.notation.FormulaParser.parser
 import frontend.Show.given
 
