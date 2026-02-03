@@ -1,9 +1,10 @@
 package proofPlayground
-package frontend.tui
+package frontend.tui.views
 
 import core.logic.propositional.Formula
 import frontend.tui.Screen.EventResult
 import frontend.tui.models.{ProofRule, ProofStep, ProofTreeModel}
+import frontend.tui.{Navigation, Renderer, Screen}
 import tree.Tree
 
 import tui.*

@@ -1,9 +1,10 @@
 package proofPlayground
-package frontend.tui
+package frontend.tui.views
 
 import frontend.tui.Screen.EventResult
 import frontend.tui.components.TextInput
 import frontend.tui.models.FormulaInputModel
+import frontend.tui.{Navigation, Renderer, Screen}
 
 import tui.*
 import tui.crossterm.{Event, KeyCode}

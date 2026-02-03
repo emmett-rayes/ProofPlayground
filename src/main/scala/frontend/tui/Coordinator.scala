@@ -1,6 +1,9 @@
 package proofPlayground
 package frontend.tui
 
+import frontend.tui.components.ConfirmPopup
+import frontend.tui.views.{FormulaInput, ProofTree}
+
 import tui.Frame
 import tui.crossterm.Event
 
@@ -32,8 +35,8 @@ class Coordinator extends Navigation:
 
   override def showPopup(popup: Navigation.Popup)(callback: popup.Callback): Unit =
     val screen = popup match
-      case p @ Navigation.Popup.Prompt(message, title) =>
-        Popup(message, title)(callback.asInstanceOf[p.Callback], { () => screens = screens.tail })
+      case p @ Navigation.Popup.Confirm(message, title) =>
+        ConfirmPopup(message, title)(callback.asInstanceOf[p.Callback], { () => screens = screens.tail })
       case p @ Navigation.Popup.MissingMetaVariable(_, _, _) => ???
 
     screens = screen :: screens

@@ -104,7 +104,7 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
           }
 
   override def quit(): Unit =
-    navigation.showPopup(Navigation.Popup.Prompt("Do you want to quit the proof mode?", Some("Quit"))) { () =>
+    navigation.showPopup(Navigation.Popup.Confirm("Do you want to quit the proof mode?", Some("Quit"))) { () =>
       navigation.navigateTo(Navigation.Screen.FormulaInput)
     }
 

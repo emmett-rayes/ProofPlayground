@@ -15,7 +15,7 @@ object Navigation:
     case ProofTree(formula: Formula)
 
   object Popup:
-    case class Prompt(message: String, title: Option[String] = None) extends Popup:
+    case class Confirm(message: String, title: Option[String] = None) extends Popup:
       override type Callback = () => Unit
 
     case class MissingMetaVariable(
