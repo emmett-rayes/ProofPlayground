@@ -19,7 +19,7 @@ object Navigation:
       override type Callback = () => Unit
 
     case class MissingMetaVariable(metavariable: MetaVariable, rule: InferenceRule[Judgement, FormulaF]) extends Popup:
-      override type Callback = String => Either[Unit, String]
+      override type Callback = Formula => Unit
 
 trait Navigation:
   def exit(): Unit

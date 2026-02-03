@@ -12,12 +12,13 @@ class InputPopup(message: String, title: Option[String] = None, inputTitle: Opti
   confirm: String => Either[Unit, String],
   dismiss: () => Unit
 ) extends Screen:
-  private val textInput = TextInput(confirm, inputTitle, startInEditMode = true)
+  private val textInput = TextInput(callback, inputTitle, startInEditMode = true)
 
   private val ySize = 40
   private val xSize = 30
 
   override def headerText: Text = Text.nostyle(title.getOrElse(""))
+
   override def footerText: Text = textInput.footerText
 
   override def handleEvent(event: Event): EventResult =
@@ -52,3 +53,8 @@ class InputPopup(message: String, title: Option[String] = None, inputTitle: Opti
     renderer.render(border, contentArea)
     renderer.render(content, layout(1))
     textInput.render(renderer, layout(2))
+
+  private def callback(input: String) =
+    val result = confirm(input)
+    if result == Left(()) then dismiss()
+    result

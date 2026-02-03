@@ -101,7 +101,11 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
         case ProofResult.SubstitutionFailure(partiallySubstitutedRule) =>
           val metavariables = partiallySubstitutedRule.metavariables: Set[MetaVariable]
           handleMissingMetaVariables(partiallySubstitutedRule, metavariables.toSeq)(Map.empty) { unification =>
-            val proof = Assistant.proof(zipper.get.conclusion, partiallySubstitutedRule, unification)
+            Assistant.proof(zipper.get.conclusion, partiallySubstitutedRule, unification) match
+              case Assistant.ProofResult.Success(proof)                                => replace(proof)
+              case Assistant.ProofResult.UnificationFailure()                          => ()
+              case Assistant.ProofResult.SubstitutionFailure(partiallySubstitutedRule) =>
+                throw RuntimeException("Substitution failure after user input")
           }
 
   override def quit(): Unit =
@@ -119,13 +123,7 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
       callback(unification)
     else
       navigation.showPopup(Navigation.Popup.MissingMetaVariable(metavariables.head, rule)) {
-        import frontend.notation.FormulaParser.parser
-        text =>
-          Formula.parser.parse(text) match
-            case Failure(_)     => Right("invalid formula")
-            case Success(value) =>
-              val formula = value.parsed
-              val updated = unification.updated(metavariables.head, formula)
-              handleMissingMetaVariables(rule, metavariables.tail)(updated)(callback)
-              Left(())
+        Formula =>
+          val updated = unification.updated(metavariables.head, formula)
+          handleMissingMetaVariables(rule, metavariables.tail)(updated)(callback)
       }
