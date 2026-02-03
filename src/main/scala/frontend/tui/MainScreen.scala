@@ -1,11 +1,15 @@
 package proofPlayground
 package frontend.tui
 
+import frontend.tui.Screen.EventResult
+
 import tui.*
 import tui.crossterm.Event
 import tui.widgets.{BlockWidget, ParagraphWidget}
 
 class MainScreen(screens: List[Screen]) extends Screen:
+  override def handleEvent(event: Event): EventResult = screens.head.handleEvent(event)
+
   override def render(renderer: Renderer, area: Rect): Unit =
     val layout = Layout(
       direction = Direction.Vertical,
@@ -35,5 +39,3 @@ class MainScreen(screens: List[Screen]) extends Screen:
 
   override def headerText: Text = screens.head.headerText
   override def footerText: Text = screens.head.footerText
-
-  override def handleEvent(event: Event): Unit = screens.head.handleEvent(event)

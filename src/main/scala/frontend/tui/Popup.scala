@@ -1,11 +1,13 @@
 package proofPlayground
 package frontend.tui
 
+import frontend.tui.Screen.EventResult
+
 import tui.*
 import tui.crossterm.{Event, KeyCode}
 import tui.widgets.{BlockWidget, ClearWidget, ParagraphWidget}
 
-class PromptPopup(message: String, title: Option[String] = None)(confirm: () => Unit, dismiss: () => Unit)
+class Popup(message: String, title: Option[String] = None)(confirm: () => Unit, dismiss: () => Unit)
     extends Screen:
   private val ySize      = 40
   private val xSize      = 30
@@ -21,7 +23,10 @@ class PromptPopup(message: String, title: Option[String] = None)(confirm: () => 
       Span.nostyle(" to cancel."),
     )
 
-  override def handleEvent(event: Event): Unit =
+  override def handleEvent(event: Event): EventResult =
+    import scala.language.implicitConversions
+    given Conversion[Unit, EventResult.Handled.type] = _ => EventResult.Handled
+
     event match {
       case key: tui.crossterm.Event.Key =>
         key.keyEvent().code() match {
@@ -29,9 +34,9 @@ class PromptPopup(message: String, title: Option[String] = None)(confirm: () => 
           case c: KeyCode.Enter => dismiss(); if confirming then confirm()
           case c: KeyCode.Left  => confirming = false
           case c: KeyCode.Right => confirming = true
-          case _                => ()
+          case _                => EventResult.NotHandled
         }
-      case _ => ()
+      case _ => EventResult.NotHandled
     }
 
   override def render(renderer: Renderer, area: Rect): Unit =

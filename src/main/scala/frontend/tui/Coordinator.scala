@@ -18,7 +18,7 @@ class Coordinator extends Navigation:
 
   def render(frame: Frame): Unit =
     val renderer = FrameRenderer(frame)
-    val screen = MainScreen(screens)
+    val screen   = MainScreen(screens)
     screen.render(renderer, frame.size)
 
   override def exit(): Unit =
@@ -32,16 +32,8 @@ class Coordinator extends Navigation:
 
   override def showPopup(popup: Navigation.Popup)(callback: popup.Callback): Unit =
     val screen = popup match
-      case p@Navigation.Popup.Prompt(message, title) =>
-        PromptPopup(message, title)(callback.asInstanceOf[p.Callback], { () => screens = screens.tail })
-
-      case p@Navigation.Popup.MissingMetaVariable(metavariable, _, _) =>
-        import core.logic.propositional.Formula.given
-        import core.logic.propositional.{Formula, FormulaF}
-
-        PromptPopup(s"Enter formula for meta-variable ${metavariable.name}")(
-          { () => callback.asInstanceOf[p.Callback](FormulaF.variable[Formula]("X")) },
-          { () => screens = screens.tail }
-        )
+      case p @ Navigation.Popup.Prompt(message, title) =>
+        Popup(message, title)(callback.asInstanceOf[p.Callback], { () => screens = screens.tail })
+      case p @ Navigation.Popup.MissingMetaVariable(_, _, _) => ???
 
     screens = screen :: screens

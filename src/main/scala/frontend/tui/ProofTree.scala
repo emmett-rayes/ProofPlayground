@@ -2,6 +2,7 @@ package proofPlayground
 package frontend.tui
 
 import core.logic.propositional.Formula
+import frontend.tui.Screen.EventResult
 import frontend.tui.models.{ProofRule, ProofStep, ProofTreeModel}
 import tree.Tree
 
@@ -32,23 +33,25 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
       Span.nostyle(" to " + (if data.focusOnRules then "cancel" else "exit") + "."),
     )
 
-  override def handleEvent(event: Event): Unit =
+  override def handleEvent(event: Event): EventResult =
+    import scala.language.implicitConversions
+    given Conversion[Unit, EventResult.Handled.type] = _ => EventResult.Handled
+
     val treeFocus = !data.focusOnRules
     event match {
       case key: tui.crossterm.Event.Key =>
         key.keyEvent().code() match {
-          case c: KeyCode.Left  => signals.left()
-          case c: KeyCode.Right => signals.right()
-          case c: KeyCode.Up    => if treeFocus then signals.up() else previousRule()
-          case c: KeyCode.Down  => if treeFocus then signals.down() else nextRule()
-          case c: KeyCode.Esc   => if !treeFocus then signals.selectRule(None)
           case c: KeyCode.Enter =>
             if treeFocus then signals.selectNode() else signals.selectRule(rulesListState.selected)
-          case c: KeyCode.Char if c.c == 'q' =>
-            signals.quit()
-          case _ => ()
+          case c: KeyCode.Esc                => if !treeFocus then signals.selectRule(None)
+          case c: KeyCode.Left               => signals.left()
+          case c: KeyCode.Right              => signals.right()
+          case c: KeyCode.Up                 => if treeFocus then signals.up() else previousRule()
+          case c: KeyCode.Down               => if treeFocus then signals.down() else nextRule()
+          case c: KeyCode.Char if c.c == 'q' => signals.quit()
+          case _                             => EventResult.NotHandled
         }
-      case _ => ()
+      case _ => EventResult.NotHandled
     }
 
   private def previousRule(): Unit =
