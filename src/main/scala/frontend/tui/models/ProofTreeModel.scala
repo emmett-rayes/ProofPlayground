@@ -17,6 +17,7 @@ import tree.Zipper.root
 
 import java.util
 import scala.compiletime.uninitialized
+import scala.util.{Failure, Success}
 
 case class ProofStep(formula: String, rule: String)
 case class ProofRule(active: Boolean, rule: String)
@@ -118,7 +119,13 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
       callback(unification)
     else
       navigation.showPopup(Navigation.Popup.MissingMetaVariable(metavariables.head, rule)) {
-        formula =>
-          val updated = unification.updated(metavariables.head, formula)
-          handleMissingMetaVariables(rule, metavariables.tail)(updated)(callback)
+        import frontend.notation.FormulaParser.parser
+        text =>
+          Formula.parser.parse(text) match
+            case Failure(_)     => Right("invalid formula")
+            case Success(value) =>
+              val formula = value.parsed
+              val updated = unification.updated(metavariables.head, formula)
+              handleMissingMetaVariables(rule, metavariables.tail)(updated)(callback)
+              Left(())
       }

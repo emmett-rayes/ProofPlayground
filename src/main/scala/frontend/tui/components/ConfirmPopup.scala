@@ -2,7 +2,7 @@ package proofPlayground
 package frontend.tui.components
 
 import frontend.tui.Screen.EventResult
-import frontend.tui.{Renderer, Screen}
+import frontend.tui.{Rectangle, Renderer, Screen}
 
 import tui.*
 import tui.crossterm.{Event, KeyCode}
@@ -83,27 +83,6 @@ class ConfirmPopup(message: String, title: Option[String] = None)(confirm: () =>
     renderer.render(content, contentLayout(1))
     renderer.render(cancelButton, buttonsLayout(0))
     renderer.render(confirmButton, buttonsLayout(2))
-
-  private def Rectangle(ySize: Int, xSize: Int, area: Rect): Rect =
-    val yLayout = Layout(
-      direction = Direction.Vertical,
-      constraints = Array(
-        Constraint.Percentage((100 - ySize) / 2),
-        Constraint.Percentage(ySize),
-        Constraint.Percentage((100 - ySize) / 2)
-      )
-    ).split(area)
-
-    val xLayout = Layout(
-      direction = Direction.Horizontal,
-      constraints = Array(
-        Constraint.Percentage((100 - xSize) / 2),
-        Constraint.Percentage(xSize),
-        Constraint.Percentage((100 - xSize) / 2),
-      )
-    ).split(yLayout(1))
-
-    xLayout(1)
 
   private def ButtonWidget(label: String, active: => Boolean) =
     ParagraphWidget(

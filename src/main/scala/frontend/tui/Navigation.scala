@@ -18,12 +18,8 @@ object Navigation:
     case class Confirm(message: String, title: Option[String] = None) extends Popup:
       override type Callback = () => Unit
 
-    case class MissingMetaVariable(
-      metavariable: MetaVariable,
-      rule: InferenceRule[Judgement, FormulaF],
-      title: Option[String] = None
-    ) extends Popup:
-      override type Callback = Formula => Unit
+    case class MissingMetaVariable(metavariable: MetaVariable, rule: InferenceRule[Judgement, FormulaF]) extends Popup:
+      override type Callback = String => Either[Unit, String]
 
 trait Navigation:
   def exit(): Unit

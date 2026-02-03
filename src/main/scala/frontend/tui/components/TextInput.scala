@@ -8,10 +8,18 @@ import tui.*
 import tui.crossterm.{Event, KeyCode}
 import tui.widgets.{BlockWidget, ParagraphWidget}
 
-class TextInput(callback: String => Either[Unit, String], title: Option[String] = None) extends Screen:
+class TextInput(
+  callback: String => Either[Unit, String],
+  title: Option[String] = None,
+  startInEditMode: Boolean = false,
+) extends Screen:
   private var cursor: Int     = 0
   private var text: String    = ""
   private var mode: InputMode = InputMode.Normal
+
+  {
+    if startInEditMode then edit()
+  }
 
   override def handleEvent(event: Event): EventResult =
     import scala.language.implicitConversions

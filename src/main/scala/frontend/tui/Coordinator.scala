@@ -1,7 +1,7 @@
 package proofPlayground
 package frontend.tui
 
-import frontend.tui.components.ConfirmPopup
+import frontend.tui.components.{ConfirmPopup, InputPopup}
 import frontend.tui.views.{FormulaInput, ProofTree}
 
 import tui.Frame
@@ -34,9 +34,14 @@ class Coordinator extends Navigation:
     screens = screen :: List.empty
 
   override def showPopup(popup: Navigation.Popup)(callback: popup.Callback): Unit =
-    val screen = popup match
+    val dismiss = { () => screens = screens.tail }
+    val screen  = popup match
       case p @ Navigation.Popup.Confirm(message, title) =>
-        ConfirmPopup(message, title)(callback.asInstanceOf[p.Callback], { () => screens = screens.tail })
-      case p @ Navigation.Popup.MissingMetaVariable(_, _, _) => ???
-
+        ConfirmPopup(message, title)(callback.asInstanceOf[p.Callback], dismiss)
+      case p @ Navigation.Popup.MissingMetaVariable(meta, _) =>
+        InputPopup(
+          s"Enter formula for missing meta-variable ${meta.name}",
+          Some("Missing meta-variable"),
+          Some(" Formula "),
+        )(callback.asInstanceOf[p.Callback], dismiss)
     screens = screen :: screens
