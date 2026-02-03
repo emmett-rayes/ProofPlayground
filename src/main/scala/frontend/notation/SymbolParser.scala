@@ -102,7 +102,7 @@ object SymbolParser:
       * @return a parser that recognizes and produces implication.
       */
     def parser[F](subparser: Parser[Tokens, F]): Parser[Tokens, Implication[F]] =
-      val op = LiteralParser.parser["-->"].orElse(LiteralParser.parser["→"])
+      val op = LiteralParser.parser["-->"].orElse(LiteralParser.parser["->"].orElse(LiteralParser.parser["→"]))
       subparser.thenSkip(op).andThen(subparser).map {
         (lhs, rhs) => Implication(lhs, rhs)
       }
@@ -114,7 +114,7 @@ object SymbolParser:
       * @return a parser that recognizes and produces lists of subformulas as left-associated Implications.
       */
     def chainedParser[F](subparser: Parser[Tokens, F])(converter: Implication[F] => F): Parser[Tokens, Implication[F]] =
-      val op = LiteralParser.parser["-->"].orElse(LiteralParser.parser["→"])
+      val op = LiteralParser.parser["-->"].orElse(LiteralParser.parser["->"].orElse(LiteralParser.parser["→"]))
       subparser.andThen(op.skipThen(subparser).atLeast(1)).map { (first, rest) =>
         val rhs = rest.reduceRight((curr, acc) => converter(Implication(curr, acc)))
         Implication(first, rhs)
@@ -127,7 +127,7 @@ object SymbolParser:
       * @return a parser that recognizes and produces difference.
       */
     def parser[F](subparser: Parser[Tokens, F]): Parser[Tokens, Difference[F]] =
-      val op = LiteralParser.parser["--<"]
+      val op = LiteralParser.parser["--<"].orElse(LiteralParser.parser["-<"])
       subparser.thenSkip(op).andThen(subparser).map {
         (lhs, rhs) => Difference(lhs, rhs)
       }
@@ -139,7 +139,7 @@ object SymbolParser:
       * @return a parser that recognizes and produces lists of subformulas as left-associated Differences.
       */
     def chainedParser[F](subparser: Parser[Tokens, F])(converter: Difference[F] => F): Parser[Tokens, Difference[F]] =
-      val op = LiteralParser.parser["--<"]
+      val op = LiteralParser.parser["--<"].orElse(LiteralParser.parser["-<"])
       subparser.andThen(op.skipThen(subparser).atLeast(1)).map { (first, rest) =>
         val rhs = rest.reduceRight((curr, acc) => converter(Difference(curr, acc)))
         Difference(first, rhs)
