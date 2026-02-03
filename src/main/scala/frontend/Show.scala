@@ -30,13 +30,13 @@ object Show:
   given Formula is Show:
     extension (formula: Self)
       override def show: String =
-        catamorphism(formula)(summon)
+        catamorphism(formula)(summon).stripPrefix("(").stripSuffix(")")
 
   given [F[_]: Functor] => (Algebra[F, String]) => Pattern[F] is Show:
     extension (pattern: Pattern[F])
       override def show: String =
         val algebra = Pattern.algebra(summon)(_.name)
-        catamorphism(pattern)(algebra)
+        catamorphism(pattern)(algebra).stripPrefix("(").stripSuffix(")")
 
   /** [[Show]] instance for [[Judgement]]. */
   given [F: Show] => Judgement[F] is Show:
