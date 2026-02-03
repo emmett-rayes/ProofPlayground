@@ -89,12 +89,12 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
     rulesInFocus = true
 
   override def selectRule(index: Option[Int]): Unit =
-    rulesInFocus = false
     for
       idx  <- index
       rule <- inferenceRules.lift(idx)
     yield
       def replace(replacement: Proof[Judgement[Formula]]) =
+        rulesInFocus = false
         zipper = zipper.replace(replacement)
         proofStepLabels.put(zipper.get.conclusion, rule.label)
 
