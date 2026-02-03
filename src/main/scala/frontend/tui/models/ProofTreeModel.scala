@@ -42,7 +42,7 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
   private val inferenceRules = proofSystem.rules.toVector.sortBy(_.label)
 
   // hack to remember the label of the proof step for each judgement
-  // Uses `IdentityHashMap` which compares keys by reference equality (eq) instead of structural equality
+  // uses `IdentityHashMap` which compares keys by reference equality (eq) instead of structural equality
   private val proofStepLabels = util.IdentityHashMap[Judgement[Formula], String]()
 
   private var selected: ProofTreeModel.ProofStep = uninitialized
@@ -62,8 +62,10 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
 
   override def proofTree: Tree[ProofTreeModel.ProofStep] =
     zipper.root.get.asTree.map { judgement =>
-      val result = ProofTreeModel.ProofStep(judgement.show, proofStepLabels.getOrDefault(judgement, "?"))
-      // remember the current position for `nodeSelected`
+      val label =
+        if judgement.assumptions(judgement.assertion) then " " else proofStepLabels.getOrDefault(judgement, "?")
+      val result = ProofTreeModel.ProofStep(judgement.show, label)
+      // remember the current position for `isNodeSelected`
       if judgement eq zipper.get.conclusion then selected = result
       result
     }
