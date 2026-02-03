@@ -10,8 +10,9 @@ import tui.widgets.{BlockWidget, ClearWidget, ParagraphWidget}
 
 class ConfirmPopup(message: String, title: Option[String] = None)(confirm: () => Unit, dismiss: () => Unit)
     extends Screen:
-  private val ySize      = 40
-  private val xSize      = 30
+  private val ySize = 40
+  private val xSize = 30
+
   private var confirming = false
 
   override def headerText: Text =

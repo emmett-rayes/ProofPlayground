@@ -56,4 +56,3 @@ class InputPopup(message: String, title: Option[String] = None, inputTitle: Opti
   private def callback(input: String) =
     dismiss()
     confirm(input)
-

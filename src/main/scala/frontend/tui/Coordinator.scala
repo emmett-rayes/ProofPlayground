@@ -34,6 +34,7 @@ class Coordinator extends Navigation:
     screens = screen :: List.empty
 
   override def showPopup(popup: Navigation.Popup)(callback: popup.Callback): Unit =
+    // we can later dismiss by screen reference to allow for stacked popups with z-index offset
     val dismiss = { () => screens = screens.tail }
     val screen  = popup match
       case p @ Navigation.Popup.Confirm(message, title) =>
