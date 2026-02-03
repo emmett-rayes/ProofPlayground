@@ -13,16 +13,16 @@ case object InferenceRules:
   /** Implicit conversion from a formula over patterns to a pattern. */
   private given [F[_]] => Conversion[F[Pattern[F]], Pattern[F]] = f => Pattern(concrete(f))
 
-  /** Implicit conversion from a pattern to a singleton set containing that pattern. */
-  private given [F[_]] => Conversion[Pattern[F], Set[Pattern[F]]] = Set(_)
+  /** Implicit conversion from a pattern to a singleton sequence containing that pattern. */
+  private given [F[_]] => Conversion[Pattern[F], Seq[Pattern[F]]] = Seq(_)
 
   extension [F[_]](pattern: Pattern[F])
-    /** Add a pattern to a set of patterns.
+    /** Add a pattern to a sequence of patterns.
       *
-      * @param other The set of patterns to add to.
-      * @return A new set containing the original patterns and the added pattern.
+      * @param other The sequence of patterns to add to.
+      * @return A new sequence containing the original patterns and the added pattern.
       */
-    private def ::(other: Set[Pattern[F]]) = other + pattern
+    private def ::(other: Seq[Pattern[F]]) = other :+ pattern
 
   /** Inference rules for intuitionistic propositional logic. */
   // noinspection DuplicatedCode
@@ -41,7 +41,7 @@ case object InferenceRules:
 
       Inference(
         "∧I",
-        Set(
+        Seq(
           gamma |- phi,
           gamma |- psi,
         ),
@@ -59,7 +59,7 @@ case object InferenceRules:
 
       Inference(
         "∧E₁",
-        Set(
+        Seq(
           gamma |- phi /\ psi,
         ),
         gamma |- phi,
@@ -76,7 +76,7 @@ case object InferenceRules:
 
       Inference(
         "∧E₂",
-        Set(
+        Seq(
           gamma |- phi /\ psi,
         ),
         gamma |- psi,
@@ -93,7 +93,7 @@ case object InferenceRules:
 
       Inference(
         "∨I₁",
-        Set(
+        Seq(
           gamma |- phi,
         ),
         gamma |- phi \/ psi,
@@ -110,7 +110,7 @@ case object InferenceRules:
 
       Inference(
         "∨I₂",
-        Set(
+        Seq(
           gamma |- psi,
         ),
         gamma |- phi \/ psi,
@@ -128,7 +128,7 @@ case object InferenceRules:
 
       Inference(
         "∨E",
-        Set(
+        Seq(
           gamma |- phi \/ psi,
           gamma :: phi |- rho,
           gamma :: psi |- rho,
@@ -147,7 +147,7 @@ case object InferenceRules:
 
       Inference(
         "→I",
-        Set(
+        Seq(
           gamma :: phi |- psi,
         ),
         gamma |- phi --> psi,
@@ -164,7 +164,7 @@ case object InferenceRules:
 
       Inference(
         "→E",
-        Set(
+        Seq(
           gamma |- phi --> psi,
           gamma |- phi,
         ),
@@ -181,7 +181,7 @@ case object InferenceRules:
 
       Inference(
         "¬I",
-        Set(
+        Seq(
           gamma :: phi |- fls,
         ),
         gamma |- ~phi,
@@ -197,7 +197,7 @@ case object InferenceRules:
 
       Inference(
         "¬E",
-        Set(
+        Seq(
           gamma |- ~phi,
           gamma |- phi,
         ),
@@ -215,7 +215,7 @@ case object InferenceRules:
 
       Inference(
         "⊤I",
-        Set(),
+        Seq(),
         gamma |- tru,
       )
 
@@ -231,7 +231,7 @@ case object InferenceRules:
 
       Inference(
         "⊥E",
-        Set(
+        Seq(
           gamma |- fls
         ),
         gamma |- phi,

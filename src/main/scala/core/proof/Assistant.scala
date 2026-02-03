@@ -52,9 +52,9 @@ object Assistant:
             for
               assertion   <- substitute[Fix[F], F](hypothesis.assertion, unification)
               assumptions <- substitute[Fix[F], F](hypothesis.assumptions.toSeq, seqUnification)
-            yield Judgement(assumptions.toSet, assertion)
+            yield Judgement(assumptions, assertion)
           }
-        yield Proof(Judgement(assumptions.toSet, assertion), hypotheses.map(Proof(_, List.empty)).toList)
+        yield Proof(Judgement(assumptions, assertion), hypotheses.map(Proof(_, List.empty)).toList)
 
       if proof.isDefined then ProofResult.Success(proof.get)
       else
@@ -63,9 +63,9 @@ object Assistant:
         val hypotheses  = rule.hypotheses.map { hypothesis =>
           val assertion   = substitutePartial(hypothesis.assertion, unification)
           val assumptions = substitutePartial(hypothesis.assumptions.toSeq, seqUnification)
-          Judgement(assumptions.toSet, assertion)
+          Judgement(assumptions, assertion)
         }
-        val conclusion  = Judgement(assumptions.toSet, assertion)
+        val conclusion  = Judgement(assumptions, assertion)
         ProofResult.SubstitutionFailure(Inference(rule.label, hypotheses, conclusion))
 
   /** Result of attempting to construct a proof. */

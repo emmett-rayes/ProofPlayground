@@ -23,42 +23,42 @@ import scala.language.implicitConversions
 class TestAssistant extends AnyFunSuite:
   import InferenceRules.IntuitionisticPropositional.*
 
-  /** Implicit conversion from a formula to a singleton set containing that formula. */
-  private given Conversion[Formula, Set[Formula]] = Set(_)
+  /** Implicit conversion from a formula to a singleton sequence containing that formula. */
+  private given Conversion[Formula, Seq[Formula]] = Seq(_)
 
   /** Implicit conversion from a formula over patterns to a pattern. */
   private given [F[_]] => Conversion[F[Pattern[F]], Pattern[F]] = f => Pattern(concrete(f))
 
-  /** Implicit conversion from a pattern to a singleton set containing that pattern. */
-  private given [F[_]] => Conversion[Pattern[F], Set[Pattern[F]]] = Set(_)
+  /** Implicit conversion from a pattern to a singleton sequence containing that pattern. */
+  private given [F[_]] => Conversion[Pattern[F], Seq[Pattern[F]]] = Seq(_)
 
   extension [F[_]](pattern: Pattern[F])
-    /** Add a pattern to a set of patterns.
+    /** Add a pattern to a sequence of patterns.
       *
-      * @param other The set of patterns to add to.
-      * @return A new set containing the original patterns and the added pattern.
+      * @param other The sequence of patterns to add to.
+      * @return A new sequence containing the original patterns and the added pattern.
       */
-    private def ::(other: Set[Pattern[F]]) = other + pattern
+    private def ::(other: Seq[Pattern[F]]) = other :+ pattern
 
   test("conjunction introduction for two propositional variables") {
     val A         = variable[Formula]("A")
     val B         = variable[Formula]("B")
-    val judgement = Set.empty |- (A /\ B)
+    val judgement = Seq.empty |- (A /\ B)
     val rule      = ConjunctionIntroduction
 
     val result = Assistant.proof(judgement, rule)
     result match
       case ProofResult.Success(proof) =>
-        val hypotheses = proof.subproofs.map(_.conclusion).toSet
+        val hypotheses = proof.subproofs.map(_.conclusion)
         assert(proof.conclusion == judgement)
-        assert(hypotheses == Set(Set.empty |- A, Set.empty |- B))
+        assert(hypotheses == Seq(Seq.empty |- A, Seq.empty |- B))
       case _ => fail("Expected successful proof construction")
   }
 
   test("disjunction elimination fails for two propositional variables") {
     val A         = variable[Formula]("A")
     val B         = variable[Formula]("B")
-    val judgement = Set.empty |- (A /\ B)
+    val judgement = Seq.empty |- (A /\ B)
     val rule      = DisjunctionElimination
 
     val result = Assistant.proof(judgement, rule)
@@ -68,30 +68,30 @@ class TestAssistant extends AnyFunSuite:
   test("disjunction introduction for two propositional variables (left)") {
     val A         = variable[Formula]("A")
     val B         = variable[Formula]("B")
-    val judgement = Set.empty |- (A \/ B)
+    val judgement = Seq.empty |- (A \/ B)
     val rule      = DisjunctionIntroduction1
 
     val result = Assistant.proof(judgement, rule)
     result match
       case ProofResult.Success(proof) =>
-        val hypotheses = proof.subproofs.map(_.conclusion).toSet
+        val hypotheses = proof.subproofs.map(_.conclusion)
         assert(proof.conclusion == judgement)
-        assert(hypotheses == Set(Set.empty |- A))
+        assert(hypotheses == Seq(Seq.empty |- A))
       case _ => fail("Expected successful proof construction")
   }
 
   test("disjunction introduction for two propositional variables (right)") {
     val A         = variable[Formula]("A")
     val B         = variable[Formula]("B")
-    val judgement = Set.empty |- (A \/ B)
+    val judgement = Seq.empty |- (A \/ B)
     val rule      = DisjunctionIntroduction2
 
     val result = Assistant.proof(judgement, rule)
     result match
       case ProofResult.Success(proof) =>
-        val hypotheses = proof.subproofs.map(_.conclusion).toSet
+        val hypotheses = proof.subproofs.map(_.conclusion)
         assert(proof.conclusion == judgement)
-        assert(hypotheses == Set(Set.empty |- B))
+        assert(hypotheses == Seq(Seq.empty |- B))
       case _ => fail("Expected successful proof construction")
   }
 
@@ -99,15 +99,15 @@ class TestAssistant extends AnyFunSuite:
     val A         = variable[Formula]("A")
     val B         = variable[Formula]("B")
     val C         = variable[Formula]("C")
-    val judgement = Set.empty |- C
+    val judgement = Seq.empty |- C
     val rule      = DisjunctionElimination
 
     val result = Assistant.proof(judgement, rule, Map(meta("phi") -> A, meta("psi") -> B))
     result match
       case ProofResult.Success(proof) =>
-        val hypotheses = proof.subproofs.map(_.conclusion).toSet
+        val hypotheses = proof.subproofs.map(_.conclusion)
         assert(proof.conclusion == judgement)
-        assert(hypotheses == Set(A |- C, B |- C, Set.empty |- A \/ B))
+        assert(hypotheses == Seq(A |- C, B |- C, Seq.empty |- A \/ B))
       case _ => fail("Expected successful proof construction")
   }
 
@@ -115,7 +115,7 @@ class TestAssistant extends AnyFunSuite:
     val phi       = meta("phi"): Pattern[FormulaF]
     val psi       = meta("psi"): Pattern[FormulaF]
     val A         = variable[Formula]("A")
-    val judgement = Set.empty |- A
+    val judgement = Seq.empty |- A
     val rule      = DisjunctionElimination
 
     val result = Assistant.proof(judgement, rule)
@@ -123,12 +123,12 @@ class TestAssistant extends AnyFunSuite:
       case ProofResult.SubstitutionFailure(partiallySubstitutedRule) =>
         val expected = Inference(
           rule.label,
-          Set(
-            Set.empty |- phi \/ psi,
+          Seq(
+            Seq.empty |- phi \/ psi,
             phi |- A.asPattern,
             psi |- A.asPattern,
           ),
-          Set.empty |- A.asPattern,
+          Seq.empty |- A.asPattern,
         )
         assert(partiallySubstitutedRule === expected)
       case _ => fail("Expected substitution error during proof construction")

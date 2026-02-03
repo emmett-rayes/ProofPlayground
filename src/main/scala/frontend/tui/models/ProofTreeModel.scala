@@ -48,7 +48,7 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
   private var selected: ProofTreeModel.ProofStep = uninitialized
 
   private var rulesInFocus = false
-  private var zipper       = Proof(Judgement(Set.empty, formula), List.empty).zipper
+  private var zipper       = Proof(Judgement(Seq.empty, formula), List.empty).zipper
 
   override def focusOnRules: Boolean = rulesInFocus
 
@@ -63,7 +63,7 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
   override def proofTree: Tree[ProofTreeModel.ProofStep] =
     zipper.root.get.asTree.map { judgement =>
       val label =
-        if judgement.assumptions(judgement.assertion) then " " else proofStepLabels.getOrDefault(judgement, "?")
+        if judgement.assumptions.contains(judgement.assertion) then " " else proofStepLabels.getOrDefault(judgement, "?")
       val result = ProofTreeModel.ProofStep(judgement.show, label)
       // remember the current position for `isNodeSelected`
       if judgement eq zipper.get.conclusion then selected = result
