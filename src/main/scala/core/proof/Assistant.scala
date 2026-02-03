@@ -54,7 +54,7 @@ object Assistant:
               assumptions <- substitute[Fix[F], F](hypothesis.assumptions.toSeq, seqUnification)
             yield Judgement(assumptions, assertion)
           }
-        yield Proof(Judgement(assumptions, assertion), hypotheses.map(Proof(_, List.empty)).toList)
+        yield Proof(Judgement(assumptions, assertion), hypotheses.reverse.map(Proof(_, List.empty)).toList)
 
       if proof.isDefined then ProofResult.Success(proof.get)
       else
