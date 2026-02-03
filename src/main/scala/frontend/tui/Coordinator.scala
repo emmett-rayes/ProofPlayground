@@ -1,8 +1,8 @@
 package proofPlayground
 package frontend.tui
 
-import frontend.tui.components.{ConfirmPopup, InputPopup}
-import frontend.tui.views.{FormulaInput, ProofTree}
+import frontend.tui.components.ConfirmPopup
+import frontend.tui.views.{FormulaInput, MissingMetaVariable, ProofTree}
 
 import tui.Frame
 import tui.crossterm.Event

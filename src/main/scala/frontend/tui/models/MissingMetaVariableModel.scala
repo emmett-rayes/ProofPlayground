@@ -16,14 +16,15 @@ object MissingMetaVariableModel:
   trait Data:
     def variable: String
     def inferenceRule: InferenceRuleString
-
     def inputHandler: String => Either[Unit, String]
-    def exitHandler: () => Unit
+
+  trait Signals:
+    def exit(): Unit
 
 class MissingMetaVariableModel(confirm: Formula => Unit, dismiss: () => Unit)(
   metavariable: MetaVariable,
   rule: InferenceRule[Judgement, FormulaF]
-) extends MissingMetaVariableModel.Data:
+) extends MissingMetaVariableModel.Data, MissingMetaVariableModel.Signals:
   override def variable: String = metavariable.name
 
   override def inferenceRule: MissingMetaVariableModel.InferenceRuleString =
@@ -31,9 +32,11 @@ class MissingMetaVariableModel(confirm: Formula => Unit, dismiss: () => Unit)(
 
   override def inputHandler: String => Either[Unit, String] =
     input =>
+      dismiss()
       Formula.parser.parse(input) match
         case Failure(_)     => Right("invalid formula")
         case Success(value) =>
           confirm(value.parsed); Left(())
 
-  override def exitHandler: () => Unit = dismiss
+  override def exit(): Unit =
+    dismiss()

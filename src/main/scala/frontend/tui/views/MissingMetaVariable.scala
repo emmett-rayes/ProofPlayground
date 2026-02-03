@@ -1,15 +1,17 @@
 package proofPlayground
-package frontend.tui
+package frontend.tui.views
 
 import core.logic.propositional.{Formula, FormulaF}
 import core.meta.MetaVariable
 import core.proof.InferenceRule
 import core.proof.natural.Judgement
-import frontend.tui.components.InputPopup
+import frontend.tui.Screen.EventResult
+import frontend.tui.components.TextInput
 import frontend.tui.models.MissingMetaVariableModel
+import frontend.tui.{Rectangle, Renderer, Screen}
 
 import tui.*
-import tui.crossterm.Event
+import tui.crossterm.{Event, KeyCode}
 import tui.widgets.{BlockWidget, ClearWidget, ParagraphWidget}
 
 object MissingMetaVariable:
@@ -18,22 +20,26 @@ object MissingMetaVariable:
     dismiss: () => Unit
   ): MissingMetaVariable =
     val model = MissingMetaVariableModel(confirm, dismiss)(metavariable, rule)
-    new MissingMetaVariable(model)
+    new MissingMetaVariable(model)(model)
 
-class MissingMetaVariable(data: MissingMetaVariableModel.Data) extends Screen:
+class MissingMetaVariable(data: MissingMetaVariableModel.Data)(signals: MissingMetaVariableModel.Signals)
+    extends Screen:
   private val ySize = 60
   private val xSize = 40
 
-  private val popup = InputPopup(
-    s"Enter formula for missing meta-variable ${data.variable}",
-    Some("Missing meta-variable"),
-    Some(" Formula "),
-  )(data.inputHandler, data.exitHandler, ySize = 100, xSize = 100) // Hack for defining actual popup size in this class
+  private val textInput = TextInput(data.inputHandler, Some(" Formula "), startInEditMode = true)
 
-  override def headerText: Text = popup.headerText
-  override def footerText: Text = popup.footerText
+  override def headerText: Text = Text.nostyle("")
+  override def footerText: Text = textInput.footerText
 
-  override def handleEvent(event: Event): Screen.EventResult = popup.handleEvent(event)
+  override def handleEvent(event: Event): Screen.EventResult =
+    event match {
+      case key: tui.crossterm.Event.Key =>
+        key.keyEvent().code() match
+          case c: KeyCode.Esc => signals.exit(); EventResult.Handled
+          case _              => textInput.handleEvent(event)
+      case _ => EventResult.NotHandled
+    }
 
   override def render(renderer: Renderer, area: Rect): Unit =
     val contentArea = Rectangle(ySize, xSize, area)
@@ -45,9 +51,16 @@ class MissingMetaVariable(data: MissingMetaVariableModel.Data) extends Screen:
         Constraint.Length(2), // spacer
         Constraint.Length(3), // rule
         Constraint.Length(2), // spacer
+        Constraint.Length(1), // message
         Constraint.Min(1),    // input
+        Constraint.Length(1), // spacer
       ),
     ).split(contentArea)
+
+    val message = ParagraphWidget(
+      text = Text.nostyle(s"Enter formula for missing meta-variable ${data.variable}"),
+      alignment = Alignment.Center,
+    )
 
     val border =
       BlockWidget(borders = Borders.ALL, borderType = BlockWidget.BorderType.Rounded)
@@ -56,7 +69,8 @@ class MissingMetaVariable(data: MissingMetaVariableModel.Data) extends Screen:
     renderer.render(background, contentArea)
     renderer.render(border, contentArea)
     renderRule(data.inferenceRule, renderer, layout(1))
-    popup.render(renderer, layout(3))
+    renderer.render(message, layout(3))
+    textInput.render(renderer, layout(4))
 
   private def renderRule(rule: MissingMetaVariableModel.InferenceRuleString, renderer: Renderer, area: Rect): Unit =
     val layout = Layout(

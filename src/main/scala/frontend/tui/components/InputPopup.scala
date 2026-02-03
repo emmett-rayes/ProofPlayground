@@ -11,9 +11,10 @@ import tui.widgets.{BlockWidget, ClearWidget, ParagraphWidget}
 class InputPopup(message: String, title: Option[String] = None, inputTitle: Option[String] = None)(
   confirm: String => Either[Unit, String],
   dismiss: () => Unit,
-  ySize: Int = 40,
-  xSize: Int = 30,
 ) extends Screen:
+  private val ySize = 40
+  private val xSize = 30
+
   private val textInput = TextInput(callback, inputTitle, startInEditMode = true)
 
   override def headerText: Text = Text.nostyle(title.getOrElse(""))
