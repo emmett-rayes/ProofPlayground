@@ -1,9 +1,10 @@
 package proofPlayground
 package frontend
 
-import core.catamorphism
+import core.{Algebra, Functor, catamorphism}
 import core.logic.propositional
 import core.logic.propositional.{Formula, FormulaF}
+import core.meta.Pattern
 import core.proof.natural.Judgement
 
 /** A typeclass for showing a value of type `Self` as a string. */
@@ -15,21 +16,27 @@ trait Show:
     def show: String
 
 object Show:
-  private def algebra(formula: FormulaF[String]): String =
-    formula match
-      case propositional.FormulaF.Variable(variable)       => variable.id
-      case propositional.FormulaF.True(tru)                => "⊤"
-      case propositional.FormulaF.False(fls)               => "⊥"
-      case propositional.FormulaF.Negation(negation)       => s"¬${negation.arg}"
-      case propositional.FormulaF.Conjunction(conjunction) => s"(${conjunction.lhs} ∧ ${conjunction.rhs})"
-      case propositional.FormulaF.Disjunction(disjunction) => s"(${disjunction.lhs} ∨ ${disjunction.rhs})"
-      case propositional.FormulaF.Implication(implication) => s"(${implication.lhs} → ${implication.rhs})"
+  given Algebra[FormulaF, String] = {
+    case propositional.FormulaF.Variable(variable)       => variable.id
+    case propositional.FormulaF.True(tru)                => "⊤"
+    case propositional.FormulaF.False(fls)               => "⊥"
+    case propositional.FormulaF.Negation(negation)       => s"¬${negation.arg}"
+    case propositional.FormulaF.Conjunction(conjunction) => s"(${conjunction.lhs} ∧ ${conjunction.rhs})"
+    case propositional.FormulaF.Disjunction(disjunction) => s"(${disjunction.lhs} ∨ ${disjunction.rhs})"
+    case propositional.FormulaF.Implication(implication) => s"(${implication.lhs} → ${implication.rhs})"
+  }
 
   /** [[Show]] instance for [[Formula]]. */
   given Formula is Show:
     extension (formula: Self)
       override def show: String =
-        catamorphism(formula)(algebra)
+        catamorphism(formula)(summon)
+
+  given [F[_]: Functor] => (Algebra[F, String]) => Pattern[F] is Show:
+    extension (pattern: Pattern[F])
+      override def show: String =
+        val algebra = Pattern.algebra(summon)(_.name)
+        catamorphism(pattern)(algebra)
 
   /** [[Show]] instance for [[Judgement]]. */
   given [F: Show] => Judgement[F] is Show:
