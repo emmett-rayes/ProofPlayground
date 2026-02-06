@@ -4,6 +4,7 @@ package core.meta
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
 import core.meta.Pattern.given
+import core.{Algebra, catamorphism}
 
 import scala.language.implicitConversions
 
@@ -27,14 +28,17 @@ object AsPattern:
   given Conversion[FormulaF[Pattern[FormulaF]], Pattern[FormulaF]] =
     PatternF.concrete(_)
 
+  given Algebra[FormulaF, Pattern[FormulaF]] = {
+    case FormulaF.Variable(symbol)         => variable(symbol)
+    case FormulaF.True(_)                  => tru
+    case FormulaF.False(_)                 => fls
+    case FormulaF.Negation(negation)       => ~negation.arg
+    case FormulaF.Conjunction(conjunction) => conjunction.lhs /\ conjunction.rhs
+    case FormulaF.Disjunction(disjunction) => disjunction.lhs \/ disjunction.rhs
+    case FormulaF.Implication(implication) => implication.lhs --> implication.rhs
+  }
+
   given Formula is AsPattern[FormulaF]:
     extension (formula: Formula)
       override def asPattern: Pattern[FormulaF] =
-        formula.unfix match
-          case FormulaF.Variable(symbol)         => variable(symbol)
-          case FormulaF.True(_)                  => tru
-          case FormulaF.False(_)                 => fls
-          case FormulaF.Negation(negation)       => ~negation.arg.asPattern
-          case FormulaF.Conjunction(conjunction) => conjunction.lhs.asPattern /\ conjunction.rhs.asPattern
-          case FormulaF.Disjunction(disjunction) => disjunction.lhs.asPattern \/ disjunction.rhs.asPattern
-          case FormulaF.Implication(implication) => implication.lhs.asPattern --> implication.rhs.asPattern
+        catamorphism(formula)(summon)
