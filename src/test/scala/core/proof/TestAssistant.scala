@@ -107,7 +107,7 @@ class TestAssistant extends AnyFunSuite:
       case ProofResult.Success(proof) =>
         val hypotheses = proof.subproofs.map(_.conclusion)
         assert(proof.conclusion == judgement)
-        assert(hypotheses == Seq(A |- C, B |- C, Seq.empty |- A \/ B))
+        assert(hypotheses == Seq(Seq.empty |- A \/ B, A |- C, B |- C))
       case _ => fail("Expected successful proof construction")
   }
 
