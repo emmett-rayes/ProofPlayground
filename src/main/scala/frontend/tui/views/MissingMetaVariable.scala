@@ -34,7 +34,7 @@ class MissingMetaVariable(data: MissingMetaVariableModel.Data)(signals: MissingM
 
   override def handleEvent(event: Event): Screen.EventResult =
     event match {
-      case key: tui.crossterm.Event.Key =>
+      case key: Event.Key =>
         key.keyEvent().code() match
           case c: KeyCode.Esc => signals.exit(); EventResult.Handled
           case _              => textInput.handleEvent(event)

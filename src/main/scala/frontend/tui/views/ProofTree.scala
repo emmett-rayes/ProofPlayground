@@ -9,7 +9,7 @@ import frontend.tui.{Navigation, Renderer, Screen}
 import tree.Tree
 
 import tui.*
-import tui.crossterm.{Event, KeyCode, MouseEventKind}
+import tui.crossterm.{Event, KeyCode, KeyModifiers, MouseEventKind}
 import tui.widgets.{BlockWidget, ListWidget, ParagraphWidget}
 
 extension [A](tree: Tree[A])
@@ -70,19 +70,19 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
 
     val treeFocus = !data.focusOnRules
     event match {
-      case mouse: tui.crossterm.Event.Mouse if treeFocus =>
+      case mouse: Event.Mouse if treeFocus =>
         mouse.mouseEvent().kind() match {
           case k: MouseEventKind.ScrollUp =>
-            if mouse.mouseEvent().modifiers().bits() == tui.crossterm.KeyModifiers.ALT then
+            if mouse.mouseEvent().modifiers().bits() == KeyModifiers.ALT then
               scrollViewState.scrollLeft()
             else scrollViewState.scrollUp()
           case k: MouseEventKind.ScrollDown =>
-            if mouse.mouseEvent().modifiers().bits() == tui.crossterm.KeyModifiers.ALT then
+            if mouse.mouseEvent().modifiers().bits() == KeyModifiers.ALT then
               scrollViewState.scrollRight()
             else scrollViewState.scrollDown()
           case _ => EventResult.NotHandled
         }
-      case key: tui.crossterm.Event.Key =>
+      case key: Event.Key =>
         key.keyEvent().code() match {
           case c: KeyCode.Enter =>
             if treeFocus then signals.selectNode() else signals.selectRule(rulesListState.selected)

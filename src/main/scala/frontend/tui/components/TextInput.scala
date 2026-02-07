@@ -26,7 +26,7 @@ class TextInput(
     given Conversion[Unit, EventResult.Handled.type] = _ => EventResult.Handled
 
     event match {
-      case key: tui.crossterm.Event.Key =>
+      case key: Event.Key =>
         mode match {
           case InputMode.Normal =>
             key.keyEvent().code() match

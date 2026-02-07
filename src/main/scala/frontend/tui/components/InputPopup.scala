@@ -23,7 +23,7 @@ class InputPopup(message: String, title: Option[String] = None, inputTitle: Opti
 
   override def handleEvent(event: Event): EventResult =
     event match {
-      case key: tui.crossterm.Event.Key =>
+      case key: Event.Key =>
         key.keyEvent().code() match
           case c: KeyCode.Esc => dismiss(); EventResult.Handled
           case _              => textInput.handleEvent(event)

@@ -26,7 +26,7 @@ class FormulaInput(model: FormulaInputModel) extends Screen:
       case EventResult.Handled    => EventResult.Handled
       case EventResult.NotHandled =>
         event match {
-          case key: tui.crossterm.Event.Key =>
+          case key: Event.Key =>
             key.keyEvent().code() match
               case c: KeyCode.Char if c.c == 'q' =>
                 model.quit()
