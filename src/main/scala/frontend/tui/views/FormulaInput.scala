@@ -13,10 +13,10 @@ import tui.widgets.ParagraphWidget
 object FormulaInput:
   def apply(navigation: Navigation): FormulaInput =
     val model = FormulaInputModel(navigation)
-    new FormulaInput(model)
+    new FormulaInput(model)(model)
 
-class FormulaInput(model: FormulaInputModel) extends Screen:
-  private val textInput = TextInput(model.inputHandler, Some(" Formula "))
+class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Signals) extends Screen:
+  private val textInput = TextInput(data.inputHandler, Some(" Formula "))
 
   override def headerText: Text =
     Text.from(Span.styled("Proof Playground", Style.DEFAULT.fg(Color.Cyan).addModifier(Modifier.BOLD)))
@@ -28,10 +28,8 @@ class FormulaInput(model: FormulaInputModel) extends Screen:
         event match {
           case key: Event.Key =>
             key.keyEvent().code() match
-              case c: KeyCode.Char if c.c == 'q' =>
-                model.quit()
-                EventResult.Handled
-              case _ => EventResult.NotHandled
+              case c: KeyCode.Char if c.c == 'q' => signals.quit(); EventResult.Handled
+              case _                             => EventResult.NotHandled
           case _ => EventResult.NotHandled
         }
 

@@ -7,8 +7,15 @@ import frontend.tui.Navigation
 
 import scala.util.Success
 
-class FormulaInputModel(navigation: Navigation):
-  def inputHandler: String => Either[Unit, String] =
+object FormulaInputModel:
+  trait Data:
+    def inputHandler: String => Either[Unit, String]
+
+  trait Signals:
+    def quit(): Unit
+
+class FormulaInputModel(navigation: Navigation) extends FormulaInputModel.Data, FormulaInputModel.Signals:
+  override def inputHandler: String => Either[Unit, String] =
     input =>
       Formula.parser.parse(input) match
         case Success(value) if value.remaining.isEmpty =>
@@ -16,5 +23,5 @@ class FormulaInputModel(navigation: Navigation):
           Left(())
         case _ => Right("invalid formula")
 
-  def quit(): Unit =
+  override def quit(): Unit =
     navigation.exit()
