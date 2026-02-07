@@ -40,7 +40,7 @@ case class ScrollViewWidget(
 
   override type State = ScrollViewState
 
-  private val area        = Rect(x = 0, y = 0, width = size.width, height = size.height)
+  val area        = Rect(x = 0, y = 0, width = size.width, height = size.height)
   private val buf: Buffer = Buffer.empty(area)
 
   /** The content size of the scroll view */
