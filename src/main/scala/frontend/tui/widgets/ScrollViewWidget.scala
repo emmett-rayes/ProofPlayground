@@ -355,9 +355,9 @@ case class ScrollbarWidget(
       else if y == area.bottom - 1 then
         "▼"
       else if y >= area.top + thumbPos + 1 && y < area.top + thumbPos + thumbSize + 1 then
-        "█"
+        "┃"
       else
-        "║"
+        "│"
       buf.get(x, y).setSymbol(symbol).setStyle(style)
       y += 1
   }
@@ -382,9 +382,9 @@ case class ScrollbarWidget(
       else if x == area.right - 1 then
         "►"
       else if x >= area.left + thumbPos + 1 && x < area.left + thumbPos + thumbSize + 1 then
-        "█"
+        "━"
       else
-        "═"
+        "─"
       buf.get(x, y).setSymbol(symbol).setStyle(style)
       x += 1
   }
