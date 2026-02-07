@@ -3,8 +3,8 @@ package frontend.tui.views
 
 import frontend.tui.Screen.EventResult
 import frontend.tui.components.TextInput
-import frontend.tui.models.FormulaInputModel
 import frontend.tui.{Navigation, Renderer, Screen}
+import frontend.presentation.FormulaInputModel
 
 import tui.*
 import tui.crossterm.{Event, KeyCode}

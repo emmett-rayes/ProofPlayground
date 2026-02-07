@@ -1,5 +1,5 @@
 package proofPlayground
-package frontend.tui.models
+package frontend.presentation
 
 import core.logic.propositional.Formula
 import frontend.notation.FormulaParser.parser

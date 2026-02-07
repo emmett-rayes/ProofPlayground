@@ -1,14 +1,14 @@
 package proofPlayground
-package frontend.tui.models
+package frontend.presentation
 
 import core.logic.propositional.{Formula, FormulaF}
 import core.meta.MetaVariable
 import core.proof.InferenceRule
 import core.proof.natural.Judgement
-import frontend.notation.FormulaParser.parser
 import frontend.Show.given
+import frontend.notation.FormulaParser.parser
 
-import scala.util.{Failure, Success}
+import scala.util.Success
 
 object MissingMetaVariableModel:
   type InferenceRuleString = (label: String, conclusion: String, hypotheses: Vector[String])

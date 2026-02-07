@@ -1,5 +1,5 @@
 package proofPlayground
-package frontend.tui.models
+package frontend.presentation
 
 import core.logic.propositional.{Formula, FormulaF}
 import core.meta.MetaVars.given

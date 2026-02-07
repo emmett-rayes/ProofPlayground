@@ -7,8 +7,8 @@ import core.proof.InferenceRule
 import core.proof.natural.Judgement
 import frontend.tui.Screen.EventResult
 import frontend.tui.components.TextInput
-import frontend.tui.models.MissingMetaVariableModel
 import frontend.tui.{Rectangle, Renderer, Screen}
+import frontend.presentation.MissingMetaVariableModel
 
 import tui.*
 import tui.crossterm.{Event, KeyCode}
