@@ -4,12 +4,41 @@ package frontend.tui.views
 import core.logic.propositional.Formula
 import frontend.tui.Screen.EventResult
 import frontend.tui.models.ProofTreeModel
+import frontend.tui.widgets.{ScrollViewState, ScrollViewWidget, Size}
 import frontend.tui.{Navigation, Renderer, Screen}
 import tree.Tree
 
 import tui.*
-import tui.crossterm.{Event, KeyCode}
+import tui.crossterm.{Event, KeyCode, MouseEventKind}
 import tui.widgets.{BlockWidget, ListWidget, ParagraphWidget}
+
+extension [A](tree: Tree[A])
+  private def width: Int =
+    if tree.isLeaf then 1
+    else
+      tree.children.foldLeft(tree.children.length) { (acc, child) => acc.max(child.width) }
+
+  private def height: Int =
+    if tree.isLeaf then 1
+    else
+      tree.children.foldLeft(0) { (acc, child) => acc.max(child.height) } + 1
+
+  private def leaves: Seq[Tree[A]] =
+    if tree.isLeaf then Seq(tree)
+    else tree.children.flatMap(_.leaves)
+
+extension (view: ScrollViewWidget)
+  private def renderer: Renderer = renderer(None)
+
+  private def renderer(cursorRenderer: Option[Renderer]): Renderer = new Renderer:
+    override def render(widget: Widget, area: Rect): Unit =
+      view.renderWidget(widget, area)
+
+    override def render(widget: StatefulWidget, area: Rect)(state: widget.State): Unit =
+      view.renderStatefulWidget(widget, area, state)
+
+    override def setCursor(x: Int, y: Int): Unit =
+      cursorRenderer.foreach(_.setCursor(x, y))
 
 object ProofTree:
   def apply(navigation: Navigation)(formula: Formula): ProofTree =
@@ -17,7 +46,8 @@ object ProofTree:
     new ProofTree(model)(model)
 
 class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) extends Screen:
-  private val rulesListState = ListWidget.State()
+  private val rulesListState  = ListWidget.State()
+  private val scrollViewState = ScrollViewState()
 
   override def headerText: Text =
     Text.from(Span.styled("Proof Tree", Style.DEFAULT.fg(Color.Cyan)))
@@ -40,6 +70,18 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
 
     val treeFocus = !data.focusOnRules
     event match {
+      case mouse: tui.crossterm.Event.Mouse if treeFocus =>
+        mouse.mouseEvent().kind() match {
+          case k: MouseEventKind.ScrollUp =>
+            if mouse.mouseEvent().modifiers().bits() == tui.crossterm.KeyModifiers.ALT then
+              scrollViewState.scrollLeft()
+            else scrollViewState.scrollUp()
+          case k: MouseEventKind.ScrollDown =>
+            if mouse.mouseEvent().modifiers().bits() == tui.crossterm.KeyModifiers.ALT then
+              scrollViewState.scrollRight()
+            else scrollViewState.scrollDown()
+          case _ => EventResult.NotHandled
+        }
       case key: tui.crossterm.Event.Key =>
         key.keyEvent().code() match {
           case c: KeyCode.Enter =>
@@ -81,8 +123,8 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
     if !data.focusOnRules then deselectRule()
     else if rulesListState.selected.isEmpty then nextRule()
 
+    renderScrollableTree(renderer, data.proofTree, layout(1))
     renderRules(renderer, data.rules, layout(0))
-    renderTree(renderer, data.proofTree, layout(1))
 
   private def renderRules(renderer: Renderer, rules: Vector[ProofTreeModel.ProofRule], area: Rect): Unit =
     val items = data.rules.toArray.map { rule =>
@@ -105,6 +147,17 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
     )
 
     renderer.render(list, area)(rulesListState)
+
+  private def renderScrollableTree(renderer: Renderer, tree: Tree[ProofTreeModel.ProofStep], area: tui.Rect): Unit =
+    // alternatively: sum the width of all graphemes in a level and maximize
+    val width                   = tree.leaves.length * 40
+    val height                  = tree.height * 5
+    val verticalScrollbarSize   = if height > area.height then 1 else 0
+    val horizontalScrollbarSize = if width > area.width then 1 else 0
+    val size = Size(width.max(area.width) - verticalScrollbarSize, height.max(area.height) - horizontalScrollbarSize)
+    val scrollView = ScrollViewWidget(size)
+    renderTree(scrollView.renderer, data.proofTree, scrollView.area)
+    renderer.render(scrollView, area)(scrollViewState)
 
   private def renderTree(renderer: Renderer, tree: Tree[ProofTreeModel.ProofStep], area: tui.Rect): Unit =
     val nodeLayout = Layout(
@@ -138,16 +191,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
 
     // render children
     if !tree.isLeaf then
-      val childrenSizes = tree.children.map { tree =>
-        def width(tree: Tree[?]): Int =
-          if tree.isLeaf then 1
-          else
-            tree.children.foldLeft(tree.children.length) { (acc, child) =>
-              acc.max(width(child))
-            }
-        width(tree)
-      }
-
+      val childrenSizes  = tree.children.map(width)
       val childrenLayout = Layout(
         direction = Direction.Horizontal,
         constraints = Array.tabulate(tree.children.length) { idx =>
