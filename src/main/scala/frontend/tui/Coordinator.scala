@@ -4,11 +4,23 @@ package frontend.tui
 import frontend.tui.components.ConfirmPopup
 import frontend.tui.views.{FormulaInput, MissingMetaVariable, ProofTree}
 
-import tui.Frame
+import tui.*
 import tui.crossterm.Event
 
+extension (frame: Frame)
+  private def renderer: Renderer = new Renderer:
+    override def render(widget: Widget, area: Rect): Unit =
+      frame.renderWidget(widget, area)
+
+    override def render[W <: StatefulWidget](widget: W, area: Rect)(state: widget.State): Unit =
+      frame.renderStatefulWidget(widget, area)(state)
+
+    override def setCursor(x: Int, y: Int): Unit =
+      frame.setCursor(x, y)
+
 class Coordinator extends Navigation:
-  private var screens: List[Screen] = List.empty
+  private var mainScreen: MainScreen = MainScreen(List.empty)
+  private var screens: List[Screen]  = List.empty
 
   {
     navigateTo(Navigation.Screen.FormulaInput)
@@ -16,13 +28,11 @@ class Coordinator extends Navigation:
 
   def shouldExit: Boolean = screens.isEmpty
 
-  def handleEvent(event: Event): Unit =
-    screens.head.handleEvent(event)
+  def handleEvent(event: Event): Unit = mainScreen.handleEvent(event)
 
   def render(frame: Frame): Unit =
-    val renderer = FrameRenderer(frame)
-    val screen   = MainScreen(screens)
-    screen.render(renderer, frame.size)
+    mainScreen = MainScreen(screens)
+    mainScreen.render(frame.renderer, frame.size)
 
   override def exit(): Unit =
     screens = List.empty
