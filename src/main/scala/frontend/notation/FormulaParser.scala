@@ -21,6 +21,7 @@ private def conjunctionParser[F] = symbol.Conjunction.parser[F]
 private def disjunctionParser[F] = symbol.Disjunction.parser[F]
 private def implicationParser[F] = symbol.Implication.parser[F]
 
+private def negationChainedParser[F]    = symbol.Negation.chainedParser[F]
 private def conjunctionChainedParser[F] = symbol.Conjunction.chainedParser[F]
 private def disjunctionChainedParser[F] = symbol.Disjunction.chainedParser[F]
 private def implicationChainedParser[F] = symbol.Implication.chainedParser[F]
@@ -46,7 +47,7 @@ object FormulaParser:
           `orElse` unary
 
       def unary: Parser[Tokens, Formula] =
-        FormulaF.Negation.parser(input => unary.parse(input)).wrap
+        FormulaF.Negation.chainedParser(atomic).wrap
           `orElse` atomic
 
       def atomic: Parser[Tokens, Formula] =
@@ -73,6 +74,11 @@ object FormulaParser:
   extension ($ : FormulaF.Negation.type)
     def parser[T](subparser: Parser[Tokens, T]): Parser[Tokens, FormulaF.Negation[T]] =
       negationParser(subparser).map(FormulaF.Negation[T])
+      
+    def chainedParser[T](subparser: Parser[Tokens, T])(using
+      Conversion[FormulaF.Negation[T], T]
+    ) : Parser[Tokens, FormulaF.Negation[T]] =
+      negationChainedParser(subparser)(FormulaF.Negation(_)).map(FormulaF.Negation[T])
 
   extension ($ : FormulaF.Conjunction.type)
     def parser[T](subparser: Parser[Tokens, T]): Parser[Tokens, FormulaF.Conjunction[T]] =
