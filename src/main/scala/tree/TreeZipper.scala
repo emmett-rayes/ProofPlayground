@@ -3,7 +3,12 @@ package tree
 
 /** A zipper for [[Tree]]s.
   *
-  * This is the derivative of the type constructor [[Tree]] with respect to `A`.
+  * This is the derivative of the type constructor [[Tree]] with respect to `A` plus an element of type `A`.
+  *
+  * The element of type `A` is implicitly plugged in the one-hole-context (derivative)
+  * of the underlying functor with respect to `A` resulting in the member `subtree`.
+  *
+  * @note [[Tree]] is the fixed-point of the underlying implicit functor of which [[TreeContext]] is a derivate.
   *
   * @tparam A the type of values stored in the tree.
   */

@@ -7,7 +7,7 @@ type MetaVariable = PatternF.Meta[?, ?]
 
 /** Pattern for matching formulas in proof structures.
   *
-  * A pattern is defined as a fixed point over the functor [[PatternF]].
+  * A pattern is defined as a fixed-point over the functor [[PatternF]].
   */
 type Pattern[F[_]] = Fix[[T] =>> PatternF[F, T]]
 

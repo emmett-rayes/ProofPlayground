@@ -8,7 +8,7 @@ import core.Functor
   * A leaf node has no children.
   *
   * @note This definition contains the sum type implicitly.
-  *       The corresponding functor of the least fixed point is X => A + List[X].
+  *       The corresponding implicit functor of the least fixed-point is X => A + List[X].
   * @tparam A the type of values stored in the tree.
   */
 case class Tree[+A](value: A, children: List[Tree[A]] = List.empty):

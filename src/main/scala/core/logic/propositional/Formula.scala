@@ -8,7 +8,7 @@ import scala.language.implicitConversions
 
 /** Representation of a propositional formula.
   *
-  * A formula is defined as a fixed point over the functor [[FormulaF]].
+  * A formula is defined as a fixed-point over the functor [[FormulaF]].
   */
 type Formula = Fix[FormulaF]
 
