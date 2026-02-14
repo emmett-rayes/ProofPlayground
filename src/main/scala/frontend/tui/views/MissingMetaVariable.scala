@@ -81,15 +81,15 @@ class MissingMetaVariable(data: MissingMetaVariableModel.Data)(signals: MissingM
       direction = Direction.Vertical,
       margin = Margin(0, 4),
       constraints = Array(
-        Constraint.Length(1), // hypotheses
+        Constraint.Length(1), // premises
         Constraint.Length(1), // separator
         Constraint.Length(1), // conclusion
       )
     ).split(area)
 
-    val hypothesesLayout = Layout(
+    val premisesLayout = Layout(
       direction = Direction.Horizontal,
-      constraints = Array.fill(rule.hypotheses.length)(Constraint.Ratio(1, rule.hypotheses.length)),
+      constraints = Array.fill(rule.premises.length)(Constraint.Ratio(1, rule.premises.length)),
     ).split(layout(0))
 
     val divider = ParagraphWidget(
@@ -106,8 +106,8 @@ class MissingMetaVariable(data: MissingMetaVariableModel.Data)(signals: MissingM
     renderer.render(divider, layout(1))
     renderer.render(conclusion, layout(2))
 
-    rule.hypotheses.zipWithIndex.foreach { (h, idx) =>
-      val spacer = if idx == rule.hypotheses.length - 1 then "" else "  "
+    rule.premises.zipWithIndex.foreach { (h, idx) =>
+      val spacer = if idx == rule.premises.length - 1 then "" else "  "
       val text   = findVariable(h) match {
         case None =>
           Text.nostyle(h + spacer)
@@ -120,8 +120,8 @@ class MissingMetaVariable(data: MissingMetaVariableModel.Data)(signals: MissingM
             Span.nostyle(after + spacer)
           )
       }
-      val hypothesis = ParagraphWidget(text = text, alignment = Alignment.Center)
-      renderer.render(hypothesis, hypothesesLayout(idx))
+      val premise = ParagraphWidget(text = text, alignment = Alignment.Center)
+      renderer.render(premise, premisesLayout(idx))
     }
 
   private def findVariable(text: String): Option[Int] =

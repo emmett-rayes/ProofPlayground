@@ -56,4 +56,4 @@ object MetaVars:
   given [J: MetaVars] => Inference[J] is MetaVars:
     extension (inference: Inference[J])
       override def metavariables: Set[MetaVariable] =
-        inference.conclusion.metavariables ++ inference.hypotheses.flatMap(_.metavariables)
+        inference.conclusion.metavariables ++ inference.premises.flatMap(_.metavariables)

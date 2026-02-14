@@ -14,12 +14,12 @@ object Assistant:
     * The proof is constructible if the judgement can be proved by applying the inference rule to the judgement.
     * Unification is used to match the patterns in the inference rule with the concrete formulas in the judgement.
     * Substitution is used to substitute the unification results into the patterns in the inference rule.
-    * Thus producing new hypotheses as given by the inference rule.
+    * Thus producing new premises as given by the inference rule.
     *
     * @tparam F The type of the formula functor used in patterns in the inference rule.
     * @param judgement The judgement to be proved.
     * @param rule The inference rule to be applied.
-    * @param auxUnification A unification for the meta-variables appearing in the hypotheses but not in the conclusion.
+    * @param auxUnification A unification for the meta-variables appearing in the premises but not in the conclusion.
     * @return Some(proof) if it is constructible, None otherwise.
     */
   def proof[F[_]: Functor](using
@@ -48,25 +48,25 @@ object Assistant:
         for
           assertion   <- substitute[Fix[F], F](rule.conclusion.assertion, unification)
           assumptions <- substitute[Fix[F], F](rule.conclusion.assumptions.toSeq, seqUnification)
-          hypotheses  <- rule.hypotheses.toSeq.traverse { hypothesis =>
+          premises  <- rule.premises.toSeq.traverse { premise =>
             for
-              assertion   <- substitute[Fix[F], F](hypothesis.assertion, unification)
-              assumptions <- substitute[Fix[F], F](hypothesis.assumptions.toSeq, seqUnification)
+              assertion   <- substitute[Fix[F], F](premise.assertion, unification)
+              assumptions <- substitute[Fix[F], F](premise.assumptions.toSeq, seqUnification)
             yield Judgement(assumptions, assertion)
           }
-        yield Proof(Judgement(assumptions, assertion), hypotheses.reverse.map(Proof(_, List.empty)).toList)
+        yield Proof(Judgement(assumptions, assertion), premises.reverse.map(Proof(_, List.empty)).toList)
 
       if proof.isDefined then ProofResult.Success(proof.get)
       else
         val assertion   = substitutePartial(rule.conclusion.assertion, unification)
         val assumptions = substitutePartial(rule.conclusion.assumptions.toSeq, seqUnification)
-        val hypotheses  = rule.hypotheses.map { hypothesis =>
-          val assertion   = substitutePartial(hypothesis.assertion, unification)
-          val assumptions = substitutePartial(hypothesis.assumptions.toSeq, seqUnification)
+        val premises  = rule.premises.map { premise =>
+          val assertion   = substitutePartial(premise.assertion, unification)
+          val assumptions = substitutePartial(premise.assumptions.toSeq, seqUnification)
           Judgement(assumptions, assertion)
         }
         val conclusion  = Judgement(assumptions, assertion)
-        ProofResult.SubstitutionFailure(Inference(rule.label, hypotheses, conclusion))
+        ProofResult.SubstitutionFailure(Inference(rule.label, premises, conclusion))
 
   /** Result of attempting to construct a proof. */
   enum ProofResult[J[_], F[_]]:

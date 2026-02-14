@@ -11,7 +11,7 @@ import frontend.notation.FormulaParser.parser
 import scala.util.Success
 
 object MissingMetaVariableModel:
-  type InferenceRuleString = (label: String, conclusion: String, hypotheses: Vector[String])
+  type InferenceRuleString = (label: String, conclusion: String, premises: Vector[String])
 
   trait Data:
     def variable: String
@@ -28,7 +28,7 @@ class MissingMetaVariableModel(confirm: Formula => Unit, dismiss: () => Unit)(
   override def variable: String = metavariable.name
 
   override def inferenceRule: MissingMetaVariableModel.InferenceRuleString =
-    (rule.label, rule.conclusion.show, rule.hypotheses.map(_.show).toVector)
+    (rule.label, rule.conclusion.show, rule.premises.map(_.show).toVector)
 
   override def inputHandler: String => Either[Unit, String] =
     input =>

@@ -49,9 +49,9 @@ class TestAssistant extends AnyFunSuite:
     val result = Assistant.proof(judgement, rule)
     result match
       case ProofResult.Success(proof) =>
-        val hypotheses = proof.subproofs.map(_.conclusion)
+        val premises = proof.subproofs.map(_.conclusion)
         assert(proof.conclusion == judgement)
-        assert(hypotheses == Seq(Seq.empty |- A, Seq.empty |- B))
+        assert(premises == Seq(Seq.empty |- A, Seq.empty |- B))
       case _ => fail("Expected successful proof construction")
   }
 
@@ -74,9 +74,9 @@ class TestAssistant extends AnyFunSuite:
     val result = Assistant.proof(judgement, rule)
     result match
       case ProofResult.Success(proof) =>
-        val hypotheses = proof.subproofs.map(_.conclusion)
+        val premises = proof.subproofs.map(_.conclusion)
         assert(proof.conclusion == judgement)
-        assert(hypotheses == Seq(Seq.empty |- A))
+        assert(premises == Seq(Seq.empty |- A))
       case _ => fail("Expected successful proof construction")
   }
 
@@ -89,13 +89,13 @@ class TestAssistant extends AnyFunSuite:
     val result = Assistant.proof(judgement, rule)
     result match
       case ProofResult.Success(proof) =>
-        val hypotheses = proof.subproofs.map(_.conclusion)
+        val premises = proof.subproofs.map(_.conclusion)
         assert(proof.conclusion == judgement)
-        assert(hypotheses == Seq(Seq.empty |- B))
+        assert(premises == Seq(Seq.empty |- B))
       case _ => fail("Expected successful proof construction")
   }
 
-  test("disjunction elimination for two propositional variables with meta-variables in hypotheses only") {
+  test("disjunction elimination for two propositional variables with meta-variables in premises only") {
     val A         = variable[Formula]("A")
     val B         = variable[Formula]("B")
     val C         = variable[Formula]("C")
@@ -105,9 +105,9 @@ class TestAssistant extends AnyFunSuite:
     val result = Assistant.proof(judgement, rule, Map(meta("phi") -> A, meta("psi") -> B))
     result match
       case ProofResult.Success(proof) =>
-        val hypotheses = proof.subproofs.map(_.conclusion)
+        val premises = proof.subproofs.map(_.conclusion)
         assert(proof.conclusion == judgement)
-        assert(hypotheses == Seq(Seq.empty |- A \/ B, A |- C, B |- C))
+        assert(premises == Seq(Seq.empty |- A \/ B, A |- C, B |- C))
       case _ => fail("Expected successful proof construction")
   }
 
