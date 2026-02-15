@@ -51,6 +51,12 @@ enum FormulaF[T]:
   /** The implication from a formula to a formula. */
   case Implication(implication: symbol.Implication[T])
 
+  /** The universal abstraction of a formula. */
+  case Universal(universal: symbol.Universal[T, T])
+
+  /** The existential abstraction of a formula. */
+  case Existential(existential: symbol.Existential[T, T])
+
 case object FormulaF:
   /** Create a propositional variable formula using a variable identifier. */
   def variable[T](id: String)(using Conversion[FormulaF[T], T]): T = Variable(symbol.Variable[Propositional](id))
@@ -63,6 +69,14 @@ case object FormulaF:
 
   /** Create a false formula. */
   def fls[T](using Conversion[FormulaF[T], T]): T = False(symbol.False())
+
+  /** Create a universally quantified formula. */
+  def forall[T](using Conversion[FormulaF[T], T])(variable: T, formula: T): T =
+    Universal(symbol.Universal(variable, formula))
+
+  /** Create an existentially quantified formula. */
+  def exists[T](using Conversion[FormulaF[T], T])(variable: T, formula: T): T =
+    Existential(symbol.Existential(variable, formula))
 
   /** Marker trait for propositional logic variables. */
   sealed trait Propositional
@@ -96,3 +110,5 @@ case object FormulaF:
           case Conjunction(conjunction) => Conjunction(symbol.Conjunction(f(conjunction.lhs), f(conjunction.rhs)))
           case Disjunction(disjunction) => Disjunction(symbol.Disjunction(f(disjunction.lhs), f(disjunction.rhs)))
           case Implication(implication) => Implication(symbol.Implication(f(implication.lhs), f(implication.rhs)))
+          case Universal(universal)     => Universal(symbol.Universal(f(universal.variable), f(universal.body)))
+          case Existential(existential) => Existential(symbol.Existential(f(existential.variable), f(existential.body)))

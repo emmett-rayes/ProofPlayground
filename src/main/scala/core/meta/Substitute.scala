@@ -73,7 +73,7 @@ object Substitute:
     def substitute(patterns: Seq[Pattern[F]], unification: Unification[Seq[Pattern[F]]]): Seq[Pattern[F]] =
       patterns.flatMap { pattern =>
         pattern.unfix match
-          case pattern @ PatternF.Meta(_) => unification.getOrElse(pattern, Seq(pattern)): Seq[Pattern[F]]
+          case pattern @ PatternF.Meta(_)          => unification.getOrElse(pattern, Seq(pattern)): Seq[Pattern[F]]
           case pattern @ PatternF.Formula(formula) => substitute(Seq(concrete(formula)), unification)
       }
     val patternUnification: Unification[Seq[Pattern[F]]] = unification.view.mapValues(_.map(_.asPattern)).toMap
@@ -90,4 +90,8 @@ object Substitute:
         case FormulaF.Conjunction(conjunction) => for lhs <- conjunction.lhs; rhs <- conjunction.rhs yield lhs /\ rhs
         case FormulaF.Disjunction(disjunction) => for lhs <- disjunction.lhs; rhs <- disjunction.rhs yield lhs \/ rhs
         case FormulaF.Implication(implication) => for lhs <- implication.lhs; rhs <- implication.rhs yield lhs --> rhs
+        case FormulaF.Universal(universal)     =>
+          for variable <- universal.variable; body <- universal.body yield forall(variable, body)
+        case FormulaF.Existential(existential) =>
+          for variable <- existential.variable; body <- existential.body yield exists(variable, body)
     }

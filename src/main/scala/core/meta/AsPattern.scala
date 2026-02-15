@@ -36,6 +36,8 @@ object AsPattern:
     case FormulaF.Conjunction(conjunction) => conjunction.lhs /\ conjunction.rhs
     case FormulaF.Disjunction(disjunction) => disjunction.lhs \/ disjunction.rhs
     case FormulaF.Implication(implication) => implication.lhs --> implication.rhs
+    case FormulaF.Universal(universal)     => forall(universal.variable, universal.body)
+    case FormulaF.Existential(existential) => exists(existential.variable, existential.body)
   }
 
   given Formula is AsPattern[FormulaF]:

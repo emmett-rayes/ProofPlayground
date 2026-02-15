@@ -1,11 +1,10 @@
 package proofPlayground
 package frontend
 
-import core.{Algebra, Functor, catamorphism}
-import core.logic.propositional
 import core.logic.propositional.{Formula, FormulaF}
 import core.meta.Pattern
 import core.proof.natural.Judgement
+import core.{Algebra, Functor, catamorphism}
 
 /** A typeclass for showing a value of type `Self` as a string. */
 trait Show:
@@ -17,13 +16,15 @@ trait Show:
 
 object Show:
   given Algebra[FormulaF, String] = {
-    case propositional.FormulaF.Variable(variable)       => variable.id
-    case propositional.FormulaF.True(tru)                => "⊤"
-    case propositional.FormulaF.False(fls)               => "⊥"
-    case propositional.FormulaF.Negation(negation)       => s"¬${negation.arg}"
-    case propositional.FormulaF.Conjunction(conjunction) => s"(${conjunction.lhs} ∧ ${conjunction.rhs})"
-    case propositional.FormulaF.Disjunction(disjunction) => s"(${disjunction.lhs} ∨ ${disjunction.rhs})"
-    case propositional.FormulaF.Implication(implication) => s"(${implication.lhs} → ${implication.rhs})"
+    case FormulaF.Variable(variable)       => variable.id
+    case FormulaF.True(tru)                => "⊤"
+    case FormulaF.False(fls)               => "⊥"
+    case FormulaF.Negation(negation)       => s"¬${negation.arg}"
+    case FormulaF.Conjunction(conjunction) => s"(${conjunction.lhs} ∧ ${conjunction.rhs})"
+    case FormulaF.Disjunction(disjunction) => s"(${disjunction.lhs} ∨ ${disjunction.rhs})"
+    case FormulaF.Implication(implication) => s"(${implication.lhs} → ${implication.rhs})"
+    case FormulaF.Universal(universal)     => s"(∀${universal.variable}.${universal.body})"
+    case FormulaF.Existential(existential) => s"(∃${existential.variable}.${existential.body})"
   }
 
   /** [[Show]] instance for [[Formula]]. */

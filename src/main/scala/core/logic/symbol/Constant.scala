@@ -45,3 +45,21 @@ case class Implication[F](lhs: F, rhs: F)
   * @param rhs Right-hand side formula.
   */
 case class Difference[F](lhs: F, rhs: F)
+
+/** Universal Quantification (∀).
+  *
+  * @tparam V The type of variables used in the quantification.
+  * @tparam F The type of formulas being abstracted.
+  * @param variable The quantification variable.
+  * @param body The formula that is abstracted.
+  */
+case class Universal[V, F](variable: V, body: F)
+
+/** Existential Quantification (∃).
+  *
+  * @tparam V The type of variables used in the quantification.
+  * @tparam F The type of formulas being abstracted.
+  * @param variable The quantification variable.
+  * @param body The formula that is abstracted.
+  */
+case class Existential[V, F](variable: V, body: F)

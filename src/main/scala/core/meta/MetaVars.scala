@@ -39,6 +39,8 @@ object MetaVars:
     case FormulaF.Conjunction(conjunction) => conjunction.lhs ++ conjunction.rhs
     case FormulaF.Disjunction(disjunction) => disjunction.lhs ++ disjunction.rhs
     case FormulaF.Implication(implication) => implication.lhs ++ implication.rhs
+    case FormulaF.Universal(universal)     => universal.variable ++ universal.body
+    case FormulaF.Existential(existential) => existential.variable ++ existential.body
   }
 
   /** Instance of [[MetaVars]] for [[Pattern]]. */
