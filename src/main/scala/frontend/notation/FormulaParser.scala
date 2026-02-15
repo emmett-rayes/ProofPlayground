@@ -14,12 +14,14 @@ import scala.reflect.ClassTag
 
 private def variableParser[K: ClassTag] = symbol.Variable.parser[K]
 
-private def trueParser           = symbol.True.parser
-private def falseParser          = symbol.False.parser
-private def negationParser[F]    = symbol.Negation.parser[F]
-private def conjunctionParser[F] = symbol.Conjunction.parser[F]
-private def disjunctionParser[F] = symbol.Disjunction.parser[F]
-private def implicationParser[F] = symbol.Implication.parser[F]
+private def trueParser              = symbol.True.parser
+private def falseParser             = symbol.False.parser
+private def negationParser[F]       = symbol.Negation.parser[F]
+private def conjunctionParser[F]    = symbol.Conjunction.parser[F]
+private def disjunctionParser[F]    = symbol.Disjunction.parser[F]
+private def implicationParser[F]    = symbol.Implication.parser[F]
+private def universalParser[V, F]   = symbol.Universal.parser[V, F]
+private def existentialParser[V, F] = symbol.Existential.parser[V, F]
 
 private def negationChainedParser[F]    = symbol.Negation.chainedParser[F]
 private def conjunctionChainedParser[F] = symbol.Conjunction.chainedParser[F]
@@ -33,6 +35,12 @@ object FormulaParser:
 
   extension ($ : Formula.type)
     def parser: Parser[Tokens, Formula] =
+
+      def quantification: Parser[Tokens, Formula] =
+        val recurse: Parser[Tokens, Formula] = tokens => quantification.parse(tokens)
+        FormulaF.Universal.parser(FormulaF.Variable.parser.wrap, recurse).wrap
+          `orElse` FormulaF.Existential.parser(FormulaF.Variable.parser.wrap, recurse).wrap
+          `orElse` implication
 
       def implication: Parser[Tokens, Formula] =
         FormulaF.Implication.chainedParser(disjunction).wrap
@@ -58,7 +66,7 @@ object FormulaParser:
           `orElse` parser.between(LiteralParser.parser["("], LiteralParser.parser[")"])
           `orElse` Parser.fail("Exhausted all choices without a match.")
 
-      implication
+      quantification
 
   extension ($ : FormulaF.Variable.type)
     def parser[T]: Parser[Tokens, FormulaF.Variable[T]] =
@@ -75,10 +83,10 @@ object FormulaParser:
   extension ($ : FormulaF.Negation.type)
     def parser[T](subparser: Parser[Tokens, T]): Parser[Tokens, FormulaF.Negation[T]] =
       negationParser(subparser).map(FormulaF.Negation[T])
-      
+
     def chainedParser[T](subparser: Parser[Tokens, T])(using
       Conversion[FormulaF.Negation[T], T]
-    ) : Parser[Tokens, FormulaF.Negation[T]] =
+    ): Parser[Tokens, FormulaF.Negation[T]] =
       negationChainedParser(subparser)(FormulaF.Negation(_)).map(FormulaF.Negation[T])
 
   extension ($ : FormulaF.Conjunction.type)
@@ -107,3 +115,11 @@ object FormulaParser:
       Conversion[FormulaF.Implication[T], T]
     ): Parser[Tokens, FormulaF.Implication[T]] =
       implicationChainedParser(subparser)(FormulaF.Implication(_)).map(FormulaF.Implication[T])
+
+  extension ($ : FormulaF.Universal.type)
+    def parser[T](varparser: Parser[Tokens, T], subparser: Parser[Tokens, T]): Parser[Tokens, FormulaF.Universal[T]] =
+      universalParser(varparser, subparser).map(FormulaF.Universal[T])
+
+  extension ($ : FormulaF.Existential.type)
+    def parser[T](varparser: Parser[Tokens, T], subparser: Parser[Tokens, T]): Parser[Tokens, FormulaF.Existential[T]] =
+      existentialParser(varparser, subparser).map(FormulaF.Existential[T])

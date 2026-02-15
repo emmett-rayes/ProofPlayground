@@ -157,3 +157,29 @@ object SymbolParser:
         val rhs = rest.reduceRight((curr, acc) => converter(Difference(curr, acc)))
         Difference(first, rhs)
       }
+
+  extension ($ : Universal.type)
+    /** Parser for universal quantification.
+      *
+      * @param varparser the parser for the quantification variable.
+      * @param subparser the parser for the body of the quantification.
+      * @return a parser that recognizes and produces universal quantifications.
+      */
+    def parser[V, F](varparser: Parser[Tokens, V], subparser: Parser[Tokens, F]): Parser[Tokens, Universal[V, F]] =
+      val op = LiteralParser.parser["forall"].orElse(LiteralParser.parser["∀"])
+      op.skipThen(varparser).thenSkip(LiteralParser.parser["."]).andThen(subparser).map {
+        (variable, body) => Universal(variable, body)
+      }
+
+  extension ($ : Existential.type)
+    /** Parser for existential quantification.
+      *
+      * @param varparser the parser for the quantification variable.
+      * @param subparser the parser for the body of the quantification.
+      * @return a parser that recognizes and produces existential quantifications.
+      */
+    def parser[V, F](varparser: Parser[Tokens, V], subparser: Parser[Tokens, F]): Parser[Tokens, Existential[V, F]] =
+      val op = LiteralParser.parser["exists"].orElse(LiteralParser.parser["∃"])
+      op.skipThen(varparser).thenSkip(LiteralParser.parser["."]).andThen(subparser).map {
+        (variable, body) => Existential(variable, body)
+      }

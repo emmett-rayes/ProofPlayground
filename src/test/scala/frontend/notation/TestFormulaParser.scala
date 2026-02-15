@@ -517,3 +517,296 @@ class TestFormulaParser extends AnyFunSuite:
     assert(result.get.remaining.isEmpty)
     assert(result.get.parsed === variable[Formula]("A") --> (variable[Formula]("B") --> variable[Formula]("C")))
   }
+
+  test("universal quantification parsing recognizes 'forall X. A'") {
+    val parser = Formula.parser
+    val input  = "forall X. A".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === forall[Formula](variable[Formula]("X"), variable[Formula]("A")))
+  }
+
+  test("universal quantification parsing recognizes '∀ X. A'") {
+    val parser = Formula.parser
+    val input  = "∀ X. A".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === forall[Formula](variable[Formula]("X"), variable[Formula]("A")))
+  }
+
+  test("existential quantification parsing recognizes 'exists X. A'") {
+    val parser = Formula.parser
+    val input  = "exists X. A".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === exists[Formula](variable[Formula]("X"), variable[Formula]("A")))
+  }
+
+  test("existential quantification parsing recognizes '∃ X. A'") {
+    val parser = Formula.parser
+    val input  = "∃ X. A".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === exists[Formula](variable[Formula]("X"), variable[Formula]("A")))
+  }
+
+  test("universal quantification with conjunction in body") {
+    val parser = Formula.parser
+    val input  = raw"forall X. A /\ B".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === forall[Formula](variable[Formula]("X"), variable[Formula]("A") /\ variable[Formula]("B")))
+  }
+
+  test("existential quantification with disjunction in body") {
+    val parser = Formula.parser
+    val input  = raw"exists X. A \/ B".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === exists[Formula](variable[Formula]("X"), variable[Formula]("A") \/ variable[Formula]("B")))
+  }
+
+  test("universal quantification with negation in body") {
+    val parser = Formula.parser
+    val input  = raw"forall X. ~A".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === forall[Formula](variable[Formula]("X"), ~variable[Formula]("A")))
+  }
+
+  test("existential quantification with implication in body") {
+    val parser = Formula.parser
+    val input  = raw"exists X. A --> B".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === exists[Formula](variable[Formula]("X"), variable[Formula]("A") --> variable[Formula]("B")))
+  }
+
+  test("nested universal quantifications") {
+    val parser = Formula.parser
+    val input  = "forall X. forall Y. A".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === forall[Formula](variable[Formula]("X"), forall[Formula](variable[Formula]("Y"), variable[Formula]("A"))))
+  }
+
+  test("nested existential quantifications") {
+    val parser = Formula.parser
+    val input  = "exists X. exists Y. A".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === exists[Formula](variable[Formula]("X"), exists[Formula](variable[Formula]("Y"), variable[Formula]("A"))))
+  }
+
+  test("mixed nested quantifications - universal then existential") {
+    val parser = Formula.parser
+    val input  = "forall X. exists Y. A".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === forall[Formula](variable[Formula]("X"), exists[Formula](variable[Formula]("Y"), variable[Formula]("A"))))
+  }
+
+  test("mixed nested quantifications - existential then universal") {
+    val parser = Formula.parser
+    val input  = "exists X. forall Y. A".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === exists[Formula](variable[Formula]("X"), forall[Formula](variable[Formula]("Y"), variable[Formula]("A"))))
+  }
+
+  test("universal quantification with parenthesized body") {
+    val parser = Formula.parser
+    val input  = raw"forall X. (A /\ B)".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === forall[Formula](variable[Formula]("X"), variable[Formula]("A") /\ variable[Formula]("B")))
+  }
+
+  test("existential quantification with parenthesized body") {
+    val parser = Formula.parser
+    val input  = raw"exists X. (A \/ B)".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === exists[Formula](variable[Formula]("X"), variable[Formula]("A") \/ variable[Formula]("B")))
+  }
+
+  test("universal quantification with complex nested formula") {
+    val parser = Formula.parser
+    val input  = raw"forall X. (A /\ B) \/ (~C --> D)".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === forall[Formula](variable[Formula]("X"),
+      (variable[Formula]("A") /\ variable[Formula]("B")) \/ ((~variable[Formula]("C")) --> variable[Formula]("D"))))
+  }
+
+  test("existential quantification with complex nested formula") {
+    val parser = Formula.parser
+    val input  = raw"exists X. (A --> B) /\ (C \/ ~D)".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === exists[Formula](variable[Formula]("X"),
+      (variable[Formula]("A") --> variable[Formula]("B")) /\ (variable[Formula]("C") \/ ~variable[Formula]("D"))))
+  }
+
+  test("triple nested quantifications") {
+    val parser = Formula.parser
+    val input  = "forall X. exists Y. forall Z. A".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === forall[Formula](variable[Formula]("X"),
+      exists[Formula](variable[Formula]("Y"),
+        forall[Formula](variable[Formula]("Z"), variable[Formula]("A")))))
+  }
+
+  test("universal quantification over True constant") {
+    val parser = Formula.parser
+    val input  = "forall X. True".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === forall[Formula](variable[Formula]("X"), tru: Formula))
+  }
+
+  test("existential quantification over False constant") {
+    val parser = Formula.parser
+    val input  = "exists X. False".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === exists[Formula](variable[Formula]("X"), fls: Formula))
+  }
+
+  test("universal quantification with ⊤") {
+    val parser = Formula.parser
+    val input  = "forall X. ⊤".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === forall[Formula](variable[Formula]("X"), tru: Formula))
+  }
+
+  test("existential quantification with ⊥") {
+    val parser = Formula.parser
+    val input  = "exists X. ⊥".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === exists[Formula](variable[Formula]("X"), fls: Formula))
+  }
+
+  test("universal quantification with numbered variables") {
+    val parser = Formula.parser
+    val input  = "forall X1. A2".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === forall[Formula](variable[Formula]("X1"), variable[Formula]("A2")))
+  }
+
+  test("existential quantification with numbered variables") {
+    val parser = Formula.parser
+    val input  = "exists Y3. B5".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === exists[Formula](variable[Formula]("Y3"), variable[Formula]("B5")))
+  }
+
+  test("universal quantification with mixed operators using Unicode symbols") {
+    val parser = Formula.parser
+    val input  = raw"∀ X. A ∧ B ∨ ¬C → D".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === forall[Formula](variable[Formula]("X"),
+      ((variable[Formula]("A") /\ variable[Formula]("B")) \/ (~variable[Formula]("C"))) --> variable[Formula]("D")))
+  }
+
+  test("existential quantification with mixed operators using Unicode symbols") {
+    val parser = Formula.parser
+    val input  = raw"∃ X. A ∨ B ∧ ¬C → D".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === exists[Formula](variable[Formula]("X"),
+      (variable[Formula]("A") \/ (variable[Formula]("B") /\ ~variable[Formula]("C"))) --> variable[Formula]("D")))
+  }
+
+  test("formula parsing fails on quantification without body") {
+    val parser = Formula.parser
+    val input  = "forall X.".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isFailure)
+  }
+
+  test("formula parsing fails on existential without body") {
+    val parser = Formula.parser
+    val input  = "exists X.".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isFailure)
+  }
+
+  test("universal quantification with double negation in body") {
+    val parser = Formula.parser
+    val input  = "forall X. ~~A".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === forall[Formula](variable[Formula]("X"), ~(~variable[Formula]("A"))))
+  }
+
+  test("existential quantification with double negation in body") {
+    val parser = Formula.parser
+    val input  = "exists X. ~~A".asTokens
+
+    val result = parser.parse(input)
+    assert(result.isSuccess)
+    assert(result.get.remaining.isEmpty)
+    assert(result.get.parsed === exists[Formula](variable[Formula]("X"), ~(~variable[Formula]("A"))))
+  }
+
