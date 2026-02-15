@@ -47,7 +47,8 @@ object FormulaParser:
           `orElse` unary
 
       def unary: Parser[Tokens, Formula] =
-        FormulaF.Negation.chainedParser(atomic).wrap
+        val recurse : Parser[Tokens, Formula] = tokens => unary.parse(tokens)
+        FormulaF.Negation.chainedParser(recurse).wrap
           `orElse` atomic
 
       def atomic: Parser[Tokens, Formula] =
