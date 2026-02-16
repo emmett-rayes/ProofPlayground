@@ -248,3 +248,73 @@ case object InferenceRules:
         ),
         omega % gamma |- phi,
       )
+
+    /** Universal introduction (∀I).
+      */
+    val UniversalIntroduction: InferenceRule[Judgement, FormulaF] =
+      val omega = Pattern[FormulaF]("Omega")
+      val nu    = Pattern[FormulaF]("nu")
+      val gamma = Pattern[FormulaF]("Gamma")
+      val phi   = Pattern[FormulaF]("phi")
+
+      Inference(
+        "∀I",
+        Seq(
+          (omega :: nu) % gamma |- phi
+        ),
+        omega % gamma |- forall(nu, phi)
+      )
+
+    /** Universal elimination (∀E).
+      */
+    val UniversalElimination: InferenceRule[Judgement, FormulaF] =
+      val omega = Pattern[FormulaF]("Omega")
+      val nu    = Pattern[FormulaF]("nu")
+      val gamma = Pattern[FormulaF]("Gamma")
+      val phi   = Pattern[FormulaF]("phi")
+      val psi   = Pattern[FormulaF]("psi")
+
+      // todo: Find a solution for backward substitution, e.g. by taking a formula
+      //  psi from the user and substituting it with a fresh variable.
+      Inference(
+        "∀E",
+        Seq(
+          omega % gamma |- forall(nu, phi)
+        ),
+        omega % gamma |- phi // todo phi[psi/nu]
+      )
+
+    /** Existential introduction (∃I).
+      */
+    val existentialIntroduction: InferenceRule[Judgement, FormulaF] =
+      val omega = Pattern[FormulaF]("Omega")
+      val nu    = Pattern[FormulaF]("nu")
+      val gamma = Pattern[FormulaF]("Gamma")
+      val phi   = Pattern[FormulaF]("phi")
+      val psi   = Pattern[FormulaF]("psi")
+
+      Inference(
+        "∃I",
+        Seq(
+          omega % gamma |- phi // todo: phi[psi/nu]
+        ),
+        omega % gamma |- exists(nu, phi)
+      )
+
+    /** Existential elimination (∃E).
+      */
+    val existentialElimination: InferenceRule[Judgement, FormulaF] =
+      val omega = Pattern[FormulaF]("Omega")
+      val nu    = Pattern[FormulaF]("nu")
+      val gamma = Pattern[FormulaF]("Gamma")
+      val phi   = Pattern[FormulaF]("phi")
+      val rho   = Pattern[FormulaF]("rho")
+
+      Inference(
+        "∃E",
+        Seq(
+          omega         % gamma |- exists(nu, phi),
+          (omega :: nu) % (gamma :: phi) |- rho,
+        ),
+        omega % gamma |- rho,
+      )
