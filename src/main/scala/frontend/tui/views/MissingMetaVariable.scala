@@ -125,11 +125,15 @@ class MissingMetaVariable(data: MissingMetaVariableModel.Data)(signals: MissingM
     }
 
   private def findVariable(text: String): Option[Int] =
+    val boundaryCharsBefore = Set('(', '.', '∀', '∃')
+    val boundaryCharsAfter  = Set(')', '.')
     text.indexOf(data.variable) match
       case -1       => None
       case varIndex =>
         val charBefore = if varIndex == 0 then ' ' else text(varIndex - 1)
         val charAfter  =
           if varIndex + data.variable.length >= text.length then ' ' else text(varIndex + data.variable.length)
-        val isBoundary = (charBefore.isWhitespace || charBefore == '(') && (charAfter.isWhitespace || charAfter == ')')
+        val isBoundary =
+          (charBefore.isWhitespace || boundaryCharsBefore.contains(charBefore))
+            && (charAfter.isWhitespace || boundaryCharsAfter.contains(charAfter))
         Option.when(isBoundary)(varIndex)
