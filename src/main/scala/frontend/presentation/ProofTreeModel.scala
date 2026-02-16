@@ -54,6 +54,7 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
 
   override def rules: Vector[ProofTreeModel.ProofRule] = inferenceRules.map { rule =>
     val active = Assistant.proof(zipper.get.conclusion, rule) match
+      case ProofResult.NothingToDo()               => false
       case ProofResult.UnificationFailure()        => false
       case ProofResult.BoundaryConditionFailure(_) => false
       case ProofResult.Success(_)                  => true
@@ -104,6 +105,7 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
         zipper = zipper.down.getOrElse(zipper)
 
       Assistant.proof(zipper.get.conclusion, rule) match
+        case ProofResult.NothingToDo()                                 => ()
         case ProofResult.UnificationFailure()                          => ()
         case ProofResult.BoundaryConditionFailure(_)                   => ()
         case ProofResult.Success(proof)                                => replace(proof)
@@ -113,6 +115,7 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
             Assistant.proof(zipper.get.conclusion, partiallySubstitutedRule, unification) match
               case Assistant.ProofResult.UnificationFailure()                          => ()
               case Assistant.ProofResult.BoundaryConditionFailure(_)                   => ()
+              case Assistant.ProofResult.NothingToDo()                                 => ()
               case Assistant.ProofResult.Success(proof)                                => replace(proof)
               case Assistant.ProofResult.SubstitutionFailure(partiallySubstitutedRule) =>
                 throw RuntimeException("Substitution failure after user input")
