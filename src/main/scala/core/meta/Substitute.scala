@@ -6,11 +6,35 @@ import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
 import core.meta.Pattern.given
 import core.meta.PatternF.concrete
+import core.proof.natural.Judgement
 import core.{Algebra, Functor, catamorphism, traverse}
 
 import scala.language.implicitConversions
 
 object Substitute:
+  /** Substitutes meta-variables in the judgement according to the provided unifications.
+    *
+    * @tparam T The type of the concrete formula used in substitution.
+    * @tparam F The type of the formula functor used in the pattern.
+    * @param judgement    The judgement in which to perform the substitution.
+    * @param unification  The unification mapping meta-variables to concrete formulas.
+    * @param assumptionUnification The unification mapping assumption meta-variables to sequences of concrete formulas.
+    * @param freeUnification The unification mapping free meta-variables to sequences of concrete formulas.
+    */
+  def substitute[T, F[_]: Functor](using
+    Algebra[F, Option[T]]
+  )(
+    judgement: Judgement[Pattern[F]],
+    unification: Unification[T],
+    assumptionUnification: Unification[Seq[T]],
+    freeUnification: Unification[Seq[T]],
+  ): Option[Judgement[T]] =
+    for
+      assertion   <- substitute[T, F](judgement.assertion, unification)
+      assumptions <- substitute[T, F](judgement.assumptions.toSeq, assumptionUnification)
+      free        <- substitute[T, F](judgement.free.toSeq, freeUnification)
+    yield Judgement(assertion, assumptions, free)
+
   /** Substitutes meta-variables in the sequence of patterns according to the provided unification.
     *
     * The substitution is performed in the order of the patterns.
@@ -45,6 +69,29 @@ object Substitute:
   )(pattern: Pattern[F], unification: Unification[T]): Option[T] =
     val algebra = Pattern.algebra[Option[T], F](summon)(unification.get)
     catamorphism(pattern)(algebra)
+
+  /** Substitutes meta-variables in the judgement according to the provided unifications.
+    *
+    * Meta-variables are replaced by concrete formulas if they are present in the unification.
+    * Otherwise, the meta-variable is left unchanged.
+    *
+    * @tparam T The type of the concrete formula used in substitution.
+    * @tparam F The type of the formula functor used in the pattern.
+    * @param judgement    The judgement in which to perform the substitution.
+    * @param unification  The unification mapping meta-variables to concrete formulas.
+    * @param assumptionUnification The unification mapping assumption meta-variables to sequences of concrete formulas.
+    * @param freeUnification The unification mapping free meta-variables to sequences of concrete formulas.
+    */
+  def substitutePartial[T: AsPattern[F], F[_]: Functor](
+    judgement: Judgement[Pattern[F]],
+    unification: Unification[T],
+    assumptionUnification: Unification[Seq[T]],
+    freeUnification: Unification[Seq[T]],
+  ): Judgement[Pattern[F]] =
+    val assertion   = substitutePartial[T, F](judgement.assertion, unification)
+    val assumptions = substitutePartial[T, F](judgement.assumptions.toSeq, assumptionUnification)
+    val free        = substitutePartial[T, F](judgement.free.toSeq, freeUnification)
+    Judgement(assertion, assumptions, free)
 
   /** Substitutes meta-variables in the pattern according to the provided unification.
     *

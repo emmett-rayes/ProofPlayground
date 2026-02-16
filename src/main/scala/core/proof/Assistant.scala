@@ -54,29 +54,17 @@ object Assistant:
     val (unification, assumptionUnification, freeUnification) = unificationOpt.get
     val proof                                                 =
       for
-        assertion   <- substitute[Fix[F], F](rule.conclusion.assertion, unification)
-        assumptions <- substitute[Fix[F], F](rule.conclusion.assumptions.toSeq, assumptionUnification)
-        free        <- substitute[Fix[F], F](rule.conclusion.free.toSeq, freeUnification)
-        premises    <- rule.premises.toSeq.traverse { premise =>
-          for
-            assertion   <- substitute[Fix[F], F](premise.assertion, unification)
-            assumptions <- substitute[Fix[F], F](premise.assumptions.toSeq, assumptionUnification)
-            free        <- substitute[Fix[F], F](premise.free.toSeq, freeUnification)
-          yield Judgement(assertion, assumptions, free)
+        judgement <- substitute[Fix[F], F](rule.conclusion, unification, assumptionUnification, freeUnification)
+        premises  <- rule.premises.toSeq.traverse { premise =>
+          substitute[Fix[F], F](premise, unification, assumptionUnification, freeUnification)
         }
-      yield Proof(Judgement(assertion, assumptions, free), premises.reverse.map(Proof(_, List.empty)).toList)
+      yield Proof(judgement, premises.reverse.map(Proof(_, List.empty)).toList)
     if proof.isDefined then return ProofResult.Success(proof.get)
 
-    val assertion   = substitutePartial(rule.conclusion.assertion, unification)
-    val assumptions = substitutePartial(rule.conclusion.assumptions.toSeq, assumptionUnification)
-    val free        = substitutePartial(rule.conclusion.free.toSeq, freeUnification)
-    val premises    = rule.premises.map { premise =>
-      val assertion   = substitutePartial(premise.assertion, unification)
-      val assumptions = substitutePartial(premise.assumptions.toSeq, assumptionUnification)
-      val free        = substitutePartial(premise.free.toSeq, freeUnification)
-      Judgement(assertion, assumptions, free)
+    val conclusion = substitutePartial(rule.conclusion, unification, assumptionUnification, freeUnification)
+    val premises   = rule.premises.map { premise =>
+      substitutePartial(premise, unification, assumptionUnification, freeUnification)
     }
-    val conclusion = Judgement(assertion, assumptions, free)
     ProofResult.SubstitutionFailure(Inference(rule.label, premises, conclusion))
 
   /** Result of attempting to construct a proof. */
