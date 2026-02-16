@@ -7,12 +7,16 @@ package core.proof.natural
   * A judgement in natural deduction has a single formula in the conclusion.
   *
   * @tparam F the type of formulas.
-  * @param assumptions the collection of formulas assumed to be true.
   * @param assertion   the formula that is asserted.
+  * @param assumptions the collection of formulas assumed to be true.
+  * @param free the collection of variables that are not allowed to appear in the conclusion.
+  *             this is used for the side conditions of existential and universal quantifiers.
   */
-case class Judgement[F](assumptions: Seq[F], assertion: F)
+case class Judgement[F](assertion: F, assumptions: Seq[F], free: Seq[F])
 
 case object Judgement:
+
+  opaque type Context[F] = (Seq[F], Seq[F])
 
   /** Extension methods for judgements.
     *
@@ -20,4 +24,12 @@ case object Judgement:
     */
   extension [F](assumptions: Seq[F])
     /** Judgement infix constructor. */
-    def |-(assertion: F): Judgement[F] = Judgement(assumptions, assertion)
+    def |-(assertion: F): Judgement[F] = Judgement(assertion, assumptions, Seq.empty)
+
+  extension [F](free: Seq[F])
+    /** Infix operator for combining assumptions and free sequences */
+    def %(assumptions: Seq[F]): Context[F] = (free, assumptions)
+
+  extension [F](context: Context[F])
+    /** Judgement infix constructor. */
+    def |-(assertion: F): Judgement[F] = Judgement(assertion, context._2, context._1)

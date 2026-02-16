@@ -48,7 +48,7 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
   private var selected: ProofTreeModel.ProofStep = uninitialized
 
   private var rulesInFocus = false
-  private var zipper       = Proof(Judgement(Seq.empty, formula), List.empty).zipper
+  private var zipper       = Proof(Judgement(formula, Seq.empty, Seq.empty), List.empty).zipper
 
   override def focusOnRules: Boolean = rulesInFocus
 
