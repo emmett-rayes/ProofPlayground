@@ -97,29 +97,13 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
     for
       idx  <- index
       rule <- inferenceRules.lift(idx)
-    yield
-      def replace(replacement: Proof[Judgement[Formula]]): Unit =
-        rulesInFocus = false
-        zipper = zipper.replace(replacement)
-        proofStepLabels.put(zipper.get.conclusion, rule.label)
-        zipper = zipper.down.getOrElse(zipper)
-
-      Assistant.proof(zipper.get.conclusion, rule) match
-        case ProofResult.NothingToDo()                                 => ()
-        case ProofResult.UnificationFailure()                          => ()
-        case ProofResult.BoundaryConditionFailure(_)                   => ()
-        case ProofResult.Success(proof)                                => replace(proof)
-        case ProofResult.SubstitutionFailure(partiallySubstitutedRule) =>
-          val metavariables = partiallySubstitutedRule.metavariables: Set[MetaVariable]
-          handleMissingMetaVariables(partiallySubstitutedRule, metavariables.toSeq)(Map.empty) { unification =>
-            Assistant.proof(zipper.get.conclusion, partiallySubstitutedRule, unification) match
-              case Assistant.ProofResult.UnificationFailure()                          => ()
-              case Assistant.ProofResult.BoundaryConditionFailure(_)                   => ()
-              case Assistant.ProofResult.NothingToDo()                                 => ()
-              case Assistant.ProofResult.Success(proof)                                => replace(proof)
-              case Assistant.ProofResult.SubstitutionFailure(partiallySubstitutedRule) =>
-                throw RuntimeException("Substitution failure after user input")
-          }
+    yield applyRule(rule) { substitutedRule =>
+      handleMissingMetaVariables(substitutedRule, substitutedRule.metavariables.toSeq)(Map.empty) { unification =>
+        applyRule(substitutedRule, unification) { _ =>
+          throw RuntimeException("Substitution failure after user input")
+        }
+      }
+    }
 
   override def quit(): Unit =
     navigation.showPopup(Navigation.Popup.Confirm("Do you want to quit the proof mode?", Some("Quit"))) { () =>
@@ -140,3 +124,20 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
           val updated = unification.updated(metavariables.head, formula)
           handleMissingMetaVariables(rule, metavariables.tail)(updated)(callback)
       }
+
+  private def applyRule(
+    rule: InferenceRule[Judgement, FormulaF],
+    unification: Unification[Formula] = Map.empty,
+  )(substitutionFailure: InferenceRule[Judgement, FormulaF] => Unit): Unit =
+    def replace(replacement: Proof[Judgement[Formula]]): Unit =
+      rulesInFocus = false
+      zipper = zipper.replace(replacement)
+      proofStepLabels.put(zipper.get.conclusion, rule.label)
+      zipper = zipper.down.getOrElse(zipper)
+
+    Assistant.proof(zipper.get.conclusion, rule, unification) match
+      case ProofResult.NothingToDo()                        => ()
+      case ProofResult.UnificationFailure()                 => ()
+      case ProofResult.BoundaryConditionFailure(_)          => ()
+      case ProofResult.Success(proof)                       => replace(proof)
+      case ProofResult.SubstitutionFailure(substitutedRule) => substitutionFailure(substitutedRule)
