@@ -54,16 +54,18 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
 
   override def rules: Vector[ProofTreeModel.ProofRule] = inferenceRules.map { rule =>
     val active = Assistant.proof(zipper.get.conclusion, rule) match
-      case ProofResult.Success(_)             => true
-      case ProofResult.SubstitutionFailure(_) => true // substitution failures can be fixed by user input
-      case ProofResult.UnificationFailure()   => false
+      case ProofResult.UnificationFailure()        => false
+      case ProofResult.BoundaryConditionFailure(_) => false
+      case ProofResult.Success(_)                  => true
+      case ProofResult.SubstitutionFailure(_)      => true // substitution failures can be fixed by user input
     ProofTreeModel.ProofRule(active, rule.label)
   }
 
   override def proofTree: Tree[ProofTreeModel.ProofStep] =
     zipper.root.get.asTree.map { judgement =>
       val label =
-        if judgement.assumptions.contains(judgement.assertion) then " "
+        if judgement.free.contains(judgement.assertion) then "!"
+        else if judgement.assumptions.contains(judgement.assertion) then " "
         else proofStepLabels.getOrDefault(judgement, "?")
       val result = ProofTreeModel.ProofStep(judgement.show, label)
       // remember the current position for `isNodeSelected`
@@ -102,18 +104,16 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
         zipper = zipper.down.getOrElse(zipper)
 
       Assistant.proof(zipper.get.conclusion, rule) match
-        case ProofResult.UnificationFailure() =>
-          ()
-        case ProofResult.Success(proof) =>
-          replace(proof)
+        case ProofResult.UnificationFailure()                          => ()
+        case ProofResult.BoundaryConditionFailure(_)                   => ()
+        case ProofResult.Success(proof)                                => replace(proof)
         case ProofResult.SubstitutionFailure(partiallySubstitutedRule) =>
           val metavariables = partiallySubstitutedRule.metavariables: Set[MetaVariable]
           handleMissingMetaVariables(partiallySubstitutedRule, metavariables.toSeq)(Map.empty) { unification =>
             Assistant.proof(zipper.get.conclusion, partiallySubstitutedRule, unification) match
-              case Assistant.ProofResult.UnificationFailure() =>
-                ()
-              case Assistant.ProofResult.Success(proof) =>
-                replace(proof)
+              case Assistant.ProofResult.UnificationFailure()                          => ()
+              case Assistant.ProofResult.BoundaryConditionFailure(_)                   => ()
+              case Assistant.ProofResult.Success(proof)                                => replace(proof)
               case Assistant.ProofResult.SubstitutionFailure(partiallySubstitutedRule) =>
                 throw RuntimeException("Substitution failure after user input")
           }

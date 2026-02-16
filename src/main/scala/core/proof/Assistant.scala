@@ -4,7 +4,7 @@ package core.proof
 import core.meta.Substitute.{substitute, substitutePartial}
 import core.meta.Unification.merge
 import core.meta.Unify.{Unifier, unify}
-import core.meta.{AsPattern, MetaVariable, Unification}
+import core.meta.{AsPattern, FreeVars, MetaVariable, Unification}
 import core.proof.natural.Judgement
 import core.{Algebra, Fix, Functor, traverse}
 
@@ -26,12 +26,18 @@ object Assistant:
     Algebra[F, Option[Fix[F]]],
     Algebra[F, Unifier[Fix[F]]],
     Algebra[F, Set[MetaVariable]],
+    FreeVars { type Self = Fix[F] },
     AsPattern[F] { type Self = Fix[F] },
   )(
     judgement: Judgement[Fix[F]],
     rule: InferenceRule[Judgement, F],
     auxUnification: Unification[Fix[F]] = Map.empty[MetaVariable, Fix[F]]
   ): ProofResult[Judgement, F] =
+    val sideCondition = judgement.free.find { free =>
+      judgement.assertion.freevariables.contains(free)
+    }
+    if sideCondition.isDefined then return ProofResult.BoundaryConditionFailure(sideCondition.get)
+
     val unificationOpt =
       for
         assertionUnification       <- unify(rule.conclusion.assertion, judgement.assertion): Option[Unification[Fix[F]]]
@@ -41,38 +47,35 @@ object Assistant:
         totalAssumptionUnification <- merge(assumptionsUnification, totalUnification)
         totalFreeUnification       <- merge(freeUnification, totalUnification)
       yield (totalUnification, totalAssumptionUnification, totalFreeUnification)
+    if unificationOpt.isEmpty then return ProofResult.UnificationFailure()
 
-    if unificationOpt.isEmpty then ProofResult.UnificationFailure()
-    else
-      val (unification, assumptionUnification, freeUnification) = unificationOpt.get
-
-      val proof =
-        for
-          assertion   <- substitute[Fix[F], F](rule.conclusion.assertion, unification)
-          assumptions <- substitute[Fix[F], F](rule.conclusion.assumptions.toSeq, assumptionUnification)
-          free        <- substitute[Fix[F], F](rule.conclusion.free.toSeq, freeUnification)
-          premises    <- rule.premises.toSeq.traverse { premise =>
-            for
-              assertion   <- substitute[Fix[F], F](premise.assertion, unification)
-              assumptions <- substitute[Fix[F], F](premise.assumptions.toSeq, assumptionUnification)
-              free        <- substitute[Fix[F], F](premise.free.toSeq, freeUnification)
-            yield Judgement(assertion, assumptions, free)
-          }
-        yield Proof(Judgement(assertion, assumptions, free), premises.reverse.map(Proof(_, List.empty)).toList)
-
-      if proof.isDefined then ProofResult.Success(proof.get)
-      else
-        val assertion   = substitutePartial(rule.conclusion.assertion, unification)
-        val assumptions = substitutePartial(rule.conclusion.assumptions.toSeq, assumptionUnification)
-        val free        = substitutePartial(rule.conclusion.free.toSeq, freeUnification)
-        val premises    = rule.premises.map { premise =>
-          val assertion   = substitutePartial(premise.assertion, unification)
-          val assumptions = substitutePartial(premise.assumptions.toSeq, assumptionUnification)
-          val free        = substitutePartial(premise.free.toSeq, freeUnification)
-          Judgement(assertion, assumptions, free)
+    val (unification, assumptionUnification, freeUnification) = unificationOpt.get
+    val proof                                                 =
+      for
+        assertion   <- substitute[Fix[F], F](rule.conclusion.assertion, unification)
+        assumptions <- substitute[Fix[F], F](rule.conclusion.assumptions.toSeq, assumptionUnification)
+        free        <- substitute[Fix[F], F](rule.conclusion.free.toSeq, freeUnification)
+        premises    <- rule.premises.toSeq.traverse { premise =>
+          for
+            assertion   <- substitute[Fix[F], F](premise.assertion, unification)
+            assumptions <- substitute[Fix[F], F](premise.assumptions.toSeq, assumptionUnification)
+            free        <- substitute[Fix[F], F](premise.free.toSeq, freeUnification)
+          yield Judgement(assertion, assumptions, free)
         }
-        val conclusion = Judgement(assertion, assumptions, free)
-        ProofResult.SubstitutionFailure(Inference(rule.label, premises, conclusion))
+      yield Proof(Judgement(assertion, assumptions, free), premises.reverse.map(Proof(_, List.empty)).toList)
+    if proof.isDefined then return ProofResult.Success(proof.get)
+
+    val assertion   = substitutePartial(rule.conclusion.assertion, unification)
+    val assumptions = substitutePartial(rule.conclusion.assumptions.toSeq, assumptionUnification)
+    val free        = substitutePartial(rule.conclusion.free.toSeq, freeUnification)
+    val premises    = rule.premises.map { premise =>
+      val assertion   = substitutePartial(premise.assertion, unification)
+      val assumptions = substitutePartial(premise.assumptions.toSeq, assumptionUnification)
+      val free        = substitutePartial(premise.free.toSeq, freeUnification)
+      Judgement(assertion, assumptions, free)
+    }
+    val conclusion = Judgement(assertion, assumptions, free)
+    ProofResult.SubstitutionFailure(Inference(rule.label, premises, conclusion))
 
   /** Result of attempting to construct a proof. */
   enum ProofResult[J[_], F[_]]:
@@ -84,6 +87,12 @@ object Assistant:
 
     /** Unification failure during proof construction. */
     case UnificationFailure()
+
+    /** Boundary condition failure during proof construction.
+      *
+      * @param variable the variable that violates the boundary condition.
+      */
+    case BoundaryConditionFailure(variable: Fix[F])
 
     /** Substitution failure during proof construction.
       *
