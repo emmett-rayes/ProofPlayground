@@ -101,32 +101,33 @@ class MissingMetaVariable(data: MissingMetaVariableModel.Data)(signals: MissingM
           titleAlignment = Alignment.Right,
         )),
     )
-    val conclusion = ParagraphWidget(text = Text.nostyle(rule.conclusion), alignment = Alignment.Center)
+    val conclusion = ParagraphWidget(text = colorVariable(rule.conclusion), alignment = Alignment.Center)
 
     renderer.render(divider, layout(1))
     renderer.render(conclusion, layout(2))
 
     rule.premises.zipWithIndex.foreach { (h, idx) =>
-      val spacer = if idx == rule.premises.length - 1 then "" else "  "
-      val text   = findVariable(h) match {
-        case None =>
-          Text.nostyle(h + spacer)
-        case Some(index) =>
-          val before = h.substring(0, index)
-          val after  = h.substring(index + data.variable.length)
-          Text.from(
-            Span.nostyle(before),
-            Span.styled(data.variable, Style.DEFAULT.fg(Color.Red)),
-            Span.nostyle(after + spacer)
-          )
-      }
-      val premise = ParagraphWidget(text = text, alignment = Alignment.Center)
+      val spacer  = if idx == rule.premises.length - 1 then "" else "  "
+      val premise = ParagraphWidget(text = colorVariable(h, spacer), alignment = Alignment.Center)
       renderer.render(premise, premisesLayout(idx))
     }
 
+  private def colorVariable(string: String, spacer: String = ""): Text =
+    findVariable(string) match {
+      case None =>
+        Text.nostyle(string + spacer)
+      case Some(index) =>
+        val before = string.substring(0, index)
+        val after  = string.substring(index + data.variable.length)
+        Text.from(
+          Span.nostyle(before),
+          Span.styled(data.variable, Style.DEFAULT.fg(Color.Red)),
+          Span.nostyle(after + spacer)
+        )
+    }
+
   private def findVariable(text: String): Option[Int] =
-    val boundaryCharsBefore = Set('(', '.', '∀', '∃')
-    val boundaryCharsAfter  = Set(')', '.')
+    val boundaryChars = Set('(', ')', '[', ']', '.', '/', '∀', '∃')
     text.indexOf(data.variable) match
       case -1       => None
       case varIndex =>
@@ -134,6 +135,6 @@ class MissingMetaVariable(data: MissingMetaVariableModel.Data)(signals: MissingM
         val charAfter  =
           if varIndex + data.variable.length >= text.length then ' ' else text(varIndex + data.variable.length)
         val isBoundary =
-          (charBefore.isWhitespace || boundaryCharsBefore.contains(charBefore))
-            && (charAfter.isWhitespace || boundaryCharsAfter.contains(charAfter))
+          (charBefore.isWhitespace || boundaryChars.contains(charBefore))
+            && (charAfter.isWhitespace || boundaryChars.contains(charAfter))
         Option.when(isBoundary)(varIndex)
