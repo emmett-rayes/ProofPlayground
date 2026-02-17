@@ -54,11 +54,11 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
 
   override def rules: Vector[ProofTreeModel.ProofRule] = inferenceRules.map { rule =>
     val active = Assistant.proof(zipper.get.conclusion, rule) match
-      case ProofResult.NothingToDo()               => false
-      case ProofResult.UnificationFailure()        => false
-      case ProofResult.BoundaryConditionFailure(_) => false
-      case ProofResult.Success(_)                  => true
-      case ProofResult.SubstitutionFailure(_)      => true // substitution failures can be fixed by user input
+      case ProofResult.NothingToDo()           => false
+      case ProofResult.UnificationFailure()    => false
+      case ProofResult.SideConditionFailure(_) => false
+      case ProofResult.Success(_)              => true
+      case ProofResult.SubstitutionFailure(_)  => true // substitution failures can be fixed by user input
     ProofTreeModel.ProofRule(active, rule.label)
   }
 
@@ -100,7 +100,10 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
     yield applyRule(rule) { substitutedRule =>
       handleMissingMetaVariables(substitutedRule, substitutedRule.metavariables.toSeq)(Map.empty) { unification =>
         applyRule(substitutedRule, unification) { _ =>
-          throw RuntimeException("Substitution failure after user input")
+          navigation.showPopup(Navigation.Popup.Confirm(
+            "The supplied meta-variable substitutions do not match the selected rule.",
+            Some("Substitution Error"),
+          )) { () => () }
         }
       }
     }
@@ -138,6 +141,6 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
     Assistant.proof(zipper.get.conclusion, rule, unification) match
       case ProofResult.NothingToDo()                        => ()
       case ProofResult.UnificationFailure()                 => ()
-      case ProofResult.BoundaryConditionFailure(_)          => ()
+      case ProofResult.SideConditionFailure(_)              => ()
       case ProofResult.Success(proof)                       => replace(proof)
       case ProofResult.SubstitutionFailure(substitutedRule) => substitutionFailure(substitutedRule)
