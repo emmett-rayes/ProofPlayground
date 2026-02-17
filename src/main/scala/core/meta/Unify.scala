@@ -186,5 +186,17 @@ object Unify:
               rhs    <- pattern.rhs(implication.rhs)
               merged <- merge(lhs, rhs)
             yield merged
+          case (FormulaF.Universal(universal), FormulaF.Universal(pattern)) =>
+            for
+              variable <- pattern.variable(universal.variable)
+              body     <- pattern.body(universal.body)
+              merged   <- merge(variable, body)
+            yield merged
+          case (FormulaF.Existential(existential), FormulaF.Existential(pattern)) =>
+            for
+              variable <- pattern.variable(existential.variable)
+              body     <- pattern.body(existential.body)
+              merged   <- merge(variable, body)
+            yield merged
           case _ => None
   }

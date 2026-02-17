@@ -133,3 +133,25 @@ class TestAssistant extends AnyFunSuite:
         assert(partiallySubstitutedRule === expected)
       case _ => fail("Expected substitution error during proof construction")
   }
+
+  test("universal introduction with same variable name in different scopes") {
+    val X         = variable[Formula]("X")
+    val judgement = Seq(exists[Formula](X, X)) |- forall[Formula](X, X)
+    val rule      = UniversalIntroduction
+
+    val result = Assistant.proof(judgement, rule)
+    result match
+      case ProofResult.Success(proof) =>
+        val premises = proof.subproofs.map(_.conclusion)
+        assert(proof.conclusion == judgement)
+        // When forall X.X is matched with forall(nu, phi):
+        // nu = X (the binding variable)
+        // phi = X (the body, which is the same variable X)
+        // The premise should be: X ; exists X.X |- X
+        assert(premises.length == 1)
+        val premise = premises.head
+        assert(premise.free.contains(X))
+        assert(premise.assumptions.contains(exists[Formula](X, X)))
+        assert(premise.assertion == X)
+      case _ => fail("Expected successful proof construction")
+  }
