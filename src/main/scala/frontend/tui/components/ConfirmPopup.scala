@@ -8,7 +8,7 @@ import tui.*
 import tui.crossterm.{Event, KeyCode}
 import tui.widgets.{BlockWidget, ClearWidget, ParagraphWidget}
 
-class ConfirmPopup(message: String, title: Option[String] = None)(confirm: () => Unit, dismiss: () => Unit)
+class ConfirmPopup(message: String, title: Option[String] = None)(confirm: Option[() => Unit], dismiss: () => Unit)
     extends Screen:
   private val ySize = 40
   private val xSize = 30
@@ -33,7 +33,7 @@ class ConfirmPopup(message: String, title: Option[String] = None)(confirm: () =>
       case key: Event.Key =>
         key.keyEvent().code() match {
           case c: KeyCode.Esc   => dismiss()
-          case c: KeyCode.Enter => dismiss(); if confirming then confirm()
+          case c: KeyCode.Enter => dismiss(); if confirming then confirm.foreach(_.apply())
           case c: KeyCode.Left  => confirming = false
           case c: KeyCode.Right => confirming = true
           case _                => EventResult.NotHandled
@@ -57,33 +57,48 @@ class ConfirmPopup(message: String, title: Option[String] = None)(confirm: () =>
 
     val buttonsBarLayout = Layout(
       direction = Direction.Horizontal,
+      margin = Margin(0, 1),
       constraints = Array(
-        Constraint.Percentage(25), // spacer
-        Constraint.Percentage(50), // buttons
-        Constraint.Percentage(25), // spacer
+        Constraint.Percentage(22), // spacer
+        Constraint.Percentage(56), // buttons
+        Constraint.Percentage(22), // spacer
       )
     ).split(contentLayout(2))
 
-    val buttonsLayout = Layout(
-      direction = Direction.Horizontal,
-      constraints = Array(
-        Constraint.Max(13), // cancel
-        Constraint.Min(4),  // spacer
-        Constraint.Max(13), // confirming
-      )
-    ).split(buttonsBarLayout(1))
+    val buttonsLayout =
+      if confirm.isDefined then
+        Layout(
+          direction = Direction.Horizontal,
+          constraints = Array(
+            Constraint.Max(13), // cancel
+            Constraint.Min(3),  // spacer
+            Constraint.Max(13), // confirm
+          )
+        ).split(buttonsBarLayout(1))
+      else
+        Layout(
+          direction = Direction.Horizontal,
+          constraints = Array(
+            Constraint.Max(5), // ok
+          )
+        ).split(buttonsBarLayout(1))
 
-    val cancelButton  = ButtonWidget("Cancel", !confirming)
+    val cancelButton  = ButtonWidget(if confirm.isDefined then " Cancel" else "Ok", !confirming)
     val confirmButton = ButtonWidget("Confirm", confirming)
-    val content       = ParagraphWidget(text = Text.nostyle(message), alignment = Alignment.Center)
-    val background    = ClearWidget
-    val border        = BlockWidget(title = title.map(Spans.nostyle), borders = Borders.ALL)
+    val content       = ParagraphWidget(
+      text = Text.nostyle(message),
+      alignment = Alignment.Center,
+      wrap = Some(ParagraphWidget.Wrap(true)),
+    )
+    val background = ClearWidget
+    val border     = BlockWidget(title = title.map(Spans.nostyle), borders = Borders.ALL)
 
     renderer.render(background, contentArea)
     renderer.render(border, contentArea)
     renderer.render(content, contentLayout(1))
     renderer.render(cancelButton, buttonsLayout(0))
-    renderer.render(confirmButton, buttonsLayout(2))
+    if confirm.isDefined then
+      renderer.render(confirmButton, buttonsLayout(2))
 
   private def ButtonWidget(label: String, active: => Boolean) =
     ParagraphWidget(

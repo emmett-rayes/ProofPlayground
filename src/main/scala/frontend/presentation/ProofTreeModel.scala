@@ -103,15 +103,15 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
           navigation.showPopup(Navigation.Popup.Confirm(
             "The supplied meta-variable substitutions do not match the selected rule.",
             Some("Substitution Error"),
-          )) { () => () }
+          ))(None)
         }
       }
     }
 
   override def quit(): Unit =
-    navigation.showPopup(Navigation.Popup.Confirm("Do you want to quit the proof mode?", Some("Quit"))) { () =>
+    navigation.showPopup(Navigation.Popup.Confirm("Do you want to quit the proof mode?", Some("Quit")))(Some(() =>
       navigation.navigateTo(Navigation.Screen.FormulaInput)
-    }
+    ))
 
   private def handleMissingMetaVariables(
     rule: InferenceRule[Judgement, FormulaF],
