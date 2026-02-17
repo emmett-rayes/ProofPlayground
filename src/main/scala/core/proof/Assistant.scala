@@ -4,7 +4,7 @@ package core.proof
 import core.meta.Substitute.{substitute, substitutePartial}
 import core.meta.Unification.merge
 import core.meta.Unify.{Unifier, unify}
-import core.meta.{AsPattern, FreeVars, MetaVariable, Unification}
+import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, MetaVariable, Unification}
 import core.proof.natural.Judgement
 import core.{Algebra, Fix, Functor, traverse}
 
@@ -28,6 +28,7 @@ object Assistant:
     Algebra[F, Set[MetaVariable]],
     FreeVars { type Self = Fix[F] },
     AsPattern[F] { type Self = Fix[F] },
+    CaptureAvoidingSub { type Self = Fix[F] },
   )(
     judgement: Judgement[Fix[F]],
     rule: InferenceRule[Judgement, F],
@@ -38,7 +39,7 @@ object Assistant:
     val sideCondition = judgement.free.find { free =>
       judgement.assertion.freevariables.contains(free)
     }
-    if sideCondition.isDefined then return ProofResult.BoundaryConditionFailure(sideCondition.get)
+    if sideCondition.isDefined then return ProofResult.SideConditionFailure(sideCondition.get)
 
     val unificationOpt =
       for
@@ -51,15 +52,40 @@ object Assistant:
       yield (totalUnification, totalAssumptionUnification, totalFreeUnification)
     if unificationOpt.isEmpty then return ProofResult.UnificationFailure()
 
+    enum ResultHelper {
+      case Success(proof: Proof[Judgement[Fix[F]]])
+      case Failure(rule: InferenceRule[Judgement, F])
+    }
+
     val (unification, assumptionUnification, freeUnification) = unificationOpt.get
-    val proof                                                 =
+    val proofOrFailure: Option[ResultHelper]                  =
       for
-        judgement <- substitute[Fix[F], F](rule.conclusion, unification, assumptionUnification, freeUnification)
-        premises  <- rule.premises.toSeq.traverse { premise =>
+        conclusion <- substitute[Fix[F], F](rule.conclusion, unification, assumptionUnification, freeUnification)
+        premises   <- rule.premises.toSeq.traverse { premise =>
           substitute[Fix[F], F](premise, unification, assumptionUnification, freeUnification)
         }
-      yield Proof(judgement, premises.reverse.map(Proof(_, List.empty)).toList)
-    if proof.isDefined then return ProofResult.Success(proof.get)
+        failure = if conclusion == judgement then None
+        else
+          Some(Inference(
+            rule.label,
+            premises.map { j =>
+              Judgement(j.assertion.asPattern, j.assumptions.map(_.asPattern), j.free.map(_.asPattern))
+            },
+            Judgement(
+              conclusion.assertion.asPattern,
+              conclusion.assumptions.map(_.asPattern),
+              conclusion.free.map(_.asPattern)
+            )
+          ))
+      yield
+        if failure.nonEmpty then ResultHelper.Failure(failure.get)
+        else
+          ResultHelper.Success(Proof(conclusion, premises.reverse.map(Proof(_, List.empty)).toList))
+
+    if proofOrFailure.isDefined then
+      return proofOrFailure.get match
+          case ResultHelper.Success(proof) => ProofResult.Success(proof)
+          case ResultHelper.Failure(rule) => ProofResult.SubstitutionFailure(rule)
 
     val conclusion = substitutePartial(rule.conclusion, unification, assumptionUnification, freeUnification)
     val premises   = rule.premises.map { premise =>
@@ -84,7 +110,7 @@ object Assistant:
       *
       * @param variable the variable that violates the boundary condition.
       */
-    case BoundaryConditionFailure(variable: Fix[F])
+    case SideConditionFailure(variable: Fix[F])
 
     /** Substitution failure during proof construction.
       *
