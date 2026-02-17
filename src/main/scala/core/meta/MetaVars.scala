@@ -24,7 +24,10 @@ object MetaVars:
     * @return The set of meta-variables appearing in `pattern`.
     */
   def metavariables[F[_]: Functor](using Algebra[F, Set[MetaVariable]])(pattern: Pattern[F]): Set[MetaVariable] =
-    val algebra = Pattern.algebra[Set[MetaVariable], F](summon)(Set(_))
+    val algebra = Pattern.algebra[Set[MetaVariable], F](summon) {
+      case pattern @ PatternF.Meta(_)                            => Set(pattern)
+      case PatternF.Substitution(variable, replacement, formula) => variable ++ replacement ++ formula
+    }
     catamorphism(pattern)(algebra)
 
   /** Algebra for collapsing a [[FormulaF]] to a [[Set]] of values without producing any information at the leaves.

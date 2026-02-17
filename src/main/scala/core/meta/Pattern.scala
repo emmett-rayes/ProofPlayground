@@ -28,15 +28,17 @@ object Pattern:
     *
     * @tparam T the carrier type of the algebra.
     * @tparam F the formula functor of the referenced formulas in the pattern.
-    *
-    * @param meta a function that maps a meta-variable pattern to a value of type `T`.
+    * @param baseAlgebra a function that maps a meta-variable or a substitution pattern to a value of type `T`.
     * @param subalgebra the subalgebra for the contained formula functor.
-    *
     * @return an algebra for a pattern functor that maps patterns to values of type `T`.
     */
-  def algebra[T, F[_]: Functor](subalgebra: Algebra[F, T])(meta: PatternF.Meta[F, T] => T): PatternF[F, T] => T = {
-    case pattern @ PatternF.Meta(_) => meta(pattern)
-    case PatternF.Formula(formula)  => subalgebra(formula)
+  def algebra[T, F[_]: Functor](subalgebra: Algebra[F, T])(
+    baseAlgebra: PatternF.Meta[F, T] | PatternF.Substitution[F, T] => T
+  )
+    : PatternF[F, T] => T = {
+    case pattern @ PatternF.Meta(_)               => baseAlgebra(pattern)
+    case pattern @ PatternF.Substitution(_, _, _) => baseAlgebra(pattern)
+    case PatternF.Formula(formula)                => subalgebra(formula)
   }
 
 /** The functor representing patterns.
@@ -53,6 +55,17 @@ enum PatternF[F[_], T]:
     * @param name the identifier for this meta-variable.
     */
   case Meta(name: String)
+
+  /** A pattern that stands for the capture avoiding substitution of a concrete variable in a formula.
+    *
+    * @note variables are modelled by the same type as formulas. This is both for ease of development
+    *       and future-support for pattern-based substitutions of arbitrary subformulas.
+    *
+    * @param variable the variable to be substituted.
+    * @param replacement the variable to substitute with.
+    * @param formula the formula in which the substitution takes place.
+    */
+  case Substitution(variable: T, replacement: T, formula: T)
 
   /** A pattern that matches a concrete formula.
     *
@@ -73,10 +86,15 @@ case object PatternF:
   /** Creates a formula pattern from a concrete formula. */
   def concrete[F[_], T](formula: F[T]): PatternF.Formula[F, T] = PatternF.Formula(formula)
 
+  /** Creates a substitution pattern from a variable, a replacement formula, and a formula. */
+  def substitution[F[_], T](variable: T, replacement: T, formula: T): PatternF.Substitution[F, T] =
+    PatternF.Substitution(variable, replacement, formula)
+
   /** [[Functor]] instance for [[PatternF]]. */
   given [F[_]: Functor as F] => Functor[[T] =>> PatternF[F, T]]:
     extension [A](fa: PatternF[F, A])
       override def map[B](f: A => B): PatternF[F, B] =
         fa match
-          case Meta(name)       => meta(name)
-          case Formula(formula) => concrete(F.map(formula)(f))
+          case Meta(name)                                   => meta(name)
+          case Substitution(variable, replacement, formula) => Substitution(f(variable), f(replacement), f(formula))
+          case Formula(formula)                             => concrete(F.map(formula)(f))

@@ -2,7 +2,7 @@ package proofPlayground
 package frontend
 
 import core.logic.propositional.{Formula, FormulaF}
-import core.meta.Pattern
+import core.meta.{Pattern, PatternF}
 import core.proof.natural.Judgement
 import core.{Algebra, Functor, catamorphism}
 
@@ -39,8 +39,11 @@ object Show:
   given [F[_]: Functor] => (Algebra[F, String]) => Pattern[F] is Show:
     extension (pattern: Pattern[F])
       override def show: String =
-        val algebra = Pattern.algebra(summon)(_.name)
-        val result  = catamorphism(pattern)(algebra).stripPrefix("(").stripSuffix(")")
+        val algebra = Pattern.algebra(summon) {
+          case PatternF.Meta(name)                                   => name
+          case PatternF.Substitution(variable, replacement, formula) => s"$formula[$replacement/$variable]"
+        }
+        val result = catamorphism(pattern)(algebra).stripPrefix("(").stripSuffix(")")
         if result.startsWith("(") && result.endsWith(")")
         then result.stripPrefix("(").stripSuffix(")")
         else result

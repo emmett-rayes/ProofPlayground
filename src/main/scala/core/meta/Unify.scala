@@ -79,8 +79,9 @@ object Unify:
     val unificationConcrete = patterns.zipWithIndex.foldLeft(Option(emptyContext)) { (ctx, pWithIdx) =>
       val (pattern, idx) = pWithIdx
       pattern.unfix match
-        case PatternF.Meta(_)    => ctx
-        case PatternF.Formula(_) =>
+        case PatternF.Meta(_)               => ctx
+        case PatternF.Substitution(_, _, _) => ctx // substitution patterns match anything
+        case PatternF.Formula(_)            =>
           for
             (unificationAcc, idxMap) <- ctx
             // we can alternatively track the last used index in the context
@@ -98,8 +99,8 @@ object Unify:
         val (map, lastConcreteIdx) = ctx
         val (pattern, idx)         = pWithIdx
         pattern.unfix match
-          case PatternF.Meta(_)    => (map + (idx -> lastConcreteIdx), lastConcreteIdx)
-          case PatternF.Formula(_) => (map + (idx -> idx), idx)
+          case PatternF.Meta(_) | PatternF.Substitution(_, _, _) => (map + (idx -> lastConcreteIdx), lastConcreteIdx)
+          case PatternF.Formula(_)                               => (map + (idx -> idx), idx)
       }._1
 
       val idxConcreteAfter =
@@ -107,8 +108,8 @@ object Unify:
           val (map, lastConcreteIdx) = ctx
           val (pattern, idx)         = pWithIdx
           pattern.unfix match
-            case PatternF.Meta(_)    => (map + (idx -> lastConcreteIdx), lastConcreteIdx)
-            case PatternF.Formula(_) => (map + (idx -> idx), idx)
+            case PatternF.Meta(_) | PatternF.Substitution(_, _, _) => (map + (idx -> lastConcreteIdx), lastConcreteIdx)
+            case PatternF.Formula(_)                               => (map + (idx -> idx), idx)
         }._1
 
       val idxStutteringMeta = patterns.map(_.unfix).zip(patterns.map(_.unfix).drop(1)).zipWithIndex.collect {
@@ -147,8 +148,9 @@ object Unify:
     unify(pattern)(scrutinee)
 
   def unify[T, F[_]: Functor](using Algebra[F, Unifier[T]])(pattern: Pattern[F]): Unifier[T] =
-    val algebra = Pattern.algebra[Unifier[T], F](summon) { pattern => scrutinee =>
-      Some(Map(meta(pattern.name) -> scrutinee))
+    val algebra = Pattern.algebra[Unifier[T], F](summon) {
+      case PatternF.Meta(name)            => scrutinee => Some(Map(meta(name) -> scrutinee))
+      case PatternF.Substitution(_, _, _) => _ => Some(Map.empty)
     }
     catamorphism(pattern)(algebra)
 
