@@ -83,7 +83,7 @@ class ConfirmPopup(message: String, title: Option[String] = None)(confirm: Optio
           )
         ).split(buttonsBarLayout(1))
 
-    val cancelButton  = ButtonWidget(if confirm.isDefined then " Cancel" else "Ok", !confirming)
+    val cancelButton  = ButtonWidget(if confirm.isDefined then "\u200ACancel" else "Ok", !confirming)
     val confirmButton = ButtonWidget("Confirm", confirming)
     val content       = ParagraphWidget(
       text = Text.nostyle(message),
@@ -91,7 +91,8 @@ class ConfirmPopup(message: String, title: Option[String] = None)(confirm: Optio
       wrap = Some(ParagraphWidget.Wrap(true)),
     )
     val background = ClearWidget
-    val border     = BlockWidget(title = title.map(Spans.nostyle), borders = Borders.ALL)
+    val border     =
+      BlockWidget(title = title.map(Spans.nostyle), borders = Borders.ALL, borderType = BlockWidget.BorderType.Rounded)
 
     renderer.render(background, contentArea)
     renderer.render(border, contentArea)
@@ -107,7 +108,8 @@ class ConfirmPopup(message: String, title: Option[String] = None)(confirm: Optio
       block = Some(
         BlockWidget(
           borders = Borders.ALL,
-          style = if active then Style.DEFAULT.fg(Color.Yellow) else Style.DEFAULT
+          style = if active then Style.DEFAULT.fg(Color.Yellow) else Style.DEFAULT,
+          borderType = BlockWidget.BorderType.Rounded,
         )
       )
     )
