@@ -1,8 +1,9 @@
 package proofPlayground
 package core.proof.natural
 
-import core.meta.PatternF.concrete
-import core.meta.{Pattern, PatternF}
+import core.meta.PatternF.{concrete, substitution}
+import core.meta.{MetaVariable, Pattern, PatternF}
+import core.meta.Pattern.given
 import core.proof.natural.Judgement.*
 import core.proof.{Inference, InferenceRule}
 
@@ -10,6 +11,8 @@ import scala.language.implicitConversions
 
 /** Collection of inference rules for natural deduction. */
 case object InferenceRules:
+  opaque type SubstitutionContext[F[_]] = (Pattern[F], Pattern[F])
+
   /** Implicit conversion from a formula over patterns to a pattern. */
   private given [F[_]] => Conversion[F[Pattern[F]], Pattern[F]] = f => Pattern(concrete(f))
 
@@ -23,6 +26,11 @@ case object InferenceRules:
       * @return A new sequence containing the original patterns and the added pattern.
       */
     private def ::(other: Seq[Pattern[F]]): Seq[Pattern[F]] = other :+ pattern
+
+    private def /(other: Pattern[F]): SubstitutionContext[F] = (pattern, other)
+
+    private def apply(context: SubstitutionContext[F]): Pattern[F] =
+      substitution(context._2, context._1, pattern)
 
   /** Inference rules for intuitionistic propositional logic. */
   // noinspection DuplicatedCode
@@ -274,14 +282,12 @@ case object InferenceRules:
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
 
-      // todo: Find a solution for backward substitution, e.g. by taking a formula
-      //  psi from the user and substituting it with a fresh variable.
       Inference(
         "∀E",
         Seq(
           omega % gamma |- forall(nu, phi)
         ),
-        omega % gamma |- phi // todo phi[psi/nu]
+        omega % gamma |- phi(psi / nu)
       )
 
     /** Existential introduction (∃I).
@@ -296,7 +302,7 @@ case object InferenceRules:
       Inference(
         "∃I",
         Seq(
-          omega % gamma |- phi // todo: phi[psi/nu]
+          omega % gamma |- phi(psi / nu)
         ),
         omega % gamma |- exists(nu, phi)
       )
