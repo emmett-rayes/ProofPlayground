@@ -5,7 +5,7 @@ import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
 import core.meta.Pattern.given
-import core.meta.PatternF.concrete
+import core.meta.PatternF.{concrete, substitution}
 import core.proof.natural.Judgement
 import core.{Algebra, Functor, catamorphism, traverse}
 
@@ -21,7 +21,7 @@ object Substitute:
     * @param assumptionUnification The unification mapping assumption meta-variables to sequences of concrete formulas.
     * @param freeUnification The unification mapping free meta-variables to sequences of concrete formulas.
     */
-  def substitute[T, F[_]: Functor](using
+  def substitute[T: CaptureAvoidingSub, F[_]: Functor](using
     Algebra[F, Option[T]]
   )(
     judgement: Judgement[Pattern[F]],
@@ -46,14 +46,19 @@ object Substitute:
     * @param unification The unification mapping meta-variables to concrete formulas.
     * @return Some(substituted) if the substitution is successful; None otherwise.
     */
-  def substitute[T, F[_]: Functor](using
+  def substitute[T: CaptureAvoidingSub, F[_]: Functor](using
     Algebra[F, Option[T]]
   )(patterns: Seq[Pattern[F]], unification: Unification[Seq[T]]): Option[Seq[T]] =
     patterns.traverse { pattern =>
       pattern.unfix match
-        case pattern @ PatternF.Meta(name) => unification.get(pattern)
-        case PatternF.Formula(formula)     => substitute[T, F](pattern, Map.empty).map(Seq(_))
-      // substituting with the empty unification converts a pattern without variables to a formula
+        case pattern @ PatternF.Meta(name) =>
+          unification.get(pattern)
+        case PatternF.Substitution(variable, replacement, formula) =>
+          // substitution pattern with sequence meta-variables are not supported
+          None
+        case PatternF.Formula(formula) =>
+          // substituting with the empty unification converts a pattern without variables to a formula
+          substitute[T, F](pattern, Map.empty).map(Seq(_))
     }.map(_.flatten)
 
   /** Substitutes meta-variables in the pattern according to the provided unification.
@@ -64,10 +69,19 @@ object Substitute:
     * @param unification The unification mapping meta-variables to concrete formulas.
     * @return Some(substituted) if the substitution is successful; None otherwise.
     */
-  def substitute[T, F[_]: Functor](using
+  def substitute[T: CaptureAvoidingSub, F[_]: Functor](using
     Algebra[F, Option[T]]
   )(pattern: Pattern[F], unification: Unification[T]): Option[T] =
-    val algebra = Pattern.algebra[Option[T], F](summon)(unification.get)
+    val algebra = Pattern.algebra[Option[T], F](summon) {
+      case pattern @ PatternF.Meta(_) =>
+        unification.get(pattern)
+      case PatternF.Substitution(variable, replacement, formula) =>
+        for
+          variable    <- variable
+          replacement <- replacement
+          formula     <- formula
+        yield formula.substituteWithoutCapturing(variable, replacement)
+    }
     catamorphism(pattern)(algebra)
 
   /** Substitutes meta-variables in the judgement according to the provided unifications.
@@ -108,8 +122,16 @@ object Substitute:
   def substitutePartial[T: AsPattern[F], F[_]: Functor](pattern: Pattern[F], unification: Unification[T]): Pattern[F] =
     def substitute(pattern: Pattern[F], unification: Unification[Pattern[F]]): Pattern[F] =
       pattern.unfix match
-        case pattern @ PatternF.Meta(_) => unification.getOrElse(pattern, pattern)
-        case PatternF.Formula(formula)  => concrete(formula.map(substitute(_, unification)))
+        case pattern @ PatternF.Meta(_) =>
+          unification.getOrElse(pattern, pattern)
+        case PatternF.Substitution(variable, replacement, formula) =>
+          substitution(
+            substitute(variable, unification),
+            substitute(replacement, unification),
+            substitute(formula, unification),
+          )
+        case PatternF.Formula(formula) =>
+          concrete(formula.map(substitute(_, unification)))
     val patternUnification = unification.view.mapValues(_.asPattern).toMap
     substitute(pattern, patternUnification)
 
@@ -120,8 +142,13 @@ object Substitute:
     def substitute(patterns: Seq[Pattern[F]], unification: Unification[Seq[Pattern[F]]]): Seq[Pattern[F]] =
       patterns.flatMap { pattern =>
         pattern.unfix match
-          case pattern @ PatternF.Meta(_)          => unification.getOrElse(pattern, Seq(pattern)): Seq[Pattern[F]]
-          case pattern @ PatternF.Formula(formula) => substitute(Seq(concrete(formula)), unification)
+          case pattern @ PatternF.Meta(_) =>
+            unification.getOrElse(pattern, Seq(pattern)): Seq[Pattern[F]]
+          case PatternF.Substitution(variable, replacement, formula) =>
+            // substitution pattern with sequence meta-variables are not supported
+            None
+          case PatternF.Formula(formula) =>
+            substitute(Seq(concrete(formula)), unification)
       }
     val patternUnification: Unification[Seq[Pattern[F]]] = unification.view.mapValues(_.map(_.asPattern)).toMap
     substitute(patterns, patternUnification)
