@@ -62,17 +62,13 @@ object Assistant:
           Right(Proof(conclusion, premises.reverse.map(Proof(_, List.empty)).toList))
         else
           Left(Inference(rule.label, premises, conclusion).map(j => j.map(_.asPattern)))
-
     if proofOrFailure.isDefined then
       return proofOrFailure.get match
         case Right(proof) => ProofResult.Success(proof)
         case Left(rule)   => ProofResult.SubstitutionFailure(rule)
 
-    val conclusion = substitutePartial(rule.conclusion, unification, assumptionUnification, freeUnification)
-    val premises   = rule.premises.map { premise =>
-      substitutePartial(premise, unification, assumptionUnification, freeUnification)
-    }
-    ProofResult.SubstitutionFailure(Inference(rule.label, premises, conclusion))
+    val substitutedRule = rule.map { j => substitutePartial(j, unification, assumptionUnification, freeUnification) }
+    ProofResult.SubstitutionFailure(substitutedRule)
 
   /** Result of attempting to construct a proof. */
   enum ProofResult[J[_], F[_]]:
