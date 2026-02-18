@@ -29,9 +29,6 @@ object Formula {
   /** Construct a formula from its functor representation. */
   def apply(formula: FormulaF[Formula]): Formula = formula.fix
 
-  /** [[Fix]] is the initial algebra for [[FormulaF]]. */
-  given Algebra[FormulaF, Fix[FormulaF]] = Fix(_)
-
   /** [[AsPattern]] instance for [[Formula]]. */
   given Formula is AsPattern[FormulaF] {
     private given Conversion[FormulaF[Pattern[FormulaF]], Pattern[FormulaF]] = concrete(_).fix
@@ -162,9 +159,9 @@ object Formula {
 
     extension (formula: Formula) {
       override def freevariables: Set[Formula] = {
-        given Conversion[FormulaF.Variable[?], Formula] = variable =>
+        given Conversion[FormulaF.Variable[?], Formula] = { variable =>
           FormulaF.Variable[Formula](variable.variable)
-
+        }
         catamorphism(formula)(algebra)
       }
     }
@@ -226,6 +223,9 @@ case object FormulaF {
   /** Create an existentially quantified formula. */
   def exists[T](using Conversion[FormulaF[T], T])(variable: T, formula: T): T =
     Existential(symbol.Existential(variable, formula))
+
+  /** [[Fix]] is the initial algebra for [[FormulaF]]. */
+  given FixAlgebra: Algebra[FormulaF, Fix[FormulaF]] = Fix(_)
 
   /** Algebra for collapsing a [[FormulaF]] to a [[Set]] of values without producing any information at the leaves. */
   given SetAlgebra: [T] => Algebra[FormulaF, Set[T]] = {
