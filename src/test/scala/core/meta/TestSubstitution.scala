@@ -16,7 +16,7 @@ import core.fix
 import scala.language.implicitConversions
 
 /** Tests for [[Substitution]] functions. */
-class TestSubstitution extends AnyFunSuite:
+class TestSubstitution extends AnyFunSuite {
   private given Conversion[FormulaF[Pattern[FormulaF]], Pattern[FormulaF]] = concrete(_).fix
   
   private val formulaGenerator = FormulaGenerationUtil.arbitraryGenerator
@@ -112,3 +112,4 @@ class TestSubstitution extends AnyFunSuite:
     assert(result.isDefined)
     assert(result.get === formula1 --> formula2)
   }
+}

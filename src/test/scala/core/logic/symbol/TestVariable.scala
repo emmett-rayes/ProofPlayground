@@ -4,7 +4,7 @@ package core.logic.symbol
 import org.scalatest.funsuite.AnyFunSuite
 
 /** Tests for the [[Variable]] class and its companion object. */
-final class TestVariable extends AnyFunSuite:
+final class TestVariable extends AnyFunSuite {
 
   test("two different variables are not equal") {
     sealed trait DummyKind
@@ -39,3 +39,4 @@ final class TestVariable extends AnyFunSuite:
     val v1k2 = Variable[DummyKind2]("V1")
     assert(v1k1 !== v1k2)
   }
+}

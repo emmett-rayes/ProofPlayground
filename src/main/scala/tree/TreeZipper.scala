@@ -14,11 +14,11 @@ package tree
   */
 case class TreeZipper[+A](subtree: Tree[A], context: List[TreeContext[A]])
 
-object TreeZipper:
+object TreeZipper {
   def apply[A](tree: Tree[A]): TreeZipper[A] = TreeZipper(tree, Nil)
 
-  given TreeZipper is Zipper[Tree]:
-    extension [A](self: TreeZipper[A])
+  given TreeZipper is Zipper[Tree] {
+    extension [A](self: TreeZipper[A]) {
       override def get: Tree[A] = self.subtree
 
       override def replace(value: Tree[A]): TreeZipper[A] =
@@ -28,15 +28,16 @@ object TreeZipper:
         first
 
       override def up: Option[TreeZipper[A]] =
-        self.context match
+        self.context match {
           case Nil =>
             None
           case TreeContext(value, direction, siblings) :: rest =>
             val node = Tree(value, siblings.patch(direction, List(self.subtree), 0))
             Some(TreeZipper(node, rest))
+        }
 
       override def left: Option[TreeZipper[A]] =
-        self.context match
+        self.context match {
           case Nil =>
             None
           case TreeContext(value, direction, siblings) :: rest =>
@@ -51,9 +52,10 @@ object TreeZipper:
                 uncle  <- parent.left
                 cousin <- uncle.last
               yield cousin
+        }
 
       override def right: Option[TreeZipper[A]] =
-        self.context match
+        self.context match {
           case Nil =>
             None
           case TreeContext(value, direction, siblings) :: rest =>
@@ -68,6 +70,7 @@ object TreeZipper:
                 uncle  <- parent.right
                 cousin <- uncle.first
               yield cousin
+        }
 
       private def first: Option[TreeZipper[A]] = nth(0)
 
@@ -77,6 +80,10 @@ object TreeZipper:
         if self.subtree.isLeaf then None
         else
           if direction < 0 || direction >= self.subtree.children.length then None
-          else
+          else {
             val subcontext = TreeContext(self.subtree.value, direction, self.subtree.children.patch(direction, Nil, 1))
             Some(TreeZipper(self.subtree.children(direction), subcontext :: self.context))
+          }
+    }
+  }
+}

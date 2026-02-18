@@ -11,7 +11,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import scala.language.implicitConversions
 
 /** Tests for [[CaptureAvoidingSub]] trait and implementation. */
-class TestCaptureAvoidingSub extends AnyFunSuite:
+class TestCaptureAvoidingSub extends AnyFunSuite {
 
   // Test simple substitution without quantifiers
   test("substitution in a simple variable replaces the variable") {
@@ -236,4 +236,5 @@ class TestCaptureAvoidingSub extends AnyFunSuite:
     assert(formula.freevariables.contains(x))
     assert(result.freevariables.contains(y))
   }
+}
 

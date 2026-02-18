@@ -8,9 +8,9 @@ package core
   *
   * @tparam F The functor type constructor.
   */
-trait Functor[F[_]]:
+trait Functor[F[_]] {
   /** Extension methods for values of type `F[A]`. */
-  extension [A](fa: F[A])
+  extension [A](fa: F[A]) {
     /** Map a function over the functor.
       *
       * @param f The function to apply to values inside the functor.
@@ -18,3 +18,5 @@ trait Functor[F[_]]:
       * @return A new functor with the function applied to its values.
       */
     def map[B](f: A => B): F[B]
+  }
+}

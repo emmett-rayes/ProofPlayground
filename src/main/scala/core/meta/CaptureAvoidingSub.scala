@@ -1,10 +1,10 @@
 package proofPlayground
 package core.meta
 
-trait CaptureAvoidingSub:
+trait CaptureAvoidingSub {
   type Self
 
-  extension (self: Self)
+  extension (self: Self) {
     /** Performs capture-avoiding substitution of `term` for `variable` in `self`.
       *
       * @param variable the variable to be substituted in `self`.
@@ -12,3 +12,5 @@ trait CaptureAvoidingSub:
       * @return a new value with `term` substituted for `variable`, avoiding variable capture.
       */
     def substituteWithoutCapturing(variable: Self, replacement: Self): Self
+  }
+}

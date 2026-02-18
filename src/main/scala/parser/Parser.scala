@@ -18,7 +18,7 @@ type ParserResult[Input, Output] = Try[(remaining: Input, parsed: Output)]
   * @tparam Input the type of the input to be parsed.
   * @tparam Output the type of the output produced by the parser.
   */
-trait Parser[Input, +Output]:
+trait Parser[Input, +Output] {
   /** Parses the given input and returns a `ParserResult`.
     *
     * @param input the input to be parsed.
@@ -37,9 +37,10 @@ trait Parser[Input, +Output]:
     input =>
       parse(input).flatMap((remaining, output) =>
         Try {
-          f(output).parse(remaining) match
+          f(output).parse(remaining) match {
             case Failure(exception) => throw ParseError(input, message = exception.getMessage, cause = exception)
             case Success(result)    => result
+          }
         }
       )
 
@@ -51,8 +52,9 @@ trait Parser[Input, +Output]:
     */
   final def orElse[Else](other: => Parser[Input, Else]): Parser[Input, Output | Else] =
     input => parse(input).orElse(other.parse(input))
+}
 
-object Parser:
+object Parser {
   /** Creates a parser that always succeeds with the given output without consuming any input.
     *
     * @param output the output to be produced by the parser.
@@ -72,3 +74,4 @@ object Parser:
     */
   def fail[Input, Output](message: String): Parser[Input, Output] =
     input => Failure(ParseError(input, message))
+}

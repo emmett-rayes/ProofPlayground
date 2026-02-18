@@ -12,8 +12,11 @@ import core.Functor
   */
 case class Inference[J](label: String, premises: Seq[J], conclusion: J)
 
-object Inference:
-  given Functor[Inference]:
-    extension [A](inference: Inference[A])
+object Inference {
+  given Functor[Inference] {
+    extension [A](inference: Inference[A]) {
       override def map[B](f: A => B): Inference[B] =
         Inference(inference.label, inference.premises.map(f), f(inference.conclusion))
+    }
+  }
+}

@@ -8,14 +8,16 @@ import core.proof.natural.Judgement
 import core.{Algebra, Functor, catamorphism}
 
 /** A typeclass for extracting meta-variables from a container. */
-trait MetaVars:
+trait MetaVars {
   type Self
 
-  extension (self: Self)
+  extension (self: Self) {
     /** Returns the set of meta-variables appearing in `self`. */
     def metavariables: Set[MetaVariable]
+  }
+}
 
-object MetaVars:
+object MetaVars {
   /** Extracts the set of meta-variables appearing in a pattern.
     *
     * @param pattern The pattern to extract meta-variables from.
@@ -23,12 +25,13 @@ object MetaVars:
     *
     * @return The set of meta-variables appearing in `pattern`.
     */
-  def metavariables[F[_]: Functor](using Algebra[F, Set[MetaVariable]])(pattern: Pattern[F]): Set[MetaVariable] =
+  def metavariables[F[_]: Functor](using Algebra[F, Set[MetaVariable]])(pattern: Pattern[F]): Set[MetaVariable] = {
     val algebra = Pattern.algebra[Set[MetaVariable], F](summon) {
       case pattern @ PatternF.Meta(_)                            => Set(pattern)
       case PatternF.Substitution(variable, replacement, formula) => variable ++ replacement ++ formula
     }
     catamorphism(pattern)(algebra)
+  }
 
   /** Algebra for collapsing a [[FormulaF]] to a [[Set]] of values without producing any information at the leaves.
     *
@@ -47,18 +50,25 @@ object MetaVars:
   }
 
   /** Instance of [[MetaVars]] for [[Pattern]]. */
-  given [F[_]: Functor] => (Algebra[F, Set[MetaVariable]]) => Pattern[F] is MetaVars:
-    extension (pattern: Pattern[F])
+  given [F[_]: Functor] => (Algebra[F, Set[MetaVariable]]) => Pattern[F] is MetaVars {
+    extension (pattern: Pattern[F]) {
       override def metavariables: Set[MetaVariable] = MetaVars.metavariables(pattern)
+    }
+  }
 
   /** Instance of [[MetaVars]] for [[Judgement]]. */
-  given [F: MetaVars] => Judgement[F] is MetaVars:
-    extension (judgement: Judgement[F])
+  given [F: MetaVars] => Judgement[F] is MetaVars {
+    extension (judgement: Judgement[F]) {
       override def metavariables: Set[MetaVariable] =
         judgement.assertion.metavariables ++ judgement.assumptions.flatMap(_.metavariables)
+    }
+  }
 
   /** Instance of [[MetaVars]] for [[Inference]]. */
-  given [J: MetaVars] => Inference[J] is MetaVars:
-    extension (inference: Inference[J])
+  given [J: MetaVars] => Inference[J] is MetaVars {
+    extension (inference: Inference[J]) {
       override def metavariables: Set[MetaVariable] =
         inference.conclusion.metavariables ++ inference.premises.flatMap(_.metavariables)
+    }
+  }
+}

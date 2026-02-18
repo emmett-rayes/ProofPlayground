@@ -10,7 +10,7 @@ def sequence[A](seq: Seq[Option[A]]): Option[Seq[A]] =
     for b <- a; bs <- acc yield b +: bs
   }
 
-extension [A](seq: Seq[A])
+extension [A](seq: Seq[A]) {
   /** Traverse a sequence of values using a function that produces an option.
     * If any of the values in the sequence maps to None, the result is None.
     * Otherwise, the result is a sequence of all mapped values.
@@ -24,3 +24,4 @@ extension [A](seq: Seq[A])
   // noinspection ScalaDocUnknownParameter
   def traverse[B](f: A => Option[B]): Option[Seq[B]] =
     sequence[B](seq.map(f))
+}

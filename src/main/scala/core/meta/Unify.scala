@@ -11,7 +11,7 @@ import scala.annotation.targetName
 /** A successful unifier mapping meta-variables from a pattern to concrete values. */
 type Unification[T] = Map[MetaVariable, T]
 
-object Unification:
+object Unification {
   /** Merge two unifications if they agree on shared variables, otherwise fail.
     *
     * @param fst the first unification to merge
@@ -19,9 +19,10 @@ object Unification:
     * @tparam T the type of the values produced by the unifications
     * @return Some(merged) when consistent; None on conflict
     */
-  def merge[T](fst: Unification[T], snd: Unification[T]): Option[Unification[T]] =
+  def merge[T](fst: Unification[T], snd: Unification[T]): Option[Unification[T]] = {
     val intersection = fst.keySet.intersect(snd.keySet)
     if intersection.exists(key => fst(key) != snd(key)) then None else Some(fst ++ snd)
+  }
 
   /** Merge two unifications if they agree on shared variables, otherwise fail.
     *
@@ -36,11 +37,13 @@ object Unification:
     * @return Some(merged) when consistent; None on conflict
     */
   @targetName("mergeSeq")
-  def merge[T](fst: Unification[Seq[T]], snd: Unification[T]): Option[Unification[Seq[T]]] =
+  def merge[T](fst: Unification[Seq[T]], snd: Unification[T]): Option[Unification[Seq[T]]] = {
     val intersection = fst.keySet.intersect(snd.keySet)
     if intersection.exists(key => !fst(key).contains(snd(key))) then None else Some(fst ++ snd.view.mapValues(Seq(_)))
+  }
+}
 
-object Unify:
+object Unify {
   import Unification.merge
 
   /** Type alias for a unification function that attempts to produce a unification.
@@ -74,11 +77,11 @@ object Unify:
   // noinspection ScalaDocUnknownParameter
   def unify[T, F[_]: Functor](using
     Algebra[F, Unifier[T]]
-  )(patterns: Seq[Pattern[F]], scrutinees: Seq[T]): Option[Unification[Seq[T]]] =
+  )(patterns: Seq[Pattern[F]], scrutinees: Seq[T]): Option[Unification[Seq[T]]] = {
     val emptyContext: (Unification[T], Map[Int, Int]) = (Map.empty, Map.empty)
     val unificationConcrete = patterns.zipWithIndex.foldLeft(Option(emptyContext)) { (ctx, pWithIdx) =>
       val (pattern, idx) = pWithIdx
-      pattern.unfix match
+      pattern.unfix match {
         case PatternF.Meta(_)               => ctx
         case PatternF.Substitution(_, _, _) => ctx // substitution patterns match anything
         case PatternF.Formula(_)            =>
@@ -90,26 +93,29 @@ object Unify:
               scrutinees.drop(last).map(unify[T, F](pattern, _)).zipWithIndex.find(_._1.isDefined)
             merged <- merge(unificationAcc, unification.get)
           yield (merged, idxMap + (idx -> idxMatch))
+      }
     }
 
     for
       (unification, idxMap) <- unificationConcrete
-    yield
+    yield {
       val idxConcreteBefore = patterns.zipWithIndex.foldLeft((Map.empty[Int, Int], 0)) { (ctx, pWithIdx) =>
         val (map, lastConcreteIdx) = ctx
         val (pattern, idx)         = pWithIdx
-        pattern.unfix match
+        pattern.unfix match {
           case PatternF.Meta(_) | PatternF.Substitution(_, _, _) => (map + (idx -> lastConcreteIdx), lastConcreteIdx)
           case PatternF.Formula(_)                               => (map + (idx -> idx), idx)
+        }
       }._1
 
       val idxConcreteAfter =
         patterns.zipWithIndex.reverse.foldLeft((Map.empty[Int, Int], patterns.size - 1)) { (ctx, pWithIdx) =>
           val (map, lastConcreteIdx) = ctx
           val (pattern, idx)         = pWithIdx
-          pattern.unfix match
+          pattern.unfix match {
             case PatternF.Meta(_) | PatternF.Substitution(_, _, _) => (map + (idx -> lastConcreteIdx), lastConcreteIdx)
             case PatternF.Formula(_)                               => (map + (idx -> idx), idx)
+          }
         }._1
 
       val idxStutteringMeta = patterns.map(_.unfix).zip(patterns.map(_.unfix).drop(1)).zipWithIndex.collect {
@@ -119,13 +125,16 @@ object Unify:
       val unificationSeq = unification.map(p => p._1 -> Seq(p._2)).withDefaultValue(Seq.empty)
       patterns.zipWithIndex.foldLeft(unificationSeq) { (unification, pWithIdx) =>
         val (pattern, idx) = pWithIdx
-        pattern.unfix match
+        pattern.unfix match {
           case p @ PatternF.Meta(_) if !idxStutteringMeta.contains(idx) =>
             val before = idxConcreteBefore.get(idx).flatMap(idxMap.get).getOrElse(-1)
             val after  = idxConcreteAfter.get(idx).flatMap(idxMap.get).getOrElse(scrutinees.size)
             unification + (p -> scrutinees.slice(before + 1, after))
           case _ => unification
+        }
       }
+    }
+  }
 
   /** Attempt to unify a pattern with a concrete formula.
     *
@@ -147,19 +156,20 @@ object Unify:
   def unify[T, F[_]: Functor](using Algebra[F, Unifier[T]])(pattern: Pattern[F], scrutinee: T): Option[Unification[T]] =
     unify(pattern)(scrutinee)
 
-  def unify[T, F[_]: Functor](using Algebra[F, Unifier[T]])(pattern: Pattern[F]): Unifier[T] =
+  def unify[T, F[_]: Functor](using Algebra[F, Unifier[T]])(pattern: Pattern[F]): Unifier[T] = {
     val algebra = Pattern.algebra[Unifier[T], F](summon) {
       case PatternF.Meta(name)            => scrutinee => Some(Map(meta(name) -> scrutinee))
       case PatternF.Substitution(_, _, _) => _ => Some(Map.empty)
     }
     catamorphism(pattern)(algebra)
+  }
 
   /** An algebra that reduces a [[Formula]] to a `Unifier[Formula]`. */
   given Algebra[FormulaF, Unifier[Formula]] = {
     formula =>
       // noinspection DuplicatedCode
       scrutinee =>
-        (scrutinee.unfix, formula) match
+        (scrutinee.unfix, formula) match {
           case (FormulaF.Variable(variable), FormulaF.Variable(pattern)) =>
             if pattern == variable then Some(Map.empty) else None
           case (FormulaF.True(_), FormulaF.True(_)) =>
@@ -199,4 +209,6 @@ object Unify:
               merged   <- merge(variable, body)
             yield merged
           case _ => None
+        }
   }
+}

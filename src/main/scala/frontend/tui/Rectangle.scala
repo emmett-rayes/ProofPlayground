@@ -3,8 +3,8 @@ package frontend.tui
 
 import tui.{Constraint, Direction, Layout, Rect}
 
-object Rectangle:
-  def apply(ySize: Int, xSize: Int, area: Rect): Rect =
+object Rectangle {
+  def apply(ySize: Int, xSize: Int, area: Rect): Rect = {
     val yLayout = Layout(
       direction = Direction.Vertical,
       constraints = Array(
@@ -24,3 +24,5 @@ object Rectangle:
     ).split(yLayout(1))
 
     xLayout(1)
+  }
+}

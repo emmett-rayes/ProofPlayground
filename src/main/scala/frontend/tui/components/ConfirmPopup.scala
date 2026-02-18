@@ -9,7 +9,7 @@ import tui.crossterm.{Event, KeyCode}
 import tui.widgets.{BlockWidget, ClearWidget, ParagraphWidget}
 
 class ConfirmPopup(message: String, title: Option[String] = None)(confirm: Option[() => Unit], dismiss: () => Unit)
-    extends Screen:
+    extends Screen {
   private val ySize = 40
   private val xSize = 30
 
@@ -25,7 +25,7 @@ class ConfirmPopup(message: String, title: Option[String] = None)(confirm: Optio
       Span.nostyle(" to cancel."),
     )
 
-  override def handleEvent(event: Event): EventResult =
+  override def handleEvent(event: Event): EventResult = {
     import scala.language.implicitConversions
     given Conversion[Unit, EventResult.Handled.type] = _ => EventResult.Handled
 
@@ -40,8 +40,9 @@ class ConfirmPopup(message: String, title: Option[String] = None)(confirm: Optio
         }
       case _ => EventResult.NotHandled
     }
+  }
 
-  override def render(renderer: Renderer, area: Rect): Unit =
+  override def render(renderer: Renderer, area: Rect): Unit = {
     val contentArea = Rectangle(ySize, xSize, area)
 
     val contentLayout = Layout(
@@ -100,6 +101,7 @@ class ConfirmPopup(message: String, title: Option[String] = None)(confirm: Optio
     renderer.render(cancelButton, buttonsLayout(0))
     if confirm.isDefined then
       renderer.render(confirmButton, buttonsLayout(2))
+  }
 
   private def ButtonWidget(label: String, active: => Boolean) =
     ParagraphWidget(
@@ -113,3 +115,4 @@ class ConfirmPopup(message: String, title: Option[String] = None)(confirm: Optio
         )
       )
     )
+}

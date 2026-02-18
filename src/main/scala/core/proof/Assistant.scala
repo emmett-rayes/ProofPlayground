@@ -8,7 +8,7 @@ import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, MetaVariable, Unifica
 import core.proof.natural.Judgement
 import core.{Algebra, Fix, Functor, traverse}
 
-object Assistant:
+object Assistant {
   /** Attempts to produce a proof for the given judgement by applying the given inference rule.
     *
     * The proof is constructible if the judgement can be proved by applying the inference rule to the judgement.
@@ -33,7 +33,7 @@ object Assistant:
     judgement: Judgement[Fix[F]],
     rule: InferenceRule[Judgement, F],
     auxUnification: Unification[Fix[F]] = Map.empty[MetaVariable, Fix[F]]
-  ): ProofResult[Judgement, F] =
+  ): ProofResult[Judgement, F] = {
     val sideCondition = judgement.free.find { free =>
       judgement.assertion.freevariables.contains(free)
     }
@@ -63,15 +63,17 @@ object Assistant:
         else
           Left(Inference(rule.label, premises, conclusion).map(j => j.map(_.asPattern)))
     if proofOrFailure.isDefined then
-      return proofOrFailure.get match
+      return proofOrFailure.get match {
         case Right(proof) => ProofResult.Success(proof)
         case Left(rule)   => ProofResult.SubstitutionFailure(rule)
+      }
 
     val substitutedRule = rule.map { j => substitutePartial(j, unification, assumptionUnification, freeUnification) }
     ProofResult.SubstitutionFailure(substitutedRule)
+  }
 
   /** Result of attempting to construct a proof. */
-  enum ProofResult[J[_], F[_]]:
+  enum ProofResult[J[_], F[_]] {
     /** Successful proof construction.
       *
       * @param proof the constructed proof.
@@ -92,3 +94,5 @@ object Assistant:
       * @param partiallySubstitutedRule the inference rule that could not be fully substituted.
       */
     case SubstitutionFailure(partiallySubstitutedRule: InferenceRule[J, F])
+  }
+}

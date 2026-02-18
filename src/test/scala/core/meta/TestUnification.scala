@@ -16,7 +16,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import scala.language.implicitConversions
 
 /** Tests for the [[Unification]] functions. */
-class TestUnification extends AnyFunSuite:
+class TestUnification extends AnyFunSuite {
   private given Conversion[FormulaF[Pattern[FormulaF]], Pattern[FormulaF]] = concrete(_).fix
 
   private val formulaGenerator = FormulaGenerationUtil.arbitraryGenerator
@@ -104,9 +104,10 @@ class TestUnification extends AnyFunSuite:
     val subPattern = meta("phi"): Pattern[FormulaF]
     val pattern    = ~subPattern
     val formula    = formulaGenerator.arbitrary.retryUntil(f =>
-      f.unfix match
+      f.unfix match {
         case FormulaF.Negation(_) => false
         case _                    => true
+      }
     ).sample.get
     val result = unify[Formula, FormulaF](pattern, formula)
 
@@ -131,9 +132,10 @@ class TestUnification extends AnyFunSuite:
     val rightPattern = meta("psi"): Pattern[FormulaF]
     val pattern      = leftPattern /\ rightPattern
     val formula      = formulaGenerator.arbitrary.retryUntil(f =>
-      f.unfix match
+      f.unfix match {
         case FormulaF.Conjunction(_) => false
         case _                       => true
+      }
     ).sample.get
     val result = unify[Formula, FormulaF](pattern, formula)
 
@@ -169,9 +171,10 @@ class TestUnification extends AnyFunSuite:
     val rightPattern = meta("psi"): Pattern[FormulaF]
     val pattern      = leftPattern \/ rightPattern
     val formula      = formulaGenerator.arbitrary.retryUntil(f =>
-      f.unfix match
+      f.unfix match {
         case FormulaF.Disjunction(_) => false
         case _                       => true
+      }
     ).sample.get
     val result = unify[Formula, FormulaF](pattern, formula)
 
@@ -207,9 +210,10 @@ class TestUnification extends AnyFunSuite:
     val rightPattern = meta("psi"): Pattern[FormulaF]
     val pattern      = leftPattern --> rightPattern
     val formula      = formulaGenerator.arbitrary.retryUntil(f =>
-      f.unfix match
+      f.unfix match {
         case FormulaF.Implication(_) => false
         case _                       => true
+      }
     ).sample.get
     val result = unify[Formula, FormulaF](pattern, formula)
 
@@ -316,3 +320,4 @@ class TestUnification extends AnyFunSuite:
     assert(unification.isDefined)
     assert(unification.get(gamma) === Seq[Formula](tru, fls, ~varA))
   }
+}

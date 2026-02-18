@@ -12,7 +12,7 @@ import tui.*
 import tui.crossterm.{Event, KeyCode, KeyModifiers, MouseEventKind}
 import tui.widgets.{BlockWidget, ListWidget, ParagraphWidget}
 
-extension [A](tree: Tree[A])
+extension [A](tree: Tree[A]) {
   private def width: Int =
     if tree.isLeaf then 1
     else
@@ -26,11 +26,12 @@ extension [A](tree: Tree[A])
   private def leaves: Seq[Tree[A]] =
     if tree.isLeaf then Seq(tree)
     else tree.children.flatMap(_.leaves)
+}
 
-extension (view: ScrollViewWidget)
+extension (view: ScrollViewWidget) {
   private def renderer: Renderer = renderer(None)
 
-  private def renderer(cursorRenderer: Option[Renderer]): Renderer = new Renderer:
+  private def renderer(cursorRenderer: Option[Renderer]): Renderer = new Renderer {
     override def render(widget: Widget, area: Rect): Unit =
       view.renderWidget(widget, area)
 
@@ -39,13 +40,17 @@ extension (view: ScrollViewWidget)
 
     override def setCursor(x: Int, y: Int): Unit =
       cursorRenderer.foreach(_.setCursor(x, y))
+  }
+}
 
-object ProofTree:
-  def apply(navigation: Navigation)(formula: Formula): ProofTree =
+object ProofTree {
+  def apply(navigation: Navigation)(formula: Formula): ProofTree = {
     val model = ProofTreeModel(navigation)(formula)
     new ProofTree(model)(model)
+  }
+}
 
-class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) extends Screen:
+class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) extends Screen {
   private val rulesListState  = ListWidget.State()
   private val scrollViewState = ScrollViewState()
 
@@ -64,7 +69,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
       Span.nostyle(" to " + (if data.focusOnRules then "cancel" else "exit") + "."),
     )
 
-  override def handleEvent(event: Event): EventResult =
+  override def handleEvent(event: Event): EventResult = {
     import scala.language.implicitConversions
     given Conversion[Unit, EventResult.Handled.type] = _ => EventResult.Handled
 
@@ -96,22 +101,25 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
         }
       case _ => EventResult.NotHandled
     }
+  }
 
-  private def previousRule(): Unit =
+  private def previousRule(): Unit = {
     val i = rulesListState.selected match {
       case Some(i) => if i == 0 then data.rules.length - 1 else i - 1
       case None    => 0
     }
     rulesListState.select(Some(i))
+  }
 
-  private def nextRule(): Unit =
+  private def nextRule(): Unit = {
     val i = rulesListState.selected match {
       case Some(i) => if i >= data.rules.length - 1 then 0 else i + 1
       case None    => 0
     }
     rulesListState.select(Some(i))
+  }
 
-  override def render(renderer: Renderer, area: Rect): Unit =
+  override def render(renderer: Renderer, area: Rect): Unit = {
     val layout = Layout(
       direction = Direction.Horizontal,
       constraints = Array(
@@ -125,8 +133,9 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
 
     renderScrollableTree(renderer, data.proofTree, layout(1))
     renderRules(renderer, data.rules, layout(0))
+  }
 
-  private def renderRules(renderer: Renderer, rules: Vector[ProofTreeModel.ProofRule], area: Rect): Unit =
+  private def renderRules(renderer: Renderer, rules: Vector[ProofTreeModel.ProofRule], area: Rect): Unit = {
     val items = data.rules.toArray.map { rule =>
       val label = Text.nostyle(rule.rule)
       ListWidget.Item(label, Style(bg = Some(Color.Reset), fg = Some(if rule.active then Color.Green else Color.Gray)))
@@ -147,8 +156,9 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
     )
 
     renderer.render(list, area)(rulesListState)
+  }
 
-  private def renderScrollableTree(renderer: Renderer, tree: Tree[ProofTreeModel.ProofStep], area: tui.Rect): Unit =
+  private def renderScrollableTree(renderer: Renderer, tree: Tree[ProofTreeModel.ProofStep], area: tui.Rect): Unit = {
     // alternatively: sum the width of all graphemes in a level and maximize
     val width                   = tree.leaves.length * 40
     val height                  = tree.height * 5
@@ -158,8 +168,9 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
     val scrollView = ScrollViewWidget(size)
     renderTree(scrollView.renderer, data.proofTree, scrollView.area)
     renderer.render(scrollView, area)(scrollViewState)
+  }
 
-  private def renderTree(renderer: Renderer, tree: Tree[ProofTreeModel.ProofStep], area: tui.Rect): Unit =
+  private def renderTree(renderer: Renderer, tree: Tree[ProofTreeModel.ProofStep], area: tui.Rect): Unit = {
     val nodeLayout = Layout(
       direction = Direction.Vertical,
       margin = Margin(0, 1),
@@ -190,7 +201,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
     renderer.render(nodeWidget, nodeLayout.last)
 
     // render children
-    if !tree.isLeaf then
+    if !tree.isLeaf then {
       val childrenSizes  = tree.children.map(width)
       val childrenLayout = Layout(
         direction = Direction.Horizontal,
@@ -201,6 +212,9 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
 
       for (child, idx) <- tree.children.zipWithIndex do
         renderTree(renderer, child, childrenLayout(idx))
+    }
+  }
 
   private def deselectRule(): Unit =
     rulesListState.select(None)
+}

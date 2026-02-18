@@ -1,8 +1,8 @@
 package proofPlayground
 package parser
 
-object Combinators:
-  extension [Input, Output](self: Parser[Input, Output])
+object Combinators {
+  extension [Input, Output](self: Parser[Input, Output]) {
     /** Maps the output of this parser if successful using the given function `f`.
       *
       * @param f a function that takes the output of this parser and returns a mapped value.
@@ -16,11 +16,12 @@ object Combinators:
       *
       * @return a new parser that produces a list of outputs from zero or more applications of this parser.
       */
-    def repeated: Parser[Input, List[Output]] =
+    def repeated: Parser[Input, List[Output]] = {
       val greedy =
         for selfOutput <- self; otherOutputs <- repeated
         yield selfOutput :: otherOutputs
       greedy.orElse(Parser.unit(List()))
+    }
 
     /** Parses `n` or more occurrences of this parser, collecting the results into a list.
       *
@@ -71,3 +72,5 @@ object Combinators:
       */
     def between[First, Second](first: Parser[Input, First], second: Parser[Input, Second]): Parser[Input, Output] =
       first.skipThen(self).thenSkip(second)
+  }
+}

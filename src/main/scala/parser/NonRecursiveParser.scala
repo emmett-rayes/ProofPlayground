@@ -6,13 +6,14 @@ import scala.language.reflectiveCalls
 import scala.reflect.ClassTag
 import scala.util.Failure
 
-object NonRecursiveParser:
+object NonRecursiveParser {
   opaque type Context[T] = mutable.Set[(T, ClassTag[?])]
 
-  object Context:
+  object Context {
     def apply[Input](): Context[Input] = mutable.Set.empty
+  }
 
-  extension [Input <: { def size: Int }, Output: ClassTag](self: => Parser[Input, Output])
+  extension [Input <: { def size: Int }, Output: ClassTag](self: => Parser[Input, Output]) {
     /** Creates a non-recursive version of this parser that rejects left-recursion.
       *
       * This is a convenience parser that helps avoid having to refactor left-recursive grammars.
@@ -25,16 +26,21 @@ object NonRecursiveParser:
       * @return a parser that fails if left-recursion is detected.
       */
     def nonRecur(using context: Context[Input]): Parser[Input, Output] =
-      new Parser[Input, Output]:
+      new Parser[Input, Output] {
         private val pending: Context[Input] = context
 
-        override def parse(input: Input): ParserResult[Input, Output] =
+        override def parse(input: Input): ParserResult[Input, Output] = {
           val tag = summon[ClassTag[Output]]
           val key = (input, tag)
           if pending.contains(key)
           then Failure(ParseError(input, "Left-recursion detected."))
-          else
+          else {
             pending += key
             val result = self.parse(input)
             pending -= key
             result
+          }
+        }
+      }
+  }
+}

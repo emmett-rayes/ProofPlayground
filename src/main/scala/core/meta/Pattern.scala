@@ -11,7 +11,7 @@ type MetaVariable = PatternF.Meta[?, ?]
   */
 type Pattern[F[_]] = Fix[[T] =>> PatternF[F, T]]
 
-object Pattern:
+object Pattern {
   /** Implicit conversion from a pattern functor to a pattern.
     *
     * Enables using a [[PatternF]] directly where a [[Pattern]] is expected.
@@ -40,6 +40,7 @@ object Pattern:
     case pattern @ PatternF.Substitution(_, _, _) => baseAlgebra(pattern)
     case PatternF.Formula(formula)                => subalgebra(formula)
   }
+}
 
 /** The functor representing patterns.
   *
@@ -49,7 +50,7 @@ object Pattern:
   * @tparam F the formula functor of the referenced formulas.
   * @tparam T the type used for recursive positions.
   */
-enum PatternF[F[_], T]:
+enum PatternF[F[_], T] {
   /** A meta-variable pattern that matches any formula.
     *
     * @param name the identifier for this meta-variable.
@@ -72,8 +73,9 @@ enum PatternF[F[_], T]:
     * @param formula the concrete formula to match.
     */
   case Formula(formula: F[T])
+}
 
-case object PatternF:
+case object PatternF {
   /** Implicit conversion from a meta-variable name to a meta-variable pattern. */
   given [F[_], T] => Conversion[String, PatternF[F, T]] = meta(_)
 
@@ -91,10 +93,14 @@ case object PatternF:
     PatternF.Substitution(variable, replacement, formula)
 
   /** [[Functor]] instance for [[PatternF]]. */
-  given [F[_]: Functor as F] => Functor[[T] =>> PatternF[F, T]]:
-    extension [A](fa: PatternF[F, A])
+  given [F[_]: Functor as F] => Functor[[T] =>> PatternF[F, T]] {
+    extension [A](fa: PatternF[F, A]) {
       override def map[B](f: A => B): PatternF[F, B] =
-        fa match
+        fa match {
           case Meta(name)                                   => meta(name)
           case Substitution(variable, replacement, formula) => Substitution(f(variable), f(replacement), f(formula))
           case Formula(formula)                             => concrete(F.map(formula)(f))
+        }
+    }
+  }
+}

@@ -14,16 +14,18 @@ import tui.*
 import tui.crossterm.{Event, KeyCode}
 import tui.widgets.{BlockWidget, ClearWidget, ParagraphWidget}
 
-object MissingMetaVariable:
+object MissingMetaVariable {
   def apply(metavariable: MetaVariable, rule: InferenceRule[Judgement, FormulaF])(
     confirm: Formula => Unit,
     dismiss: () => Unit
-  ): MissingMetaVariable =
+  ): MissingMetaVariable = {
     val model = MissingMetaVariableModel(confirm, dismiss)(metavariable, rule)
     new MissingMetaVariable(model)(model)
+  }
+}
 
 class MissingMetaVariable(data: MissingMetaVariableModel.Data)(signals: MissingMetaVariableModel.Signals)
-    extends Screen:
+    extends Screen {
   private val ySize = 60
   private val xSize = 40
 
@@ -35,13 +37,14 @@ class MissingMetaVariable(data: MissingMetaVariableModel.Data)(signals: MissingM
   override def handleEvent(event: Event): Screen.EventResult =
     event match {
       case key: Event.Key =>
-        key.keyEvent().code() match
+        key.keyEvent().code() match {
           case c: KeyCode.Esc => signals.exit(); EventResult.Handled
           case _              => textInput.handleEvent(event)
+        }
       case _ => EventResult.NotHandled
     }
 
-  override def render(renderer: Renderer, area: Rect): Unit =
+  override def render(renderer: Renderer, area: Rect): Unit = {
     val contentArea = Rectangle(ySize, xSize, area)
 
     val layout = Layout(
@@ -75,8 +78,9 @@ class MissingMetaVariable(data: MissingMetaVariableModel.Data)(signals: MissingM
     renderRule(data.inferenceRule, renderer, layout(1))
     renderer.render(message, layout(3))
     textInput.render(renderer, layout(4))
+  }
 
-  private def renderRule(rule: MissingMetaVariableModel.InferenceRuleString, renderer: Renderer, area: Rect): Unit =
+  private def renderRule(rule: MissingMetaVariableModel.InferenceRuleString, renderer: Renderer, area: Rect): Unit = {
     val layout = Layout(
       direction = Direction.Vertical,
       margin = Margin(0, 4),
@@ -111,6 +115,7 @@ class MissingMetaVariable(data: MissingMetaVariableModel.Data)(signals: MissingM
       val premise = ParagraphWidget(text = colorVariable(h, spacer), alignment = Alignment.Center)
       renderer.render(premise, premisesLayout(idx))
     }
+  }
 
   private def colorVariable(string: String, spacer: String = ""): Text =
     findVariable(string) match {
@@ -126,9 +131,9 @@ class MissingMetaVariable(data: MissingMetaVariableModel.Data)(signals: MissingM
         )
     }
 
-  private def findVariable(text: String): Option[Int] =
+  private def findVariable(text: String): Option[Int] = {
     val boundaryChars = Set('(', ')', '[', ']', '.', '/', '∀', '∃')
-    text.indexOf(data.variable) match
+    text.indexOf(data.variable) match {
       case -1       => None
       case varIndex =>
         val charBefore = if varIndex == 0 then ' ' else text(varIndex - 1)
@@ -138,3 +143,6 @@ class MissingMetaVariable(data: MissingMetaVariableModel.Data)(signals: MissingM
           (charBefore.isWhitespace || boundaryChars.contains(charBefore))
             && (charAfter.isWhitespace || boundaryChars.contains(charAfter))
         Option.when(isBoundary)(varIndex)
+    }
+  }
+}

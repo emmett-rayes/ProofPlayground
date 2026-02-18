@@ -10,21 +10,24 @@ import frontend.notation.FormulaParser.parser
 
 import scala.util.Success
 
-object MissingMetaVariableModel:
+object MissingMetaVariableModel {
   type InferenceRuleString = (label: String, conclusion: String, premises: Vector[String])
 
-  trait Data:
+  trait Data {
     def variable: String
     def inferenceRule: InferenceRuleString
     def inputHandler: String => Either[Unit, String]
+  }
 
-  trait Signals:
+  trait Signals {
     def exit(): Unit
+  }
+}
 
 class MissingMetaVariableModel(confirm: Formula => Unit, dismiss: () => Unit)(
   metavariable: MetaVariable,
   rule: InferenceRule[Judgement, FormulaF]
-) extends MissingMetaVariableModel.Data, MissingMetaVariableModel.Signals:
+) extends MissingMetaVariableModel.Data, MissingMetaVariableModel.Signals {
   override def variable: String = metavariable.name
 
   override def inferenceRule: MissingMetaVariableModel.InferenceRuleString =
@@ -32,11 +35,13 @@ class MissingMetaVariableModel(confirm: Formula => Unit, dismiss: () => Unit)(
 
   override def inputHandler: String => Either[Unit, String] =
     input =>
-      Formula.parser.parse(input) match
+      Formula.parser.parse(input) match {
         case Success(value) if value.remaining.isEmpty =>
           dismiss()
           confirm(value.parsed); Left(())
         case _ => Right("invalid formula")
+      }
 
   override def exit(): Unit =
     dismiss()
+}

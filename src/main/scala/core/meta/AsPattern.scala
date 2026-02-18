@@ -5,10 +5,10 @@ package core.meta
   *
   * @tparam F The type of the concrete formula.
   */
-trait AsPattern[F[_]]:
+trait AsPattern[F[_]] {
   type Self
 
-  extension (self: Self)
+  extension (self: Self) {
     /** Converts a concrete formula of type `Self` into a `PatternF.Concrete[F]`.
       *
       * This allows using concrete formulas directly in pattern matching tests.
@@ -16,3 +16,5 @@ trait AsPattern[F[_]]:
       * @return A `Pattern` wrapping the formula
       */
     def asPattern: Pattern[F]
+  }
+}

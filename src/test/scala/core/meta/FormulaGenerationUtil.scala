@@ -9,7 +9,7 @@ import scala.language.implicitConversions
 
 import org.scalacheck.{Arbitrary, Gen}
 
-object FormulaGenerationUtil:
+object FormulaGenerationUtil {
 
   /** Maximum depth for generated formulas. */
   inline val MAX_FORMULA_DEPTH = 5
@@ -32,13 +32,13 @@ object FormulaGenerationUtil:
     * @param depth Recursion depth limit
     * @return A generator that yields well-formed propositional formulas
     */
-  private def generateFormula(depth: Int): Gen[Formula] =
+  private def generateFormula(depth: Int): Gen[Formula] = {
     def randomId() = Gen.alphaStr.sample.get
 
     lazy val leaf = Gen.oneOf[Formula](variable(randomId()), tru, fls)
 
     if depth <= 0 then leaf
-    else
+    else {
       val sub = generateFormula(depth - 1)
       Gen.frequency(
         1 -> leaf,
@@ -47,3 +47,6 @@ object FormulaGenerationUtil:
         3 -> Gen.zip(sub, sub).map { case (l, r) => l \/ r },
         3 -> Gen.zip(sub, sub).map { case (l, r) => l --> r }
       )
+    }
+  }
+}

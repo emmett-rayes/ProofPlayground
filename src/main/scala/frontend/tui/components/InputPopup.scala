@@ -11,7 +11,7 @@ import tui.widgets.{BlockWidget, ClearWidget, ParagraphWidget}
 class InputPopup(message: String, title: Option[String] = None, inputTitle: Option[String] = None)(
   confirm: String => Either[Unit, String],
   dismiss: () => Unit,
-) extends Screen:
+) extends Screen {
   private val ySize = 40
   private val xSize = 30
 
@@ -24,13 +24,14 @@ class InputPopup(message: String, title: Option[String] = None, inputTitle: Opti
   override def handleEvent(event: Event): EventResult =
     event match {
       case key: Event.Key =>
-        key.keyEvent().code() match
+        key.keyEvent().code() match {
           case c: KeyCode.Esc => dismiss(); EventResult.Handled
           case _              => textInput.handleEvent(event)
+        }
       case _ => EventResult.NotHandled
     }
 
-  override def render(renderer: Renderer, area: Rect): Unit =
+  override def render(renderer: Renderer, area: Rect): Unit = {
     val contentArea = Rectangle(ySize, xSize, area)
 
     val layout = Layout(
@@ -53,7 +54,10 @@ class InputPopup(message: String, title: Option[String] = None, inputTitle: Opti
     renderer.render(border, contentArea)
     renderer.render(content, layout(1))
     textInput.render(renderer, layout(2))
+  }
 
-  private def callback(input: String) =
+  private def callback(input: String) = {
     dismiss()
     confirm(input)
+  }
+}

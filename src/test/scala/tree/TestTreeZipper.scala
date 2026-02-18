@@ -6,7 +6,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import Zipper.root
 import TreeZipper.given
 
-class TestTreeZipper extends AnyFunSuite:
+class TestTreeZipper extends AnyFunSuite {
 
   test("down then up restores the original tree") {
     val tree   = Tree("A", List(Tree("B"), Tree("C")))
@@ -79,3 +79,4 @@ class TestTreeZipper extends AnyFunSuite:
     val replaced = leaf.replace(Tree("X"))
     assert(replaced.up.get.get === Tree("AA", List(Tree("AB"), Tree("X"))))
   }
+}

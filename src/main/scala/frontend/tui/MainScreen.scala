@@ -7,10 +7,10 @@ import tui.*
 import tui.crossterm.Event
 import tui.widgets.{BlockWidget, ParagraphWidget}
 
-class MainScreen(screens: List[Screen]) extends Screen:
+class MainScreen(screens: List[Screen]) extends Screen {
   override def handleEvent(event: Event): EventResult = screens.head.handleEvent(event)
 
-  override def render(renderer: Renderer, area: Rect): Unit =
+  override def render(renderer: Renderer, area: Rect): Unit = {
     val layout = Layout(
       direction = Direction.Vertical,
       margin = Margin(1),
@@ -36,6 +36,8 @@ class MainScreen(screens: List[Screen]) extends Screen:
     renderer.render(header, layout(0))
     screens.reverse.foreach { screen => screen.render(renderer, layout(2)) }
     renderer.render(footer, layout(4))
+  }
 
   override def headerText: Text = screens.head.headerText
   override def footerText: Text = screens.head.footerText
+}

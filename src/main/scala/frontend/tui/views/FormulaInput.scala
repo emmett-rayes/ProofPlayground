@@ -10,30 +10,34 @@ import tui.*
 import tui.crossterm.{Event, KeyCode}
 import tui.widgets.ParagraphWidget
 
-object FormulaInput:
-  def apply(navigation: Navigation): FormulaInput =
+object FormulaInput {
+  def apply(navigation: Navigation): FormulaInput = {
     val model = FormulaInputModel(navigation)
     new FormulaInput(model)(model)
+  }
+}
 
-class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Signals) extends Screen:
+class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Signals) extends Screen {
   private val textInput = TextInput(data.inputHandler, Some(" Formula "))
 
   override def headerText: Text =
     Text.from(Span.styled("Proof Playground", Style.DEFAULT.fg(Color.Cyan).addModifier(Modifier.BOLD)))
 
   override def handleEvent(event: Event): EventResult =
-    textInput.handleEvent(event) match
+    textInput.handleEvent(event) match {
       case EventResult.Handled    => EventResult.Handled
       case EventResult.NotHandled =>
         event match {
           case key: Event.Key =>
-            key.keyEvent().code() match
+            key.keyEvent().code() match {
               case c: KeyCode.Char if c.c == 'q' => signals.quit(); EventResult.Handled
               case _                             => EventResult.NotHandled
+            }
           case _ => EventResult.NotHandled
         }
+    }
 
-  override def render(renderer: Renderer, area: Rect): Unit =
+  override def render(renderer: Renderer, area: Rect): Unit = {
     val layout = Layout(
       direction = Direction.Vertical,
       margin = Margin(1),
@@ -47,8 +51,9 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
 
     renderer.render(prompt, layout(0))
     textInput.render(renderer, layout(1))
+  }
 
-  override def footerText: Text =
+  override def footerText: Text = {
     textInput.footerText.lines.flatMap(_.spans)
     val spans = Spans.from(
       Span.nostyle(" Press "),
@@ -56,3 +61,5 @@ class FormulaInput(data: FormulaInputModel.Data)(signals: FormulaInputModel.Sign
       Span.nostyle(" to exit."),
     )
     Text.from(Spans.from(textInput.footerText.lines.flatMap(_.spans) ++ spans.spans*))
+  }
+}

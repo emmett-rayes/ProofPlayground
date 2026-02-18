@@ -22,12 +22,12 @@ opaque type Proof[J] = Tree[J]
   */
 opaque type ProofZipper[J] = TreeZipper[J]
 
-object Proof:
+object Proof {
   def apply[J](root: J, subproofs: List[Proof[J]]): Proof[J] = Tree(root, subproofs)
 
   def unapply[J](proof: Proof[J]): Option[(J, List[Proof[J]])] = Some(proof.value, proof.children)
 
-  extension [J](proof: Proof[J])
+  extension [J](proof: Proof[J]) {
     /** Returns the conclusion of the proof. */
     def conclusion: J = proof.value
 
@@ -39,8 +39,11 @@ object Proof:
 
     /** Returns a zipper over the proof tree. */
     def zipper: ProofZipper[J] = ProofZipper(proof)
+  }
+}
 
-object ProofZipper:
+object ProofZipper {
   def apply[J](proof: Proof[J]): ProofZipper[J] = TreeZipper(proof)
 
   given ProofZipper is Zipper[Proof] = summon[Zipper[Proof]]
+}

@@ -11,7 +11,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import scala.language.implicitConversions
 
 /** Tests for [[FormulaParser]] functions. */
-class TestFormulaParser extends AnyFunSuite:
+class TestFormulaParser extends AnyFunSuite {
   import FormulaParser.*
 
   test("variable parsing recognizes simple propositional variables") {
@@ -809,4 +809,5 @@ class TestFormulaParser extends AnyFunSuite:
     assert(result.get.remaining.isEmpty)
     assert(result.get.parsed === exists[Formula](variable[Formula]("X"), ~(~variable[Formula]("A"))))
   }
+}
 

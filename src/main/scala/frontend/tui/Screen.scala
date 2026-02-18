@@ -5,13 +5,16 @@ import frontend.tui.Screen.EventResult
 
 import tui.{Rect, Text}
 
-object Screen:
-  enum EventResult:
+object Screen {
+  enum EventResult {
     case Handled
     case NotHandled
+  }
+}
 
-trait Screen:
+trait Screen {
   def handleEvent(event: tui.crossterm.Event): EventResult
   def headerText: Text
   def footerText: Text
   def render(renderer: Renderer, area: Rect): Unit
+}

@@ -16,26 +16,32 @@ import core.Functor
   */
 case class Judgement[F](assertion: F, assumptions: Seq[F], free: Seq[F])
 
-case object Judgement:
+case object Judgement {
 
   opaque type Context[F] = (Seq[F], Seq[F])
-  given Functor[Judgement]:
-    extension [A](judgement: Judgement[A])
+  given Functor[Judgement] {
+    extension [A](judgement: Judgement[A]) {
       override def map[B](f: A => B): Judgement[B] =
         Judgement(f(judgement.assertion), judgement.assumptions.map(f), judgement.free.map(f))
+    }
+  }
 
   /** Extension methods for judgements.
     *
     * Provides DSL for constructing judgements.
     */
-  extension [F](assumptions: Seq[F])
+  extension [F](assumptions: Seq[F]) {
     /** Judgement infix constructor. */
     def |-(assertion: F): Judgement[F] = Judgement(assertion, assumptions, Seq.empty)
+  }
 
-  extension [F](free: Seq[F])
+  extension [F](free: Seq[F]) {
     /** Infix operator for combining assumptions and free sequences */
     def %(assumptions: Seq[F]): Context[F] = (free, assumptions)
+  }
 
-  extension [F](context: Context[F])
+  extension [F](context: Context[F]) {
     /** Judgement infix constructor. */
     def |-(assertion: F): Judgement[F] = Judgement(assertion, context._2, context._1)
+  }
+}

@@ -120,23 +120,25 @@ case class ScrollViewWidget(
 
     val (showHorizontal, showVertical) = visibleScrollbars(horizontalSpace, verticalSpace)
 
-    val newHeight = if showHorizontal then
+    val newHeight = if showHorizontal then {
       // if both bars are rendered, avoid the corner
       val width      = area.width - (if showVertical then 1 else 0)
       val renderArea = area.copy(width = width)
       // render scrollbar, update available space
       renderHorizontalScrollbar(renderArea, buf, state)
       area.height - 1
+    }
     else
       area.height
 
-    val newWidth = if showVertical then
+    val newWidth = if showVertical then {
       // if both bars are rendered, avoid the corner
       val height     = area.height - (if showHorizontal then 1 else 0)
       val renderArea = area.copy(height = height)
       // render scrollbar, update available space
       renderVerticalScrollbar(renderArea, buf, state)
       area.width - 1
+    }
     else
       area.width
 
@@ -200,16 +202,18 @@ case class ScrollViewWidget(
     // Copy cells from scroll buffer to main buffer
     var srcY = visibleArea.top
     var dstY = area.top
-    while srcY < visibleArea.bottom && dstY < area.bottom do
+    while srcY < visibleArea.bottom && dstY < area.bottom do {
       var srcX = visibleArea.left
       var dstX = area.left
-      while srcX < visibleArea.right && dstX < area.right do
+      while srcX < visibleArea.right && dstX < area.right do {
         val srcCell = this.buf.get(srcX, srcY)
         buf.set(dstX, dstY, srcCell.clone())
         srcX += 1
         dstX += 1
+      }
       srcY += 1
       dstY += 1
+    }
   }
 
 }
@@ -349,7 +353,7 @@ case class ScrollbarWidget(
 
     // Render track
     var y = area.top
-    while y < area.bottom do
+    while y < area.bottom do {
       val symbol = if y == area.top then
         "▲"
       else if y == area.bottom - 1 then
@@ -360,6 +364,7 @@ case class ScrollbarWidget(
         "│"
       buf.get(x, y).setSymbol(symbol).setStyle(style)
       y += 1
+    }
   }
 
   private def renderHorizontal(area: Rect, buf: Buffer, isBottom: Boolean): Unit = {
@@ -376,7 +381,7 @@ case class ScrollbarWidget(
 
     // Render track
     var x = area.left
-    while x < area.right do
+    while x < area.right do {
       val symbol = if x == area.left then
         "◄"
       else if x == area.right - 1 then
@@ -387,6 +392,7 @@ case class ScrollbarWidget(
         "─"
       buf.get(x, y).setSymbol(symbol).setStyle(style)
       x += 1
+    }
   }
 
 }

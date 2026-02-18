@@ -8,14 +8,16 @@ import core.{Algebra, catamorphism}
 import scala.language.implicitConversions
 
 /** A typeclass for extracting free-variables from a formula. */
-trait FreeVars:
+trait FreeVars {
   type Self
 
-  extension (self: Self)
+  extension (self: Self) {
     /** Returns the set of meta-variables appearing in `self`. */
     def freevariables: Set[Self]
+  }
+}
 
-object FreeVars:
+object FreeVars {
   /** Algebra for extracting free-variables from a [[FormulaF]].
     *
     * @tparam T The type of values produced by the algebra.
@@ -32,9 +34,13 @@ object FreeVars:
     case FormulaF.Existential(existential) => existential.body -- existential.variable
   }
 
-  given Formula is FreeVars:
-    extension (formula: Formula)
-      override def freevariables: Set[Formula] =
+  given Formula is FreeVars {
+    extension (formula: Formula) {
+      override def freevariables: Set[Formula] = {
         given Conversion[FormulaF.Variable[?], Formula] = variable =>
           FormulaF.Variable[Formula](variable.variable)
         catamorphism(formula)(summon)
+      }
+    }
+  }
+}

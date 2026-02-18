@@ -19,14 +19,15 @@ import tree.Zipper.root
 import java.util
 import scala.compiletime.uninitialized
 
-object ProofTreeModel:
-  trait Data:
+object ProofTreeModel {
+  trait Data {
     def proofTree: Tree[ProofStep]
     def rules: Vector[ProofRule]
     def focusOnRules: Boolean
     def isNodeSelected(node: Tree[ProofStep]): Boolean
+  }
 
-  trait Signals:
+  trait Signals {
     def quit(): Unit
     def up(): Unit
     def down(): Unit
@@ -34,11 +35,13 @@ object ProofTreeModel:
     def right(): Unit
     def selectNode(): Unit
     def selectRule(index: Option[Int]): Unit
+  }
 
   case class ProofStep(formula: String, rule: String)
   case class ProofRule(active: Boolean, rule: String)
+}
 
-class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTreeModel.Data, ProofTreeModel.Signals:
+class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTreeModel.Data, ProofTreeModel.Signals {
   private val proofSystem    = ProofSystem.IntuitionisticPropositionalNaturalDeduction
   private val inferenceRules = proofSystem.rules.toVector.sortBy(_.label)
 
@@ -54,11 +57,12 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
   override def focusOnRules: Boolean = rulesInFocus
 
   override def rules: Vector[ProofTreeModel.ProofRule] = inferenceRules.map { rule =>
-    val active = Assistant.proof(zipper.get.conclusion, rule) match
+    val active = Assistant.proof(zipper.get.conclusion, rule) match {
       case ProofResult.UnificationFailure()    => false
       case ProofResult.SideConditionFailure(_) => false
       case ProofResult.Success(_)              => true
       case ProofResult.SubstitutionFailure(_)  => true // substitution failures can be fixed by user input
+    }
     ProofTreeModel.ProofRule(active, rule.label)
   }
 
@@ -92,7 +96,7 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
   override def selectNode(): Unit =
     rulesInFocus = true
 
-  override def selectRule(index: Option[Int]): Unit =
+  override def selectRule(index: Option[Int]): Unit = {
     if index.isEmpty then rulesInFocus = false
     for
       idx  <- index
@@ -107,6 +111,7 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
         }
       }
     }
+  }
 
   override def quit(): Unit =
     navigation.showPopup(Navigation.Popup.Confirm("Do you want to quit the proof mode?", Some("Quit")))(Some(() =>
@@ -131,15 +136,19 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
   private def applyRule(
     rule: InferenceRule[Judgement, FormulaF],
     unification: Unification[Formula] = Map.empty,
-  )(substitutionFailure: InferenceRule[Judgement, FormulaF] => Unit): Unit =
-    def replace(replacement: Proof[Judgement[Formula]]): Unit =
+  )(substitutionFailure: InferenceRule[Judgement, FormulaF] => Unit): Unit = {
+    def replace(replacement: Proof[Judgement[Formula]]): Unit = {
       rulesInFocus = false
       zipper = zipper.replace(replacement)
       proofStepLabels.put(zipper.get.conclusion, rule.label)
       zipper = zipper.down.getOrElse(zipper)
+    }
 
-    Assistant.proof(zipper.get.conclusion, rule, unification) match
+    Assistant.proof(zipper.get.conclusion, rule, unification) match {
       case ProofResult.UnificationFailure()                 => ()
       case ProofResult.SideConditionFailure(_)              => ()
       case ProofResult.Success(proof)                       => replace(proof)
       case ProofResult.SubstitutionFailure(substitutedRule) => substitutionFailure(substitutedRule)
+    }
+  }
+}

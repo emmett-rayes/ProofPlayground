@@ -19,7 +19,7 @@ import scala.language.implicitConversions
   */
 type Formula = Fix[FormulaF]
 
-object Formula:
+object Formula {
   /** Implicit conversion from a formula functor to a formula.
     *
     * Enables using a [[FormulaF]] directly where a [[Formula]] is expected.
@@ -33,7 +33,7 @@ object Formula:
   given Algebra[FormulaF, Fix[FormulaF]] = Fix(_)
 
   /** [[AsPattern]] instance for [[Formula]]. */
-  given Formula is AsPattern[FormulaF]:
+  given Formula is AsPattern[FormulaF] {
     private given Conversion[FormulaF[Pattern[FormulaF]], Pattern[FormulaF]] = concrete(_).fix
 
     private def algebra: Algebra[FormulaF, Pattern[FormulaF]] = {
@@ -48,12 +48,14 @@ object Formula:
       case FormulaF.Existential(existential) => exists(existential.variable, existential.body)
     }
 
-    extension (formula: Formula)
+    extension (formula: Formula) {
       override def asPattern: Pattern[FormulaF] =
         catamorphism(formula)(algebra)
+    }
+  }
 
   /** [[CaptureAvoidingSub]] instance for [[Formula]]. */
-  given Formula is CaptureAvoidingSub:
+  given Formula is CaptureAvoidingSub {
     /** Rename the bound variable in the scope formula to the fresh variable.
       *
       * @param bound the variable to be renamed
@@ -64,7 +66,7 @@ object Formula:
       bound: Formula,
       scope: Formula,
       avoid: Set[Formula],
-    ): (renamedVariable: Formula, renamedScoped: Formula) =
+    ): (renamedVariable: Formula, renamedScoped: Formula) = {
       val boundName = bound.unfix match {
         case FormulaF.Variable(variable) => variable.id
         case _                           =>
@@ -74,6 +76,7 @@ object Formula:
       val fresh        = freshVariable(boundName, Set(bound, scope) ++ avoid)
       val renamedScope = scope.substituteWithoutCapturing(bound, fresh)
       (fresh, renamedScope)
+    }
 
     /** Generate a fresh variable name that doesn't appear in the given set of formulas.
       *
@@ -81,7 +84,7 @@ object Formula:
       * @param avoid    the set of formulas whose free variables should be avoided
       * @return a fresh variable formula that doesn't conflict with any free variables in avoid
       */
-    private def freshVariable(baseName: String, avoid: Set[Formula]): Formula =
+    private def freshVariable(baseName: String, avoid: Set[Formula]): Formula = {
       val usedNames = avoid.flatMap(_.freevariables).collect {
         case formula if formula.unfix.isInstanceOf[FormulaF.Variable[Formula]] =>
           formula.unfix match {
@@ -91,18 +94,20 @@ object Formula:
       }
 
       @tailrec
-      def findFreshName(base: String, counter: Int): String =
+      def findFreshName(base: String, counter: Int): String = {
         val candidate = if counter == 0 then base else s"$base$counter"
         if usedNames.contains(candidate) then findFreshName(base, counter + 1)
         else candidate
+      }
 
       variable[Formula](findFreshName(baseName, 0))
+    }
 
-    extension (formula: Formula)
-      override def substituteWithoutCapturing(variable: Formula, replacement: Formula): Formula =
+    extension (formula: Formula) {
+      override def substituteWithoutCapturing(variable: Formula, replacement: Formula): Formula = {
         // Use explicit recursion instead of catamorphism to avoid substituting binding variables
         def recurse(f: Formula): Formula =
-          f.unfix match
+          f.unfix match {
             case v if v == variable.unfix          => replacement
             case FormulaF.Variable(_)              => f
             case FormulaF.True(_)                  => f
@@ -113,28 +118,35 @@ object Formula:
             case FormulaF.Implication(implication) => recurse(implication.lhs) --> recurse(implication.rhs)
             case FormulaF.Universal(universal)     =>
               if universal.variable == variable then f
-              else if replacement.freevariables.contains(universal.variable) then
+              else if replacement.freevariables.contains(universal.variable) then {
                 val (fresh, renamedBody) =
                   alphaConversion(universal.variable, universal.body, Set(variable, replacement))
                 forall(fresh, recurse(renamedBody))
+              }
               else
                 forall(universal.variable, recurse(universal.body))
             case FormulaF.Existential(existential) =>
               if existential.variable == variable then f
-              else if replacement.freevariables.contains(existential.variable) then
+              else if replacement.freevariables.contains(existential.variable) then {
                 val (fresh, renamedBody) =
                   alphaConversion(existential.variable, existential.body, Set(variable, replacement))
                 exists(fresh, recurse(renamedBody))
+              }
               else
                 exists(existential.variable, recurse(existential.body))
+          }
 
         recurse(formula)
+      }
+    }
+  }
+}
 
 /** The functor representing the structure of a propositional logic formula.
   *
   * @tparam T the type used for recursive positions.
   */
-enum FormulaF[T]:
+enum FormulaF[T] {
   /** A propositional variable. */
   case Variable(variable: symbol.Variable[FormulaF.Propositional])
 
@@ -161,8 +173,9 @@ enum FormulaF[T]:
 
   /** The existential abstraction of a formula. */
   case Existential(existential: symbol.Existential[T, T])
+}
 
-case object FormulaF:
+case object FormulaF {
   /** Create a propositional variable formula using a variable identifier. */
   def variable[T](id: String)(using Conversion[FormulaF[T], T]): T = Variable(symbol.Variable[Propositional](id))
 
@@ -190,7 +203,7 @@ case object FormulaF:
     *
     * Provides DSL for constructing propositional formulas.
     */
-  extension [T](t: T)(using Conversion[FormulaF[T], T])
+  extension [T](t: T)(using Conversion[FormulaF[T], T]) {
     /** Negation operator. */
     def unary_~ : T = Negation(symbol.Negation(t))
 
@@ -202,12 +215,13 @@ case object FormulaF:
 
     /** Implication operator. */
     def -->(other: T): T = Implication(symbol.Implication(t, other))
+  }
 
   /** [[Functor]] instance for [[FormulaF]]. */
-  given Functor[FormulaF]:
-    extension [A](fa: FormulaF[A])
+  given Functor[FormulaF] {
+    extension [A](fa: FormulaF[A]) {
       override def map[B](f: A => B): FormulaF[B] =
-        fa match
+        fa match {
           case Variable(sym)            => Variable(sym)
           case True(_)                  => True(symbol.True())
           case False(_)                 => False(symbol.False())
@@ -217,3 +231,7 @@ case object FormulaF:
           case Implication(implication) => Implication(symbol.Implication(f(implication.lhs), f(implication.rhs)))
           case Universal(universal)     => Universal(symbol.Universal(f(universal.variable), f(universal.body)))
           case Existential(existential) => Existential(symbol.Existential(f(existential.variable), f(existential.body)))
+        }
+    }
+  }
+}

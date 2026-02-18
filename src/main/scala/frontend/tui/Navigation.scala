@@ -6,22 +6,29 @@ import core.meta.MetaVariable
 import core.proof.InferenceRule
 import core.proof.natural.Judgement
 
-object Navigation:
-  sealed trait Popup:
+object Navigation {
+  sealed trait Popup {
     type Callback
+  }
 
-  enum Screen:
+  enum Screen {
     case FormulaInput
     case ProofTree(formula: Formula)
+  }
 
-  object Popup:
-    case class Confirm(message: String, title: Option[String] = None) extends Popup:
+  object Popup {
+    case class Confirm(message: String, title: Option[String] = None) extends Popup {
       override type Callback = Option[() => Unit]
+    }
 
-    case class MissingMetaVariable(metavariable: MetaVariable, rule: InferenceRule[Judgement, FormulaF]) extends Popup:
+    case class MissingMetaVariable(metavariable: MetaVariable, rule: InferenceRule[Judgement, FormulaF]) extends Popup {
       override type Callback = Formula => Unit
+    }
+  }
+}
 
-trait Navigation:
+trait Navigation {
   def exit(): Unit
   def navigateTo(screen: Navigation.Screen): Unit
   def showPopup(popup: Navigation.Popup)(callback: popup.Callback): Unit
+}
