@@ -1,6 +1,8 @@
 package proofPlayground
 package core.proof.natural
 
+import core.Functor
+
 /** Representation of a judgement in natural deduction.
   *
   * A judgement consists of a sequence of assumptions and an assertion.
@@ -16,11 +18,11 @@ case class Judgement[F](assertion: F, assumptions: Seq[F], free: Seq[F])
 
 case object Judgement:
 
-  extension [A](judgement: Judgement[A])
-    def map[B](f: A => B): Judgement[B] =
-      Judgement(f(judgement.assertion), judgement.assumptions.map(f), judgement.free.map(f))
-
   opaque type Context[F] = (Seq[F], Seq[F])
+  given Functor[Judgement]:
+    extension [A](judgement: Judgement[A])
+      override def map[B](f: A => B): Judgement[B] =
+        Judgement(f(judgement.assertion), judgement.assumptions.map(f), judgement.free.map(f))
 
   /** Extension methods for judgements.
     *

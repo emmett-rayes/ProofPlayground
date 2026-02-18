@@ -1,6 +1,8 @@
 package proofPlayground
 package core.proof
 
+import core.Functor
+
 /** Representation of a syntactical inference line.
   *
   * @tparam J The type of judgments in this inference.
@@ -11,6 +13,7 @@ package core.proof
 case class Inference[J](label: String, premises: Seq[J], conclusion: J)
 
 object Inference:
-  extension [A](inference: Inference[A])
-    def map[B](f: A => B): Inference[B] =
-      Inference(inference.label, inference.premises.map(f), f(inference.conclusion))
+  given Functor[Inference]:
+    extension [A](inference: Inference[A])
+      override def map[B](f: A => B): Inference[B] =
+        Inference(inference.label, inference.premises.map(f), f(inference.conclusion))
