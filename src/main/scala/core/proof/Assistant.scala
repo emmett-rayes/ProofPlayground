@@ -34,8 +34,6 @@ object Assistant:
     rule: InferenceRule[Judgement, F],
     auxUnification: Unification[Fix[F]] = Map.empty[MetaVariable, Fix[F]]
   ): ProofResult[Judgement, F] =
-    if judgement.assumptions.contains(judgement.assertion) then return ProofResult.NothingToDo()
-
     val sideCondition = judgement.free.find { free =>
       judgement.assertion.freevariables.contains(free)
     }
@@ -78,8 +76,6 @@ object Assistant:
 
   /** Result of attempting to construct a proof. */
   enum ProofResult[J[_], F[_]]:
-    case NothingToDo()
-
     /** Successful proof construction.
       *
       * @param proof the constructed proof.

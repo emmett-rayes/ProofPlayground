@@ -54,7 +54,6 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
 
   override def rules: Vector[ProofTreeModel.ProofRule] = inferenceRules.map { rule =>
     val active = Assistant.proof(zipper.get.conclusion, rule) match
-      case ProofResult.NothingToDo()           => false
       case ProofResult.UnificationFailure()    => false
       case ProofResult.SideConditionFailure(_) => false
       case ProofResult.Success(_)              => true
@@ -139,7 +138,6 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
       zipper = zipper.down.getOrElse(zipper)
 
     Assistant.proof(zipper.get.conclusion, rule, unification) match
-      case ProofResult.NothingToDo()                        => ()
       case ProofResult.UnificationFailure()                 => ()
       case ProofResult.SideConditionFailure(_)              => ()
       case ProofResult.Success(proof)                       => replace(proof)
