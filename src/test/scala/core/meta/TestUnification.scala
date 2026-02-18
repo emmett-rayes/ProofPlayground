@@ -8,7 +8,7 @@ import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
 import core.meta.Pattern.given
 import core.meta.PatternF.{concrete, meta}
-import core.meta.Unify.unify
+import core.meta.Unify.given
 import core.meta.{Pattern, Unification}
 
 import org.scalatest.funsuite.AnyFunSuite
@@ -239,7 +239,7 @@ class TestUnification extends AnyFunSuite {
     val varB     = variable("B"): Formula
     val formulas = Seq[Formula](varA \/ varB, tru, fls, ~varA)
 
-    val unification = unify[Formula, FormulaF](patterns, formulas)
+    val unification = patterns.unifier(formulas)
     assert(unification.isDefined)
     assert(unification.get(gamma) === formulas)
   }
@@ -253,7 +253,7 @@ class TestUnification extends AnyFunSuite {
     val varB                   = variable("B"): Formula
     val formulas: Seq[Formula] = Seq(varA \/ varB, tru, fls, ~varA)
 
-    val unification = unify[Formula, FormulaF](patterns, formulas)
+    val unification = patterns.unifier(formulas)
     assert(unification.isDefined)
     assert(unification.get(gamma) === formulas)
     assert(unification.get(delta) === Seq.empty)
@@ -270,7 +270,7 @@ class TestUnification extends AnyFunSuite {
     val varB                   = variable("B"): Formula
     val formulas: Seq[Formula] = Seq(varA \/ varB, tru, fls, ~varA)
 
-    val unification = unify[Formula, FormulaF](patterns, formulas)
+    val unification = patterns.unifier(formulas)
     assert(unification.isDefined)
     assert(unification.get(delta) === Seq.empty)
     assert(unification.get(gamma) === Seq[Formula](tru, fls))
@@ -287,7 +287,7 @@ class TestUnification extends AnyFunSuite {
     val varB                   = variable("B"): Formula
     val formulas: Seq[Formula] = Seq(varA \/ varB, ~varA, tru, fls)
 
-    val unification = unify[Formula, FormulaF](patterns, formulas)
+    val unification = patterns.unifier(formulas)
     assert(unification.isDefined)
     assert(unification.get(delta) === Seq.empty)
     assert(unification.get(gamma) === Seq[Formula](tru, fls))
@@ -302,7 +302,7 @@ class TestUnification extends AnyFunSuite {
     val varB                   = variable("B"): Formula
     val formulas: Seq[Formula] = Seq(tru, fls, ~varA, varA \/ varB)
 
-    val unification = unify[Formula, FormulaF](patterns, formulas)
+    val unification = patterns.unifier(formulas)
     assert(unification.isDefined)
     assert(unification.get(gamma) === Seq[Formula](tru, fls, ~varA))
   }
@@ -316,7 +316,7 @@ class TestUnification extends AnyFunSuite {
     val varB                   = variable("B"): Formula
     val formulas: Seq[Formula] = Seq(varA \/ varB, tru, fls, ~varA)
 
-    val unification = unify[Formula, FormulaF](patterns, formulas)
+    val unification = patterns.unifier(formulas)
     assert(unification.isDefined)
     assert(unification.get(gamma) === Seq[Formula](tru, fls, ~varA))
   }

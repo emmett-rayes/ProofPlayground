@@ -3,7 +3,7 @@ package core.proof
 
 import core.meta.Substitute.{substitute, substitutePartial}
 import core.meta.Unification.merge
-import core.meta.Unify.unify
+import core.meta.Unify.given
 import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, MetaVariable, Unification, Unifier}
 import core.proof.natural.Judgement
 import core.{Algebra, Fix, Functor, traverse}
@@ -44,8 +44,8 @@ object Assistant {
     val unificationOpt =
       for
         assertionUnification       <- rule.conclusion.assertion.unifier(judgement.assertion)
-        assumptionsUnification     <- unify[Fix[F], F](rule.conclusion.assumptions.toSeq, judgement.assumptions.toSeq)
-        freeUnification            <- unify[Fix[F], F](rule.conclusion.free.toSeq, judgement.free.toSeq)
+        assumptionsUnification     <- rule.conclusion.assumptions.toSeq.unifier(judgement.assumptions.toSeq)
+        freeUnification            <- rule.conclusion.free.toSeq.unifier(judgement.free.toSeq)
         totalUnification           <- merge(assertionUnification, auxUnification)
         totalAssumptionUnification <- merge(assumptionsUnification, totalUnification)
         totalFreeUnification       <- merge(freeUnification, totalUnification)
