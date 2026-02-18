@@ -2,6 +2,7 @@ package proofPlayground
 package core.proof.natural
 
 import core.Functor
+import core.meta.{MetaVariable, MetaVars}
 
 /** Representation of a judgement in natural deduction.
   *
@@ -19,6 +20,8 @@ case class Judgement[F](assertion: F, assumptions: Seq[F], free: Seq[F])
 case object Judgement {
 
   opaque type Context[F] = (Seq[F], Seq[F])
+
+  /** [[Functor]] instance for [[Judgement]]. */
   given Functor[Judgement] {
     extension [A](judgement: Judgement[A]) {
       override def map[B](f: A => B): Judgement[B] =
@@ -26,21 +29,28 @@ case object Judgement {
     }
   }
 
-  /** Extension methods for judgements.
-    *
-    * Provides DSL for constructing judgements.
-    */
+  /** [[MetaVars]] instance for [[Judgement]]. */
+  given [F: MetaVars] => Judgement[F] is MetaVars {
+    extension (judgement: Judgement[F]) {
+      override def metavariables: Set[MetaVariable] =
+        judgement.assertion.metavariables ++ judgement.assumptions.flatMap(_.metavariables)
+    }
+  }
+
   extension [F](assumptions: Seq[F]) {
+
     /** Judgement infix constructor. */
     def |-(assertion: F): Judgement[F] = Judgement(assertion, assumptions, Seq.empty)
   }
 
   extension [F](free: Seq[F]) {
+
     /** Infix operator for combining assumptions and free sequences */
     def %(assumptions: Seq[F]): Context[F] = (free, assumptions)
   }
 
   extension [F](context: Context[F]) {
+
     /** Judgement infix constructor. */
     def |-(assertion: F): Judgement[F] = Judgement(assertion, context._2, context._1)
   }
