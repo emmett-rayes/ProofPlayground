@@ -6,7 +6,7 @@ import core.logic.propositional.FormulaF.*
 import core.logic.symbol
 import core.meta.PatternF.*
 import core.meta.Unification.merge
-import core.meta.Unify.Unifier
+import core.meta.Unifier
 import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, Pattern}
 
 import scala.annotation.tailrec

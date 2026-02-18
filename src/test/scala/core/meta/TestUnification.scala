@@ -8,7 +8,7 @@ import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
 import core.meta.Pattern.given
 import core.meta.PatternF.{concrete, meta}
-import core.meta.Unify.{unify, given}
+import core.meta.Unify.unify
 import core.meta.{Pattern, Unification}
 
 import org.scalatest.funsuite.AnyFunSuite
@@ -17,14 +17,14 @@ import scala.language.implicitConversions
 
 /** Tests for the [[Unification]] functions. */
 class TestUnification extends AnyFunSuite {
-  private given Conversion[FormulaF[Pattern[FormulaF]], Pattern[FormulaF]] = concrete(_).fix
-
   private val formulaGenerator = FormulaGenerationUtil.arbitraryGenerator
+
+  private given Conversion[FormulaF[Pattern[FormulaF]], Pattern[FormulaF]] = concrete(_).fix
 
   test("identical formulas unify") {
     val formula = formulaGenerator.arbitrary.sample.get
     val pattern = formula.asPattern
-    val result  = unify[Formula, FormulaF](pattern, formula)
+    val result  = pattern.unifier(formula)
 
     assert(result.isDefined)
   }
@@ -34,7 +34,7 @@ class TestUnification extends AnyFunSuite {
 
     val pattern = metavariable: Pattern[FormulaF]
     val formula = formulaGenerator.arbitrary.sample.get
-    val result  = unify[Formula, FormulaF](pattern, formula)
+    val result  = pattern.unifier(formula)
 
     assert(result.isDefined)
     assert(result.get === Map(metavariable -> formula))
@@ -44,7 +44,7 @@ class TestUnification extends AnyFunSuite {
     val variableSymbol = symbol.Variable[FormulaF.Propositional]("A")
     val formula        = variable(variableSymbol): Formula
     val pattern        = variable(variableSymbol): Pattern[FormulaF]
-    val result         = unify[Formula, FormulaF](pattern, formula)
+    val result         = pattern.unifier(formula)
 
     assert(result.isDefined)
   }
@@ -52,7 +52,7 @@ class TestUnification extends AnyFunSuite {
   test("variable pattern does not unify different variable formulas") {
     val pattern = variable("A"): Pattern[FormulaF]
     val formula = variable("B"): Formula
-    val result  = unify[Formula, FormulaF](pattern, formula)
+    val result  = pattern.unifier(formula)
 
     assert(result.isEmpty)
   }
@@ -60,7 +60,7 @@ class TestUnification extends AnyFunSuite {
   test("true pattern unifies true formula") {
     val pattern = tru: Pattern[FormulaF]
     val formula = tru: Formula
-    val result  = unify[Formula, FormulaF](pattern, formula)
+    val result  = pattern.unifier(formula)
 
     assert(result.isDefined)
   }
@@ -68,7 +68,7 @@ class TestUnification extends AnyFunSuite {
   test("true pattern does not unifies anything that is not true formula") {
     val pattern = tru: Pattern[FormulaF]
     val formula = formulaGenerator.arbitrary.retryUntil(f => f != tru[Formula]).sample.get
-    val result  = unify[Formula, FormulaF](pattern, formula)
+    val result  = pattern.unifier(formula)
 
     assert(result.isEmpty)
   }
@@ -76,7 +76,7 @@ class TestUnification extends AnyFunSuite {
   test("false pattern unifies false formula") {
     val pattern = fls: Pattern[FormulaF]
     val formula = fls: Formula
-    val result  = unify[Formula, FormulaF](pattern, formula)
+    val result  = pattern.unifier(formula)
 
     assert(result.isDefined)
   }
@@ -84,7 +84,7 @@ class TestUnification extends AnyFunSuite {
   test("false pattern does not unifies anything that is not false formula") {
     val pattern = tru: Pattern[FormulaF]
     val formula = formulaGenerator.arbitrary.retryUntil(f => f != fls[Formula]).sample.get
-    val result  = unify[Formula, FormulaF](pattern, formula)
+    val result  = pattern.unifier(formula)
 
     assert(result.isEmpty)
   }
@@ -94,7 +94,7 @@ class TestUnification extends AnyFunSuite {
     val pattern    = ~subPattern
     val subFormula = variable("A"): Formula
     val formula    = ~subFormula
-    val result     = unify[Formula, FormulaF](pattern, formula)
+    val result     = pattern.unifier(formula)
 
     assert(result.isDefined)
     assert(result.get === Map(subPattern.unfix -> subFormula))
@@ -109,7 +109,7 @@ class TestUnification extends AnyFunSuite {
         case _                    => true
       }
     ).sample.get
-    val result = unify[Formula, FormulaF](pattern, formula)
+    val result = pattern.unifier(formula)
 
     assert(result.isEmpty)
   }
@@ -121,7 +121,7 @@ class TestUnification extends AnyFunSuite {
     val leftFormula  = formulaGenerator.arbitrary.sample.get
     val rightFormula = formulaGenerator.arbitrary.sample.get
     val formula      = leftFormula /\ rightFormula
-    val result       = unify[Formula, FormulaF](pattern, formula)
+    val result       = pattern.unifier(formula)
 
     assert(result.isDefined)
     assert(result.get === Map(leftPattern.unfix -> leftFormula, rightPattern.unfix -> rightFormula))
@@ -137,7 +137,7 @@ class TestUnification extends AnyFunSuite {
         case _                       => true
       }
     ).sample.get
-    val result = unify[Formula, FormulaF](pattern, formula)
+    val result = pattern.unifier(formula)
 
     assert(result.isEmpty)
   }
@@ -148,7 +148,7 @@ class TestUnification extends AnyFunSuite {
     val leftFormula  = formulaGenerator.arbitrary.sample.get
     val rightFormula = formulaGenerator.arbitrary.retryUntil(f => f != leftFormula).sample.get
     val formula      = leftFormula /\ rightFormula
-    val result       = unify[Formula, FormulaF](pattern, formula)
+    val result       = pattern.unifier(formula)
 
     assert(result.isEmpty)
   }
@@ -160,7 +160,7 @@ class TestUnification extends AnyFunSuite {
     val leftFormula  = formulaGenerator.arbitrary.sample.get
     val rightFormula = formulaGenerator.arbitrary.sample.get
     val formula      = leftFormula \/ rightFormula
-    val result       = unify[Formula, FormulaF](pattern, formula)
+    val result       = pattern.unifier(formula)
 
     assert(result.isDefined)
     assert(result.get === Map(leftPattern.unfix -> leftFormula, rightPattern.unfix -> rightFormula))
@@ -176,7 +176,7 @@ class TestUnification extends AnyFunSuite {
         case _                       => true
       }
     ).sample.get
-    val result = unify[Formula, FormulaF](pattern, formula)
+    val result = pattern.unifier(formula)
 
     assert(result.isEmpty)
   }
@@ -187,7 +187,7 @@ class TestUnification extends AnyFunSuite {
     val leftFormula  = formulaGenerator.arbitrary.sample.get
     val rightFormula = formulaGenerator.arbitrary.retryUntil(f => f != leftFormula).sample.get
     val formula      = leftFormula \/ rightFormula
-    val result       = unify[Formula, FormulaF](pattern, formula)
+    val result       = pattern.unifier(formula)
 
     assert(result.isEmpty)
   }
@@ -199,7 +199,7 @@ class TestUnification extends AnyFunSuite {
     val leftFormula  = formulaGenerator.arbitrary.sample.get
     val rightFormula = formulaGenerator.arbitrary.sample.get
     val formula      = leftFormula --> rightFormula
-    val result       = unify[Formula, FormulaF](pattern, formula)
+    val result       = pattern.unifier(formula)
 
     assert(result.isDefined)
     assert(result.get === Map(leftPattern.unfix -> leftFormula, rightPattern.unfix -> rightFormula))
@@ -215,7 +215,7 @@ class TestUnification extends AnyFunSuite {
         case _                       => true
       }
     ).sample.get
-    val result = unify[Formula, FormulaF](pattern, formula)
+    val result = pattern.unifier(formula)
 
     assert(result.isEmpty)
   }
@@ -226,7 +226,7 @@ class TestUnification extends AnyFunSuite {
     val leftFormula  = formulaGenerator.arbitrary.sample.get
     val rightFormula = formulaGenerator.arbitrary.retryUntil(f => f != leftFormula).sample.get
     val formula      = leftFormula --> rightFormula
-    val result       = unify[Formula, FormulaF](pattern, formula)
+    val result       = pattern.unifier(formula)
 
     assert(result.isEmpty)
   }

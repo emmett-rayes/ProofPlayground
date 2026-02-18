@@ -3,12 +3,27 @@ package core.meta
 
 import core.meta.PatternF.meta
 import core.meta.{Pattern, PatternF}
+import core.meta.Pattern.given
 import core.{Algebra, Functor, catamorphism}
 
 import scala.annotation.targetName
 
 /** A successful unifier mapping meta-variables from a pattern to concrete values. */
 type Unification[T] = Map[MetaVariable, T]
+
+/** Type alias for a unifier function that attempts to produce a unification.
+  *
+  * This is the carrier type for the unification algebras.
+  * It is a function because a unifier can be applied to different scrutinees.
+  */
+type Unifier[T] = T => Option[Unification[T]]
+
+trait Unify[T] {
+  type Self
+
+  extension (self: Self)
+    def unifier: Unifier[T]
+}
 
 object Unification {
 
@@ -45,13 +60,6 @@ object Unification {
 
 object Unify {
   import Unification.merge
-
-  /** Type alias for a unification function that attempts to produce a unification.
-    *
-    * This is the carrier type for the algebras below.
-    * It is a function because a unifier needs to be applied to different scrutinees.
-    */
-  type Unifier[T] = T => Option[Unification[T]]
 
   /** Attempt to unify a sequence of formula patterns with a sequence of concrete formulas.
     *
@@ -90,7 +98,7 @@ object Unify {
             // we can alternatively track the last used index in the context
             last = idxMap.maxByOption(_._2).map(_._2).getOrElse(0)
             (unification, idxMatch) <-
-              scrutinees.drop(last).map(unify[T, F](pattern, _)).zipWithIndex.find(_._1.isDefined)
+              scrutinees.drop(last).map(pattern.unifier(_)).zipWithIndex.find(_._1.isDefined)
             merged <- merge(unificationAcc, unification.get)
           yield (merged, idxMap + (idx -> idxMatch))
       }
@@ -134,33 +142,5 @@ object Unify {
         }
       }
     }
-  }
-
-  /** Attempt to unify a pattern with a concrete formula.
-    *
-    * The result is a mapping from meta-variable appearing in the pattern to concrete values when a match exists.
-    *
-    * Rules:
-    * - Meta variables in the pattern match any formula and are bound to it.
-    * - Concrete constructors must structurally match and recursively unify.
-    * - Leaf cases (e.g. Variable, True, False) succeed only if equal; otherwise fail.
-    * - For unary connectives (e.g. ¬), the argument must unify.
-    * - For binary connectives (e.g. ∧, ∨, →), both sides must unify and their substitutions must be consistent.
-    *
-    * @param pattern   the pattern to unify with the scrutinee
-    * @param scrutinee the concrete formula to match against the pattern
-    * @tparam T the type of the concrete formula used in unification
-    * @tparam F the type of the formula functor used in the pattern
-    * @return Some(unification) if a consistent unification exists; None otherwise
-    */
-  def unify[T, F[_]: Functor](using Algebra[F, Unifier[T]])(pattern: Pattern[F], scrutinee: T): Option[Unification[T]] =
-    unify(pattern)(scrutinee)
-
-  def unify[T, F[_]: Functor](using Algebra[F, Unifier[T]])(pattern: Pattern[F]): Unifier[T] = {
-    val algebra = PatternF.algebra[Unifier[T], F](summon) {
-      case PatternF.Meta(name)            => scrutinee => Some(Map(meta(name) -> scrutinee))
-      case PatternF.Substitution(_, _, _) => _ => Some(Map.empty)
-    }
-    catamorphism(pattern)(algebra)
   }
 }

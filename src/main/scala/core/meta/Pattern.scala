@@ -3,6 +3,8 @@ package core.meta
 
 import core.{Algebra, Fix, Functor, catamorphism, fix}
 
+import core.meta.PatternF.*
+
 type MetaVariable = PatternF.Meta[?, ?]
 
 /** Pattern for matching formulas in proof structures.
@@ -36,6 +38,31 @@ object Pattern {
         catamorphism(pattern)(algebra)
       }
     }
+  }
+
+  /** [[Unify]] instance for [[Pattern]]. */
+  given [T, F[_]: Functor] => (Algebra[F, Unifier[T]]) => Pattern[F] is Unify[T] {
+
+    /** Attempt to unify a pattern with a concrete formula.
+      *
+      * The result is a mapping from meta-variable appearing in the pattern to concrete values when a match exists.
+      *
+      * Rules:
+      * - Meta variables in the pattern match any formula and are bound to it.
+      * - Concrete constructors must structurally match and recursively unify.
+      * - Leaf cases (e.g. Variable, True, False) succeed only if equal; otherwise fail.
+      * - For unary connectives (e.g. ¬), the argument must unify.
+      * - For binary connectives (e.g. ∧, ∨, →), both sides must unify and their substitutions must be consistent.
+      *
+      * @return Some(unification) if a consistent unification exists; None otherwise
+      */
+    extension (pattern: Pattern[F])
+      override def unifier: Unifier[T] =
+        val algebra = PatternF.algebra[Unifier[T], F](summon) {
+          case PatternF.Meta(name)            => scrutinee => Some(Map(meta(name) -> scrutinee))
+          case PatternF.Substitution(_, _, _) => _ => Some(Map.empty)
+        }
+        catamorphism(pattern)(algebra)
   }
 }
 

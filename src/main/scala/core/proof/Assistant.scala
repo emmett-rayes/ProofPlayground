@@ -3,12 +3,14 @@ package core.proof
 
 import core.meta.Substitute.{substitute, substitutePartial}
 import core.meta.Unification.merge
-import core.meta.Unify.{Unifier, unify}
-import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, MetaVariable, Unification}
+import core.meta.Unify.unify
+import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, MetaVariable, Unification, Unifier}
 import core.proof.natural.Judgement
 import core.{Algebra, Fix, Functor, traverse}
+import core.meta.Pattern.given
 
 object Assistant {
+
   /** Attempts to produce a proof for the given judgement by applying the given inference rule.
     *
     * The proof is constructible if the judgement can be proved by applying the inference rule to the judgement.
@@ -41,7 +43,7 @@ object Assistant {
 
     val unificationOpt =
       for
-        assertionUnification       <- unify(rule.conclusion.assertion, judgement.assertion): Option[Unification[Fix[F]]]
+        assertionUnification       <- rule.conclusion.assertion.unifier(judgement.assertion)
         assumptionsUnification     <- unify[Fix[F], F](rule.conclusion.assumptions.toSeq, judgement.assumptions.toSeq)
         freeUnification            <- unify[Fix[F], F](rule.conclusion.free.toSeq, judgement.free.toSeq)
         totalUnification           <- merge(assertionUnification, auxUnification)
@@ -50,7 +52,7 @@ object Assistant {
       yield (totalUnification, totalAssumptionUnification, totalFreeUnification)
     if unificationOpt.isEmpty then return ProofResult.UnificationFailure()
 
-    val (unification, assumptionUnification, freeUnification) = unificationOpt.get
+    val (unification, assumptionUnification, freeUnification)                                 = unificationOpt.get
     val proofOrFailure: Option[Either[InferenceRule[Judgement, F], Proof[Judgement[Fix[F]]]]] =
       for
         conclusion <- substitute[Fix[F], F](rule.conclusion, unification, assumptionUnification, freeUnification)
@@ -74,6 +76,7 @@ object Assistant {
 
   /** Result of attempting to construct a proof. */
   enum ProofResult[J[_], F[_]] {
+
     /** Successful proof construction.
       *
       * @param proof the constructed proof.
