@@ -6,17 +6,19 @@ import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
 import core.meta.Pattern.given
-import core.meta.PatternF.meta
-import core.meta.AsPattern.given
+import core.meta.PatternF.{concrete, meta}
 import core.meta.Substitute.{substitute, given}
 import core.meta.{Pattern, Unification}
 
 import org.scalatest.funsuite.AnyFunSuite
+import core.fix
 
 import scala.language.implicitConversions
 
 /** Tests for [[Substitution]] functions. */
 class TestSubstitution extends AnyFunSuite:
+  private given Conversion[FormulaF[Pattern[FormulaF]], Pattern[FormulaF]] = concrete(_).fix
+  
   private val formulaGenerator = FormulaGenerationUtil.arbitraryGenerator
 
   test("meta-variables can be substituted with any formula") {

@@ -1,15 +1,15 @@
 package proofPlayground
 package core.meta
 
+import core.fix
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
 import core.meta.Pattern.given
-import core.meta.PatternF.meta
-import core.meta.AsPattern.given
-import core.meta.{Pattern, Unification}
+import core.meta.PatternF.{concrete, meta}
 import core.meta.Unify.{unify, given}
+import core.meta.{Pattern, Unification}
 
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -17,6 +17,8 @@ import scala.language.implicitConversions
 
 /** Tests for the [[Unification]] functions. */
 class TestUnification extends AnyFunSuite:
+  private given Conversion[FormulaF[Pattern[FormulaF]], Pattern[FormulaF]] = concrete(_).fix
+
   private val formulaGenerator = FormulaGenerationUtil.arbitraryGenerator
 
   test("identical formulas unify") {

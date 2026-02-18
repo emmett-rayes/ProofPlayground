@@ -2,6 +2,7 @@ package proofPlayground
 package frontend.presentation
 
 import core.logic.propositional.{Formula, FormulaF}
+import core.logic.propositional.Formula.given
 import core.meta.MetaVars.given
 import core.meta.Substitute.given
 import core.meta.Unify.given

@@ -1,7 +1,12 @@
 package proofPlayground
 package core.logic.propositional
 
+import core.catamorphism
+import core.logic.propositional.FormulaF.tru
 import core.logic.symbol
+import core.meta.{AsPattern, Pattern}
+import core.meta.PatternF.*
+import core.logic.propositional.FormulaF.*
 import core.{Algebra, Fix, Functor, fix}
 
 import scala.language.implicitConversions
@@ -23,7 +28,27 @@ object Formula:
   def apply(formula: FormulaF[Formula]): Formula = formula.fix
 
   /** [[Fix]] is the initial algebra for [[FormulaF]]. */
-  given Algebra[FormulaF, Fix[FormulaF]] = _.fix
+  given Algebra[FormulaF, Fix[FormulaF]] = Fix(_)
+
+  /** [[AsPattern]] instance for [[Formula]]. */
+  given Formula is AsPattern[FormulaF]:
+    private given Conversion[FormulaF[Pattern[FormulaF]], Pattern[FormulaF]] = concrete(_).fix
+
+    private def algebra: Algebra[FormulaF, Pattern[FormulaF]] = {
+      case FormulaF.Variable(symbol)         => variable(symbol)
+      case FormulaF.True(_)                  => tru
+      case FormulaF.False(_)                 => fls
+      case FormulaF.Negation(negation)       => ~negation.arg
+      case FormulaF.Conjunction(conjunction) => conjunction.lhs /\ conjunction.rhs
+      case FormulaF.Disjunction(disjunction) => disjunction.lhs \/ disjunction.rhs
+      case FormulaF.Implication(implication) => implication.lhs --> implication.rhs
+      case FormulaF.Universal(universal)     => forall(universal.variable, universal.body)
+      case FormulaF.Existential(existential) => exists(existential.variable, existential.body)
+    }
+
+    extension (formula: Formula)
+      override def asPattern: Pattern[FormulaF] =
+        catamorphism(formula)(algebra)
 
 /** The functor representing the structure of a propositional logic formula.
   *

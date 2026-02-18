@@ -4,7 +4,6 @@ package core.proof
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
-import core.meta.AsPattern.given
 import core.meta.MetaVars.given
 import core.meta.Pattern
 import core.meta.Pattern.given
