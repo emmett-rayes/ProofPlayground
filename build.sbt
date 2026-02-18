@@ -18,7 +18,7 @@ scalacOptions ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "com.olvind.tui" %% "tui" % "0.0.7",
+  "com.olvind.tui" %% "tui" % "0.0.9",
   "org.scalatest"     %% "scalatest"       % "3.2.19"   % Test,
   "org.scalatestplus" %% "scalacheck-1-19" % "3.2.19.0" % Test,
 )
