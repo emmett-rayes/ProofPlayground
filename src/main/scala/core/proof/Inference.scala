@@ -9,3 +9,8 @@ package core.proof
   * @param conclusion The conclusion below the line.
   */
 case class Inference[J](label: String, premises: Seq[J], conclusion: J)
+
+object Inference:
+  extension [A](inference: Inference[A])
+    def map[B](f: A => B): Inference[B] =
+      Inference(inference.label, inference.premises.map(f), f(inference.conclusion))

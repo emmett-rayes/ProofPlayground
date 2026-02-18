@@ -52,40 +52,23 @@ object Assistant:
       yield (totalUnification, totalAssumptionUnification, totalFreeUnification)
     if unificationOpt.isEmpty then return ProofResult.UnificationFailure()
 
-    enum ResultHelper {
-      case Success(proof: Proof[Judgement[Fix[F]]])
-      case Failure(rule: InferenceRule[Judgement, F])
-    }
-
     val (unification, assumptionUnification, freeUnification) = unificationOpt.get
-    val proofOrFailure: Option[ResultHelper]                  =
+    val proofOrFailure: Option[Either[InferenceRule[Judgement, F], Proof[Judgement[Fix[F]]]]] =
       for
         conclusion <- substitute[Fix[F], F](rule.conclusion, unification, assumptionUnification, freeUnification)
         premises   <- rule.premises.toSeq.traverse { premise =>
           substitute[Fix[F], F](premise, unification, assumptionUnification, freeUnification)
         }
-        failure = if conclusion == judgement then None
-        else
-          Some(Inference(
-            rule.label,
-            premises.map { j =>
-              Judgement(j.assertion.asPattern, j.assumptions.map(_.asPattern), j.free.map(_.asPattern))
-            },
-            Judgement(
-              conclusion.assertion.asPattern,
-              conclusion.assumptions.map(_.asPattern),
-              conclusion.free.map(_.asPattern)
-            )
-          ))
       yield
-        if failure.nonEmpty then ResultHelper.Failure(failure.get)
+        if conclusion == judgement then
+          Right(Proof(conclusion, premises.reverse.map(Proof(_, List.empty)).toList))
         else
-          ResultHelper.Success(Proof(conclusion, premises.reverse.map(Proof(_, List.empty)).toList))
+          Left(Inference(rule.label, premises, conclusion).map(j => j.map(_.asPattern)))
 
     if proofOrFailure.isDefined then
       return proofOrFailure.get match
-          case ResultHelper.Success(proof) => ProofResult.Success(proof)
-          case ResultHelper.Failure(rule) => ProofResult.SubstitutionFailure(rule)
+        case Right(proof) => ProofResult.Success(proof)
+        case Left(rule)   => ProofResult.SubstitutionFailure(rule)
 
     val conclusion = substitutePartial(rule.conclusion, unification, assumptionUnification, freeUnification)
     val premises   = rule.premises.map { premise =>
