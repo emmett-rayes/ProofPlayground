@@ -1,13 +1,12 @@
 package proofPlayground
 package core.proof
 
+import core.meta.Pattern.given
 import core.meta.Substitute.{substitute, substitutePartial}
-import core.meta.Unification.merge
-import core.meta.Unifier.given
-import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, MetaVariable, Unification, Unifier}
+import core.meta.Unifier.{merge, given}
+import core.meta.*
 import core.proof.natural.Judgement
 import core.{Algebra, Fix, Functor, traverse}
-import core.meta.Pattern.given
 
 object Assistant {
 
@@ -25,12 +24,12 @@ object Assistant {
     * @return Some(proof) if it is constructible, None otherwise.
     */
   def proof[F[_]: Functor](using
-                           Algebra[F, Option[Fix[F]]],
-                           Algebra[F, Unifier[Fix[F]]#Fn],
-                           Algebra[F, Set[MetaVariable]],
-                           FreeVars { type Self = Fix[F] },
-                           AsPattern[F] { type Self = Fix[F] },
-                           CaptureAvoidingSub { type Self = Fix[F] },
+    Algebra[F, Option[Fix[F]]],
+    Algebra[F, Unifier[Fix[F]]#Fn],
+    Algebra[F, Set[MetaVariable]],
+    FreeVars { type Self = Fix[F] },
+    AsPattern[F] { type Self = Fix[F] },
+    CaptureAvoidingSub { type Self = Fix[F] },
   )(
     judgement: Judgement[Fix[F]],
     rule: InferenceRule[Judgement, F],

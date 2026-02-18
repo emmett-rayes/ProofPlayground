@@ -21,7 +21,8 @@ trait Unifier[T] {
     def unifier: Fn
 }
 
-object Unification {
+object Unifier {
+  import core.meta.Pattern.given
 
   /** Merge two unifications if they agree on shared variables, otherwise fail.
     *
@@ -52,11 +53,6 @@ object Unification {
     val intersection = fst.keySet.intersect(snd.keySet)
     if intersection.exists(key => !fst(key).contains(snd(key))) then None else Some(fst ++ snd.view.mapValues(Seq(_)))
   }
-}
-
-object Unifier {
-  import Unification.merge
-  import core.meta.Pattern.given
 
   /** [[Unifier]] instance for `Seq[Pattern[F]]`. */
   given [T, F[_]: Functor] => (Algebra[F, Unifier[T]#Fn]) => Seq[Pattern[F]] is Unifier[Seq[T]] {
