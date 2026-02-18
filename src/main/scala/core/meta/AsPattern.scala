@@ -9,6 +9,7 @@ trait AsPattern[F[_]] {
   type Self
 
   extension (self: Self) {
+
     /** Converts a concrete formula of type `Self` into a `PatternF.Concrete[F]`.
       *
       * This allows using concrete formulas directly in pattern matching tests.

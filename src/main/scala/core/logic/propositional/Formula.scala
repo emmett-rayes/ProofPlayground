@@ -1,14 +1,12 @@
 package proofPlayground
 package core.logic.propositional
 
-import core.catamorphism
-import core.logic.symbol
-import core.meta.{AsPattern, CaptureAvoidingSub, Pattern}
-import core.meta.PatternF.*
+import core.*
 import core.logic.propositional.FormulaF.*
-import core.{Algebra, Fix, Functor, fix}
-
+import core.logic.symbol
 import core.meta.FreeVars.given_is_Formula_FreeVars
+import core.meta.PatternF.*
+import core.meta.{AsPattern, CaptureAvoidingSub, Pattern}
 
 import scala.annotation.tailrec
 import scala.language.implicitConversions
@@ -20,6 +18,7 @@ import scala.language.implicitConversions
 type Formula = Fix[FormulaF]
 
 object Formula {
+
   /** Implicit conversion from a formula functor to a formula.
     *
     * Enables using a [[FormulaF]] directly where a [[Formula]] is expected.
@@ -56,6 +55,7 @@ object Formula {
 
   /** [[CaptureAvoidingSub]] instance for [[Formula]]. */
   given Formula is CaptureAvoidingSub {
+
     /** Rename the bound variable in the scope formula to the fresh variable.
       *
       * @param bound the variable to be renamed
@@ -106,7 +106,7 @@ object Formula {
     extension (formula: Formula) {
       override def substituteWithoutCapturing(variable: Formula, replacement: Formula): Formula = {
         // Use explicit recursion instead of catamorphism to avoid substituting binding variables
-        def recurse(f: Formula): Formula =
+        def recurse(f: Formula): Formula = {
           f.unfix match {
             case v if v == variable.unfix          => replacement
             case FormulaF.Variable(_)              => f
@@ -122,8 +122,7 @@ object Formula {
                 val (fresh, renamedBody) =
                   alphaConversion(universal.variable, universal.body, Set(variable, replacement))
                 forall(fresh, recurse(renamedBody))
-              }
-              else
+              } else
                 forall(universal.variable, recurse(universal.body))
             case FormulaF.Existential(existential) =>
               if existential.variable == variable then f
@@ -131,11 +130,11 @@ object Formula {
                 val (fresh, renamedBody) =
                   alphaConversion(existential.variable, existential.body, Set(variable, replacement))
                 exists(fresh, recurse(renamedBody))
-              }
-              else
+              } else {
                 exists(existential.variable, recurse(existential.body))
+              }
           }
-
+        }
         recurse(formula)
       }
     }
@@ -147,6 +146,7 @@ object Formula {
   * @tparam T the type used for recursive positions.
   */
 enum FormulaF[T] {
+
   /** A propositional variable. */
   case Variable(variable: symbol.Variable[FormulaF.Propositional])
 
@@ -176,6 +176,7 @@ enum FormulaF[T] {
 }
 
 case object FormulaF {
+
   /** Create a propositional variable formula using a variable identifier. */
   def variable[T](id: String)(using Conversion[FormulaF[T], T]): T = Variable(symbol.Variable[Propositional](id))
 
@@ -204,6 +205,7 @@ case object FormulaF {
     * Provides DSL for constructing propositional formulas.
     */
   extension [T](t: T)(using Conversion[FormulaF[T], T]) {
+
     /** Negation operator. */
     def unary_~ : T = Negation(symbol.Negation(t))
 

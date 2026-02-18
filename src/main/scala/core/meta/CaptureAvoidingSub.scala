@@ -5,6 +5,7 @@ trait CaptureAvoidingSub {
   type Self
 
   extension (self: Self) {
+
     /** Performs capture-avoiding substitution of `term` for `variable` in `self`.
       *
       * @param variable the variable to be substituted in `self`.
