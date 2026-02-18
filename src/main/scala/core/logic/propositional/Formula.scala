@@ -126,29 +126,9 @@ object Formula {
 
   /** [[FreeVars]] instance for [[Formula]]. */
   given Formula is FreeVars {
-
-    /** Algebra for extracting free-variables from a [[FormulaF]].
-      *
-      * @tparam T The type of values produced by the algebra.
-      */
-    private def algebra[T](using Conversion[FormulaF.Variable[?], T]): Algebra[FormulaF, Set[T]] = {
-      case variable @ FormulaF.Variable(_)   => Set(variable)
-      case FormulaF.True(tru)                => Set.empty
-      case FormulaF.False(fls)               => Set.empty
-      case FormulaF.Negation(negation)       => negation.arg
-      case FormulaF.Conjunction(conjunction) => conjunction.lhs ++ conjunction.rhs
-      case FormulaF.Disjunction(disjunction) => disjunction.lhs ++ disjunction.rhs
-      case FormulaF.Implication(implication) => implication.lhs ++ implication.rhs
-      case FormulaF.Universal(universal)     => universal.body -- universal.variable
-      case FormulaF.Existential(existential) => existential.body -- existential.variable
-    }
-
     extension (formula: Formula) {
       override def freevariables: Set[Formula] = {
-        given Conversion[FormulaF.Variable[?], Formula] = { variable =>
-          FormulaF.Variable[Formula](variable.variable)
-        }
-        catamorphism(formula)(algebra)
+        catamorphism(formula)(FormulaF.FreeVariablesAlgebra)
       }
     }
   }
@@ -192,9 +172,6 @@ case object FormulaF {
 
   /** Create a propositional variable formula using a variable identifier. */
   def variable[T](id: String)(using Conversion[FormulaF[T], T]): T = Variable(symbol.Variable[Propositional](id))
-
-  /** Create a propositional variable formula using the same variable. */
-  def variable[T](varSymbol: symbol.Variable[Propositional])(using Conversion[FormulaF[T], T]): T = Variable(varSymbol)
 
   /** Create a true formula. */
   def tru[T](using Conversion[FormulaF[T], T]): T = True(symbol.True())
@@ -277,6 +254,22 @@ case object FormulaF {
           }
       }
   }
+
+  /** Algebra for collapsing a [[FormulaF]] into a `Set[Formula]` of free variables. */
+  given FreeVariablesAlgebra: Algebra[FormulaF, Set[Formula]] = {
+    case FormulaF.Variable(variable)       => import Formula.given; Set(FormulaF.variable(variable))
+    case FormulaF.True(tru)                => Set.empty
+    case FormulaF.False(fls)               => Set.empty
+    case FormulaF.Negation(negation)       => negation.arg
+    case FormulaF.Conjunction(conjunction) => conjunction.lhs ++ conjunction.rhs
+    case FormulaF.Disjunction(disjunction) => disjunction.lhs ++ disjunction.rhs
+    case FormulaF.Implication(implication) => implication.lhs ++ implication.rhs
+    case FormulaF.Universal(universal)     => universal.body -- universal.variable
+    case FormulaF.Existential(existential) => existential.body -- existential.variable
+  }
+
+  /** Create a propositional variable formula using the same variable. */
+  def variable[T](varSymbol: symbol.Variable[Propositional])(using Conversion[FormulaF[T], T]): T = Variable(varSymbol)
 
   /** Marker trait for propositional logic variables. */
   sealed trait Propositional
