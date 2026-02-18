@@ -5,6 +5,8 @@ import core.*
 import core.logic.propositional.FormulaF.*
 import core.logic.symbol
 import core.meta.PatternF.*
+import core.meta.Unification.merge
+import core.meta.Unify.Unifier
 import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, Pattern}
 
 import scala.annotation.tailrec
@@ -236,6 +238,58 @@ case object FormulaF {
     case FormulaF.Implication(implication) => implication.lhs ++ implication.rhs
     case FormulaF.Universal(universal)     => universal.variable ++ universal.body
     case FormulaF.Existential(existential) => existential.variable ++ existential.body
+  }
+
+  /** An algebra that reduces a [[Formula]] to a `Unifier[Formula]`. */
+  given UnifierAlgebra: Algebra[FormulaF, Unifier[Formula]] = {
+    formula =>
+      {
+        // noinspection DuplicatedCode
+        scrutinee =>
+          {
+            (scrutinee.unfix, formula) match {
+              case (FormulaF.Variable(variable), FormulaF.Variable(pattern)) =>
+                if pattern == variable then Some(Map.empty) else None
+              case (FormulaF.True(_), FormulaF.True(_)) =>
+                Some(Map.empty)
+              case (FormulaF.False(_), FormulaF.False(_)) =>
+                Some(Map.empty)
+              case (FormulaF.Negation(negation), FormulaF.Negation(pattern)) =>
+                pattern.arg(negation.arg)
+              case (FormulaF.Conjunction(conjunction), FormulaF.Conjunction(pattern)) =>
+                for
+                  lhs    <- pattern.lhs(conjunction.lhs)
+                  rhs    <- pattern.rhs(conjunction.rhs)
+                  merged <- merge(lhs, rhs)
+                yield merged
+              case (FormulaF.Disjunction(disjunction), FormulaF.Disjunction(pattern)) =>
+                for
+                  lhs    <- pattern.lhs(disjunction.lhs)
+                  rhs    <- pattern.rhs(disjunction.rhs)
+                  merged <- merge(lhs, rhs)
+                yield merged
+              case (FormulaF.Implication(implication), FormulaF.Implication(pattern)) =>
+                for
+                  lhs    <- pattern.lhs(implication.lhs)
+                  rhs    <- pattern.rhs(implication.rhs)
+                  merged <- merge(lhs, rhs)
+                yield merged
+              case (FormulaF.Universal(universal), FormulaF.Universal(pattern)) =>
+                for
+                  variable <- pattern.variable(universal.variable)
+                  body     <- pattern.body(universal.body)
+                  merged   <- merge(variable, body)
+                yield merged
+              case (FormulaF.Existential(existential), FormulaF.Existential(pattern)) =>
+                for
+                  variable <- pattern.variable(existential.variable)
+                  body     <- pattern.body(existential.body)
+                  merged   <- merge(variable, body)
+                yield merged
+              case _ => None
+            }
+          }
+      }
   }
 
   /** Marker trait for propositional logic variables. */

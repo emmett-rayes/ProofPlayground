@@ -1,7 +1,6 @@
 package proofPlayground
 package core.meta
 
-import core.logic.propositional.{Formula, FormulaF}
 import core.meta.PatternF.meta
 import core.meta.{Pattern, PatternF}
 import core.{Algebra, Functor, catamorphism}
@@ -12,6 +11,7 @@ import scala.annotation.targetName
 type Unification[T] = Map[MetaVariable, T]
 
 object Unification {
+
   /** Merge two unifications if they agree on shared variables, otherwise fail.
     *
     * @param fst the first unification to merge
@@ -162,53 +162,5 @@ object Unify {
       case PatternF.Substitution(_, _, _) => _ => Some(Map.empty)
     }
     catamorphism(pattern)(algebra)
-  }
-
-  /** An algebra that reduces a [[Formula]] to a `Unifier[Formula]`. */
-  given Algebra[FormulaF, Unifier[Formula]] = {
-    formula =>
-      // noinspection DuplicatedCode
-      scrutinee =>
-        (scrutinee.unfix, formula) match {
-          case (FormulaF.Variable(variable), FormulaF.Variable(pattern)) =>
-            if pattern == variable then Some(Map.empty) else None
-          case (FormulaF.True(_), FormulaF.True(_)) =>
-            Some(Map.empty)
-          case (FormulaF.False(_), FormulaF.False(_)) =>
-            Some(Map.empty)
-          case (FormulaF.Negation(negation), FormulaF.Negation(pattern)) =>
-            pattern.arg(negation.arg)
-          case (FormulaF.Conjunction(conjunction), FormulaF.Conjunction(pattern)) =>
-            for
-              lhs    <- pattern.lhs(conjunction.lhs)
-              rhs    <- pattern.rhs(conjunction.rhs)
-              merged <- merge(lhs, rhs)
-            yield merged
-          case (FormulaF.Disjunction(disjunction), FormulaF.Disjunction(pattern)) =>
-            for
-              lhs    <- pattern.lhs(disjunction.lhs)
-              rhs    <- pattern.rhs(disjunction.rhs)
-              merged <- merge(lhs, rhs)
-            yield merged
-          case (FormulaF.Implication(implication), FormulaF.Implication(pattern)) =>
-            for
-              lhs    <- pattern.lhs(implication.lhs)
-              rhs    <- pattern.rhs(implication.rhs)
-              merged <- merge(lhs, rhs)
-            yield merged
-          case (FormulaF.Universal(universal), FormulaF.Universal(pattern)) =>
-            for
-              variable <- pattern.variable(universal.variable)
-              body     <- pattern.body(universal.body)
-              merged   <- merge(variable, body)
-            yield merged
-          case (FormulaF.Existential(existential), FormulaF.Existential(pattern)) =>
-            for
-              variable <- pattern.variable(existential.variable)
-              body     <- pattern.body(existential.body)
-              merged   <- merge(variable, body)
-            yield merged
-          case _ => None
-        }
   }
 }
