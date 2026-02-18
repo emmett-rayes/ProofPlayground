@@ -4,9 +4,8 @@ package core.logic.propositional
 import core.*
 import core.logic.propositional.FormulaF.*
 import core.logic.symbol
-import core.meta.FreeVars.given_is_Formula_FreeVars
 import core.meta.PatternF.*
-import core.meta.{AsPattern, CaptureAvoidingSub, Pattern}
+import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, Pattern}
 
 import scala.annotation.tailrec
 import scala.language.implicitConversions
@@ -136,6 +135,35 @@ object Formula {
           }
         }
         recurse(formula)
+      }
+    }
+  }
+
+  /** [[FreeVars]] instance for [[Formula]]. */
+  given Formula is FreeVars {
+
+    /** Algebra for extracting free-variables from a [[FormulaF]].
+      *
+      * @tparam T The type of values produced by the algebra.
+      */
+    private def algebra[T](using Conversion[FormulaF.Variable[?], T]): Algebra[FormulaF, Set[T]] = {
+      case variable @ FormulaF.Variable(_)   => Set(variable)
+      case FormulaF.True(tru)                => Set.empty
+      case FormulaF.False(fls)               => Set.empty
+      case FormulaF.Negation(negation)       => negation.arg
+      case FormulaF.Conjunction(conjunction) => conjunction.lhs ++ conjunction.rhs
+      case FormulaF.Disjunction(disjunction) => disjunction.lhs ++ disjunction.rhs
+      case FormulaF.Implication(implication) => implication.lhs ++ implication.rhs
+      case FormulaF.Universal(universal)     => universal.body -- universal.variable
+      case FormulaF.Existential(existential) => existential.body -- existential.variable
+    }
+
+    extension (formula: Formula) {
+      override def freevariables: Set[Formula] = {
+        given Conversion[FormulaF.Variable[?], Formula] = variable =>
+          FormulaF.Variable[Formula](variable.variable)
+
+        catamorphism(formula)(algebra)
       }
     }
   }
