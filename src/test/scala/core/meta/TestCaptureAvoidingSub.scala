@@ -4,7 +4,6 @@ package core.meta
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.Formula
-import core.meta.CaptureAvoidingSub.given
 import core.meta.FreeVars.given
 
 import org.scalatest.funsuite.AnyFunSuite
