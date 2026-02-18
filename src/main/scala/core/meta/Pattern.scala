@@ -1,7 +1,7 @@
 package proofPlayground
 package core.meta
 
-import core.{Algebra, Fix, Functor, fix}
+import core.{Algebra, Fix, Functor, catamorphism, fix}
 
 type MetaVariable = PatternF.Meta[?, ?]
 
@@ -12,6 +12,7 @@ type MetaVariable = PatternF.Meta[?, ?]
 type Pattern[F[_]] = Fix[[T] =>> PatternF[F, T]]
 
 object Pattern {
+
   /** Implicit conversion from a pattern functor to a pattern.
     *
     * Enables using a [[PatternF]] directly where a [[Pattern]] is expected.
@@ -24,21 +25,17 @@ object Pattern {
   /** Construct a pattern from its functor representation. */
   def apply[F[_]](pattern: PatternF[F, Pattern[F]]): Pattern[F] = pattern.fix
 
-  /** Construct an algebra for a pattern functor using a subalgebra for the contained formula functor.
-    *
-    * @tparam T the carrier type of the algebra.
-    * @tparam F the formula functor of the referenced formulas in the pattern.
-    * @param baseAlgebra a function that maps a meta-variable or a substitution pattern to a value of type `T`.
-    * @param subalgebra the subalgebra for the contained formula functor.
-    * @return an algebra for a pattern functor that maps patterns to values of type `T`.
-    */
-  def algebra[T, F[_]: Functor](subalgebra: Algebra[F, T])(
-    baseAlgebra: PatternF.Meta[F, T] | PatternF.Substitution[F, T] => T
-  )
-    : PatternF[F, T] => T = {
-    case pattern @ PatternF.Meta(_)               => baseAlgebra(pattern)
-    case pattern @ PatternF.Substitution(_, _, _) => baseAlgebra(pattern)
-    case PatternF.Formula(formula)                => subalgebra(formula)
+  /** [[MetaVars]] instance for [[Pattern]]. */
+  given [F[_]: Functor] => (Algebra[F, Set[MetaVariable]]) => Pattern[F] is MetaVars {
+    extension (pattern: Pattern[F]) {
+      override def metavariables: Set[MetaVariable] = {
+        val algebra = PatternF.algebra[Set[MetaVariable], F](summon) {
+          case pattern @ PatternF.Meta(_)                            => Set(pattern)
+          case PatternF.Substitution(variable, replacement, formula) => variable ++ replacement ++ formula
+        }
+        catamorphism(pattern)(algebra)
+      }
+    }
   }
 }
 
@@ -51,6 +48,7 @@ object Pattern {
   * @tparam T the type used for recursive positions.
   */
 enum PatternF[F[_], T] {
+
   /** A meta-variable pattern that matches any formula.
     *
     * @param name the identifier for this meta-variable.
@@ -76,6 +74,7 @@ enum PatternF[F[_], T] {
 }
 
 case object PatternF {
+
   /** Implicit conversion from a meta-variable name to a meta-variable pattern. */
   given [F[_], T] => Conversion[String, PatternF[F, T]] = meta(_)
 
@@ -91,6 +90,22 @@ case object PatternF {
   /** Creates a substitution pattern from a variable, a replacement formula, and a formula. */
   def substitution[F[_], T](variable: T, replacement: T, formula: T): PatternF.Substitution[F, T] =
     PatternF.Substitution(variable, replacement, formula)
+
+  /** Construct an algebra for a pattern functor using a subalgebra for the contained formula functor.
+    *
+    * @tparam T the carrier type of the algebra.
+    * @tparam F the formula functor of the referenced formulas in the pattern.
+    * @param baseAlgebra a function that maps a meta-variable or a substitution pattern to a value of type `T`.
+    * @param subalgebra the subalgebra for the contained formula functor.
+    * @return an algebra for a pattern functor that maps patterns to values of type `T`.
+    */
+  def algebra[T, F[_]: Functor](subalgebra: Algebra[F, T])(
+    baseAlgebra: PatternF.Meta[F, T] | PatternF.Substitution[F, T] => T
+  ): PatternF[F, T] => T = {
+    case pattern @ PatternF.Meta(_)               => baseAlgebra(pattern)
+    case pattern @ PatternF.Substitution(_, _, _) => baseAlgebra(pattern)
+    case PatternF.Formula(formula)                => subalgebra(formula)
+  }
 
   /** [[Functor]] instance for [[PatternF]]. */
   given [F[_]: Functor as F] => Functor[[T] =>> PatternF[F, T]] {

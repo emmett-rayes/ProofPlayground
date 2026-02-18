@@ -12,34 +12,13 @@ trait MetaVars {
   type Self
 
   extension (self: Self) {
+
     /** Returns the set of meta-variables appearing in `self`. */
     def metavariables: Set[MetaVariable]
   }
 }
 
 object MetaVars {
-  /** Extracts the set of meta-variables appearing in a pattern.
-    *
-    * @param pattern The pattern to extract meta-variables from.
-    * @tparam F The type of the formula functor used in `pattern`.
-    *
-    * @return The set of meta-variables appearing in `pattern`.
-    */
-  def metavariables[F[_]: Functor](using Algebra[F, Set[MetaVariable]])(pattern: Pattern[F]): Set[MetaVariable] = {
-    val algebra = Pattern.algebra[Set[MetaVariable], F](summon) {
-      case pattern @ PatternF.Meta(_)                            => Set(pattern)
-      case PatternF.Substitution(variable, replacement, formula) => variable ++ replacement ++ formula
-    }
-    catamorphism(pattern)(algebra)
-  }
-
-  /** Instance of [[MetaVars]] for [[Pattern]]. */
-  given [F[_]: Functor] => (Algebra[F, Set[MetaVariable]]) => Pattern[F] is MetaVars {
-    extension (pattern: Pattern[F]) {
-      override def metavariables: Set[MetaVariable] = MetaVars.metavariables(pattern)
-    }
-  }
-
   /** Instance of [[MetaVars]] for [[Judgement]]. */
   given [F: MetaVars] => Judgement[F] is MetaVars {
     extension (judgement: Judgement[F]) {

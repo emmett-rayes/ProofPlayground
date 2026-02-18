@@ -73,7 +73,7 @@ object Substitute {
   def substitute[T: CaptureAvoidingSub, F[_]: Functor](using
     Algebra[F, Option[T]]
   )(pattern: Pattern[F], unification: Unification[T]): Option[T] = {
-    val algebra = Pattern.algebra[Option[T], F](summon) {
+    val algebra = PatternF.algebra[Option[T], F](summon) {
       case pattern @ PatternF.Meta(_) =>
         unification.get(pattern)
       case PatternF.Substitution(variable, replacement, formula) =>

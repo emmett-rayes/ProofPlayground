@@ -44,7 +44,7 @@ object Show {
   given [F[_]: Functor] => (Algebra[F, String]) => Pattern[F] is Show {
     extension (pattern: Pattern[F]) {
       override def show: String = {
-        val algebra = Pattern.algebra(summon) {
+        val algebra = PatternF.algebra(summon) {
           case PatternF.Meta(name)                                   => name
           case PatternF.Substitution(variable, replacement, formula) => s"$formula[$replacement/$variable]"
         }

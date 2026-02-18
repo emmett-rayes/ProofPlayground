@@ -157,7 +157,7 @@ object Unify {
     unify(pattern)(scrutinee)
 
   def unify[T, F[_]: Functor](using Algebra[F, Unifier[T]])(pattern: Pattern[F]): Unifier[T] = {
-    val algebra = Pattern.algebra[Unifier[T], F](summon) {
+    val algebra = PatternF.algebra[Unifier[T], F](summon) {
       case PatternF.Meta(name)            => scrutinee => Some(Map(meta(name) -> scrutinee))
       case PatternF.Substitution(_, _, _) => _ => Some(Map.empty)
     }

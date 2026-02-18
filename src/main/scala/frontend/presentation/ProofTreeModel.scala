@@ -9,6 +9,7 @@ import core.meta.Unify.given
 import core.meta.{MetaVariable, Unification}
 import core.proof.Assistant.ProofResult
 import core.proof.ProofZipper.given
+import core.meta.Pattern.given
 import core.proof.natural.Judgement
 import core.proof.{Assistant, InferenceRule, Proof, ProofSystem}
 import frontend.Show.given
