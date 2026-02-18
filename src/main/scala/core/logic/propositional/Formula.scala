@@ -225,8 +225,21 @@ case object FormulaF {
   def exists[T](using Conversion[FormulaF[T], T])(variable: T, formula: T): T =
     Existential(symbol.Existential(variable, formula))
 
-  /** Marker trait for propositional logic variables. */
-  sealed trait Propositional
+  /** Algebra for collapsing a [[FormulaF]] to a [[Set]] of values without producing any information at the leaves.
+    *
+    * @tparam T The type of values produced by the algebra.
+    */
+  given [T] => Algebra[FormulaF, Set[T]] = {
+    case FormulaF.Variable(variable)       => Set.empty
+    case FormulaF.True(tru)                => Set.empty
+    case FormulaF.False(fls)               => Set.empty
+    case FormulaF.Negation(negation)       => negation.arg
+    case FormulaF.Conjunction(conjunction) => conjunction.lhs ++ conjunction.rhs
+    case FormulaF.Disjunction(disjunction) => disjunction.lhs ++ disjunction.rhs
+    case FormulaF.Implication(implication) => implication.lhs ++ implication.rhs
+    case FormulaF.Universal(universal)     => universal.variable ++ universal.body
+    case FormulaF.Existential(existential) => existential.variable ++ existential.body
+  }
 
   /** Extension methods for formulas.
     *
@@ -246,6 +259,9 @@ case object FormulaF {
     /** Implication operator. */
     def -->(other: T): T = Implication(symbol.Implication(t, other))
   }
+
+  /** Marker trait for propositional logic variables. */
+  sealed trait Propositional
 
   /** [[Functor]] instance for [[FormulaF]]. */
   given Functor[FormulaF] {
