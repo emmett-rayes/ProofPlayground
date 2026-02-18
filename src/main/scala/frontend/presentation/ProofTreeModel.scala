@@ -4,7 +4,7 @@ package frontend.presentation
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.given
-import core.meta.Unify.given
+import core.meta.Unifier.given
 import core.meta.{MetaVariable, Unification}
 import core.proof.Assistant.ProofResult
 import core.proof.ProofZipper.given

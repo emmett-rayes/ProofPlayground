@@ -40,8 +40,8 @@ object Pattern {
     }
   }
 
-  /** [[Unify]] instance for [[Pattern]]. */
-  given [T, F[_]: Functor] => (Algebra[F, Unifier[T]]) => Pattern[F] is Unify[T] {
+  /** [[Unifier]] instance for [[Pattern]]. */
+  given [T, F[_]: Functor] =>(Algebra[F, Unifier[T]#Fn]) => Pattern[F] is Unifier[T] {
 
     /** Attempt to unify a pattern with a concrete formula.
       *
@@ -57,8 +57,8 @@ object Pattern {
       * @return Some(unification) if a consistent unification exists; None otherwise
       */
     extension (pattern: Pattern[F])
-      override def unifier: Unifier[T] =
-        val algebra = PatternF.algebra[Unifier[T], F](summon) {
+      override def unifier: Unifier[T]#Fn =
+        val algebra = PatternF.algebra[Unifier[T]#Fn, F](summon) {
           case PatternF.Meta(name)            => scrutinee => Some(Map(meta(name) -> scrutinee))
           case PatternF.Substitution(_, _, _) => _ => Some(Map.empty)
         }

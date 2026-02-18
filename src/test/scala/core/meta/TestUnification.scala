@@ -8,7 +8,7 @@ import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
 import core.meta.Pattern.given
 import core.meta.PatternF.{concrete, meta}
-import core.meta.Unify.given
+import core.meta.Unifier.given
 import core.meta.{Pattern, Unification}
 
 import org.scalatest.funsuite.AnyFunSuite

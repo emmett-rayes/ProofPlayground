@@ -3,7 +3,7 @@ package core.proof
 
 import core.meta.Substitute.{substitute, substitutePartial}
 import core.meta.Unification.merge
-import core.meta.Unify.given
+import core.meta.Unifier.given
 import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, MetaVariable, Unification, Unifier}
 import core.proof.natural.Judgement
 import core.{Algebra, Fix, Functor, traverse}
@@ -25,12 +25,12 @@ object Assistant {
     * @return Some(proof) if it is constructible, None otherwise.
     */
   def proof[F[_]: Functor](using
-    Algebra[F, Option[Fix[F]]],
-    Algebra[F, Unifier[Fix[F]]],
-    Algebra[F, Set[MetaVariable]],
-    FreeVars { type Self = Fix[F] },
-    AsPattern[F] { type Self = Fix[F] },
-    CaptureAvoidingSub { type Self = Fix[F] },
+                           Algebra[F, Option[Fix[F]]],
+                           Algebra[F, Unifier[Fix[F]]#Fn],
+                           Algebra[F, Set[MetaVariable]],
+                           FreeVars { type Self = Fix[F] },
+                           AsPattern[F] { type Self = Fix[F] },
+                           CaptureAvoidingSub { type Self = Fix[F] },
   )(
     judgement: Judgement[Fix[F]],
     rule: InferenceRule[Judgement, F],

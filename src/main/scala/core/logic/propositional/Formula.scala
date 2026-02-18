@@ -6,8 +6,7 @@ import core.logic.propositional.FormulaF.*
 import core.logic.symbol
 import core.meta.PatternF.*
 import core.meta.Unification.merge
-import core.meta.Unifier
-import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, Pattern}
+import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, Pattern, Unifier}
 
 import scala.annotation.tailrec
 import scala.language.implicitConversions
@@ -204,7 +203,7 @@ case object FormulaF {
   }
 
   /** An algebra that reduces a [[Formula]] to a `Unifier[Formula]`. */
-  given UnifierAlgebra: Algebra[FormulaF, Unifier[Formula]] = {
+  given UnifierAlgebra: Algebra[FormulaF, Unifier[Formula]#Fn] = {
     formula =>
       {
         // noinspection DuplicatedCode

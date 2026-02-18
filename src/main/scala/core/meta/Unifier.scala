@@ -13,13 +13,12 @@ type Unification[T] = Map[MetaVariable, T]
   * This is the carrier type for the unification algebras.
   * It is a function because a unifier can be applied to different scrutinees.
   */
-type Unifier[T] = T => Option[Unification[T]]
-
-trait Unify[T] {
+trait Unifier[T] {
   type Self
+  type Fn = T => Option[Unification[T]]
 
   extension (self: Self)
-    def unifier: Unifier[T]
+    def unifier: Fn
 }
 
 object Unification {
@@ -55,12 +54,12 @@ object Unification {
   }
 }
 
-object Unify {
+object Unifier {
   import Unification.merge
   import core.meta.Pattern.given
 
-  /** [[Unify]] instance for `Seq[Pattern[F]]`. */
-  given [T, F[_]: Functor] => (Algebra[F, Unifier[T]]) => Seq[Pattern[F]] is Unify[Seq[T]] {
+  /** [[Unifier]] instance for `Seq[Pattern[F]]`. */
+  given [T, F[_]: Functor] => (Algebra[F, Unifier[T]#Fn]) => Seq[Pattern[F]] is Unifier[Seq[T]] {
 
     /** Attempt to unify a sequence of formula patterns with a sequence of concrete formulas.
       *
@@ -80,7 +79,7 @@ object Unify {
       * @return Some(unification) if a consistent unification exists; None otherwise
       */
     extension (patterns: Seq[Pattern[F]])
-      override def unifier: Unifier[Seq[T]] = {
+      override def unifier: Unifier[Seq[T]]#Fn = {
         scrutinees =>
           {
             val emptyContext: (Unification[T], Map[Int, Int]) = (Map.empty, Map.empty)
