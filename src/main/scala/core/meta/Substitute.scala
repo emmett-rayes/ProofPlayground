@@ -1,9 +1,6 @@
 package proofPlayground
 package core.meta
 
-import core.logic.propositional.Formula.given
-import core.logic.propositional.FormulaF.*
-import core.logic.propositional.{Formula, FormulaF}
 import core.meta.Pattern.given
 import core.meta.PatternF.{concrete, substitution}
 import core.proof.natural.Judgement
@@ -12,6 +9,7 @@ import core.{Algebra, Functor, catamorphism, traverse}
 import scala.language.implicitConversions
 
 object Substitute {
+
   /** Substitutes meta-variables in the judgement according to the provided unifications.
     *
     * @tparam T The type of the concrete formula used in substitution.
@@ -122,7 +120,10 @@ object Substitute {
     *
     * @return The pattern with meta-variables substituted where possible.
     */
-  def substitutePartial[T: AsPattern[F], F[_]: Functor](pattern: Pattern[F], unification: Unification[T]): Pattern[F] = {
+  def substitutePartial[T: AsPattern[F], F[_]: Functor](
+    pattern: Pattern[F],
+    unification: Unification[T]
+  ): Pattern[F] = {
     def substitute(pattern: Pattern[F], unification: Unification[Pattern[F]]): Pattern[F] =
       pattern.unfix match {
         case pattern @ PatternF.Meta(_) =>
@@ -158,24 +159,5 @@ object Substitute {
       }
     val patternUnification: Unification[Seq[Pattern[F]]] = unification.view.mapValues(_.map(_.asPattern)).toMap
     substitute(patterns, patternUnification)
-  }
-
-  /** An algebra for collapsing a [[Formula]] into an `Option[Formula]`. */
-  given Algebra[FormulaF, Option[Formula]] {
-    override def apply(formula: FormulaF[Option[Formula]]): Option[Formula] = {
-      formula match {
-        case FormulaF.Variable(sym)            => Some(variable(sym))
-        case FormulaF.True(_)                  => Some(tru)
-        case FormulaF.False(_)                 => Some(fls)
-        case FormulaF.Negation(negation)       => negation.arg.map(arg => ~arg)
-        case FormulaF.Conjunction(conjunction) => for lhs <- conjunction.lhs; rhs <- conjunction.rhs yield lhs /\ rhs
-        case FormulaF.Disjunction(disjunction) => for lhs <- disjunction.lhs; rhs <- disjunction.rhs yield lhs \/ rhs
-        case FormulaF.Implication(implication) => for lhs <- implication.lhs; rhs <- implication.rhs yield lhs --> rhs
-        case FormulaF.Universal(universal)     =>
-          for variable <- universal.variable; body <- universal.body yield forall(variable, body)
-        case FormulaF.Existential(existential) =>
-          for variable <- existential.variable; body <- existential.body yield exists(variable, body)
-      }
-    }
   }
 }

@@ -225,11 +225,8 @@ case object FormulaF {
   def exists[T](using Conversion[FormulaF[T], T])(variable: T, formula: T): T =
     Existential(symbol.Existential(variable, formula))
 
-  /** Algebra for collapsing a [[FormulaF]] to a [[Set]] of values without producing any information at the leaves.
-    *
-    * @tparam T The type of values produced by the algebra.
-    */
-  given [T] => Algebra[FormulaF, Set[T]] = {
+  /** Algebra for collapsing a [[FormulaF]] to a [[Set]] of values without producing any information at the leaves. */
+  given SetAlgebra: [T] => Algebra[FormulaF, Set[T]] = {
     case FormulaF.Variable(variable)       => Set.empty
     case FormulaF.True(tru)                => Set.empty
     case FormulaF.False(fls)               => Set.empty
@@ -239,6 +236,28 @@ case object FormulaF {
     case FormulaF.Implication(implication) => implication.lhs ++ implication.rhs
     case FormulaF.Universal(universal)     => universal.variable ++ universal.body
     case FormulaF.Existential(existential) => existential.variable ++ existential.body
+  }
+
+  /** Marker trait for propositional logic variables. */
+  sealed trait Propositional
+
+  /** Algebra for collapsing a [[FormulaF]] into an `Option[Formula]`. */
+  given OptionAlgebra: [T] => (Conversion[FormulaF[T], T]) => Algebra[FormulaF, Option[T]] {
+    override def apply(formula: FormulaF[Option[T]]): Option[T] = {
+      formula match {
+        case FormulaF.Variable(sym)            => Some(variable(sym))
+        case FormulaF.True(_)                  => Some(tru)
+        case FormulaF.False(_)                 => Some(fls)
+        case FormulaF.Negation(negation)       => negation.arg.map(arg => ~arg)
+        case FormulaF.Conjunction(conjunction) => for lhs <- conjunction.lhs; rhs <- conjunction.rhs yield lhs /\ rhs
+        case FormulaF.Disjunction(disjunction) => for lhs <- disjunction.lhs; rhs <- disjunction.rhs yield lhs \/ rhs
+        case FormulaF.Implication(implication) => for lhs <- implication.lhs; rhs <- implication.rhs yield lhs --> rhs
+        case FormulaF.Universal(universal)     =>
+          for variable <- universal.variable; body <- universal.body yield forall(variable, body)
+        case FormulaF.Existential(existential) =>
+          for variable <- existential.variable; body <- existential.body yield exists(variable, body)
+      }
+    }
   }
 
   /** Extension methods for formulas.
@@ -259,9 +278,6 @@ case object FormulaF {
     /** Implication operator. */
     def -->(other: T): T = Implication(symbol.Implication(t, other))
   }
-
-  /** Marker trait for propositional logic variables. */
-  sealed trait Propositional
 
   /** [[Functor]] instance for [[FormulaF]]. */
   given Functor[FormulaF] {
