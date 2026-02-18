@@ -31,23 +31,9 @@ object Formula {
 
   /** [[AsPattern]] instance for [[Formula]]. */
   given Formula is AsPattern[FormulaF] {
-    private given Conversion[FormulaF[Pattern[FormulaF]], Pattern[FormulaF]] = concrete(_).fix
-
-    private def algebra: Algebra[FormulaF, Pattern[FormulaF]] = {
-      case FormulaF.Variable(symbol)         => variable(symbol)
-      case FormulaF.True(_)                  => tru
-      case FormulaF.False(_)                 => fls
-      case FormulaF.Negation(negation)       => ~negation.arg
-      case FormulaF.Conjunction(conjunction) => conjunction.lhs /\ conjunction.rhs
-      case FormulaF.Disjunction(disjunction) => disjunction.lhs \/ disjunction.rhs
-      case FormulaF.Implication(implication) => implication.lhs --> implication.rhs
-      case FormulaF.Universal(universal)     => forall(universal.variable, universal.body)
-      case FormulaF.Existential(existential) => exists(existential.variable, existential.body)
-    }
-
     extension (formula: Formula) {
       override def asPattern: Pattern[FormulaF] =
-        catamorphism(formula)(algebra)
+        catamorphism(formula)(FormulaF.PatternAlgebra)
     }
   }
 
@@ -295,7 +281,7 @@ case object FormulaF {
   /** Marker trait for propositional logic variables. */
   sealed trait Propositional
 
-  /** Algebra for collapsing a [[FormulaF]] into an `Option[Formula]`. */
+  /** Algebra for collapsing a [[FormulaF]] into an `Option[T]`. */
   given OptionAlgebra: [T] => (Conversion[FormulaF[T], T]) => Algebra[FormulaF, Option[T]] {
     override def apply(formula: FormulaF[Option[T]]): Option[T] = {
       formula match {
@@ -310,6 +296,25 @@ case object FormulaF {
           for variable <- universal.variable; body <- universal.body yield forall(variable, body)
         case FormulaF.Existential(existential) =>
           for variable <- existential.variable; body <- existential.body yield exists(variable, body)
+      }
+    }
+  }
+
+  /** Algebra for collapsing a [[FormulaF]] into a `Pattern[FormulaF]`. */
+  given PatternAlgebra: Algebra[FormulaF, Pattern[FormulaF]] {
+    override def apply(formula: FormulaF[Pattern[FormulaF]]): Pattern[FormulaF] = {
+      given Conversion[FormulaF[Pattern[FormulaF]], Pattern[FormulaF]] = concrete(_).fix
+
+      formula match {
+        case FormulaF.Variable(symbol)         => variable(symbol)
+        case FormulaF.True(_)                  => tru
+        case FormulaF.False(_)                 => fls
+        case FormulaF.Negation(negation)       => ~negation.arg
+        case FormulaF.Conjunction(conjunction) => conjunction.lhs /\ conjunction.rhs
+        case FormulaF.Disjunction(disjunction) => disjunction.lhs \/ disjunction.rhs
+        case FormulaF.Implication(implication) => implication.lhs --> implication.rhs
+        case FormulaF.Universal(universal)     => forall(universal.variable, universal.body)
+        case FormulaF.Existential(existential) => exists(existential.variable, existential.body)
       }
     }
   }
