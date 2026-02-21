@@ -1,5 +1,5 @@
 package proofPlayground
-package tree
+package zipper
 
 /** A one-hole context for the type constructor [[Tree]].
   *

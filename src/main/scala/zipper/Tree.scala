@@ -1,5 +1,5 @@
 package proofPlayground
-package tree
+package zipper
 
 import core.Functor
 

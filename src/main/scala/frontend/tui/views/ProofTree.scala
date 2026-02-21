@@ -9,7 +9,7 @@ import core.logic.propositional.Formula
 import frontend.tui.Screen.EventResult
 import frontend.tui.widgets.{ScrollViewState, ScrollViewWidget, Size}
 import frontend.tui.{Navigation, Renderer, Screen}
-import tree.Tree
+import zipper.Tree
 import frontend.presentation.ProofTreeModel
 
 extension [A](tree: Tree[A]) {

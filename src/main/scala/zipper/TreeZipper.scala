@@ -1,5 +1,5 @@
 package proofPlayground
-package tree
+package zipper
 
 /** A zipper for [[Tree]]s.
   *

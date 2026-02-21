@@ -1,8 +1,8 @@
 package proofPlayground
 package core.proof
 
-import tree.TreeZipper.given
-import tree.{Tree, TreeZipper, Zipper}
+import zipper.TreeZipper.given
+import zipper.{Tree, TreeZipper, Zipper}
 
 /** Representation of a proof.
   *

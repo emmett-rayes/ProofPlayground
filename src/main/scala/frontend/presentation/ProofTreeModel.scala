@@ -16,8 +16,8 @@ import core.proof.natural.Judgement
 import core.proof.{Assistant, InferenceRule, Proof, ProofSystem}
 import frontend.Show.given
 import frontend.tui.Navigation
-import tree.Tree
-import tree.Zipper.root
+import zipper.Tree
+import zipper.Zipper.root
 
 object ProofTreeModel {
   trait Data {
