@@ -307,7 +307,7 @@ case object InferenceRules {
 
     /** Existential introduction (∃I).
       */
-    val existentialIntroduction: InferenceRule[Judgement, FormulaF] = {
+    val ExistentialIntroduction: InferenceRule[Judgement, FormulaF] = {
       val omega = Pattern[FormulaF]("Omega")
       val nu    = Pattern[FormulaF]("nu")
       val gamma = Pattern[FormulaF]("Gamma")
@@ -325,7 +325,7 @@ case object InferenceRules {
 
     /** Existential elimination (∃E).
       */
-    val existentialElimination: InferenceRule[Judgement, FormulaF] = {
+    val ExistentialElimination: InferenceRule[Judgement, FormulaF] = {
       val omega = Pattern[FormulaF]("Omega")
       val nu    = Pattern[FormulaF]("nu")
       val gamma = Pattern[FormulaF]("Gamma")
