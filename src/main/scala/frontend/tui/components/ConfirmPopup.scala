@@ -60,9 +60,9 @@ class ConfirmPopup(message: String, title: Option[String] = None)(confirm: Optio
       direction = Direction.Horizontal,
       margin = Margin(0, 1),
       constraints = Array(
-        Constraint.Percentage(22), // spacer
-        Constraint.Percentage(56), // buttons
-        Constraint.Percentage(22), // spacer
+        Constraint.Percentage(18), // spacer
+        Constraint.Percentage(64), // buttons
+        Constraint.Percentage(18), // spacer
       )
     ).split(contentLayout(2))
 
@@ -84,7 +84,7 @@ class ConfirmPopup(message: String, title: Option[String] = None)(confirm: Optio
           )
         ).split(buttonsBarLayout(1))
 
-    val cancelButton  = ButtonWidget(if confirm.isDefined then "\u200ACancel" else "Ok", !confirming)
+    val cancelButton  = ButtonWidget(if confirm.isDefined then "Cancel" else "Ok", !confirming)
     val confirmButton = ButtonWidget("Confirm", confirming)
     val content       = ParagraphWidget(
       text = Text.nostyle(message),
