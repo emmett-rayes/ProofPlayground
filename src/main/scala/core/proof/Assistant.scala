@@ -2,7 +2,6 @@ package proofPlayground
 package core.proof
 
 import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, MapUnification, MetaVariable}
-import core.meta.Substitute.substitutePartial
 import core.proof.natural.Judgement
 import core.proof.natural.Judgement.given
 import core.{Algebra, Fix, Functor, traverse}
@@ -38,17 +37,18 @@ object Assistant {
     val violations = judgement.sideConditionViolations
     if violations.nonEmpty then return ProofResult.SideConditionFailure(violations)
 
-    val conclusionUnification =
+    val conclusionUnificationOpt =
       for
         unification      <- rule.conclusion.unifier(judgement)
         totalUnification <- unification.merge(auxUnification)
       yield totalUnification
-    if conclusionUnification.isEmpty then return ProofResult.UnificationFailure()
+    if conclusionUnificationOpt.isEmpty then return ProofResult.UnificationFailure()
 
-    val proofOrFailure: Option[Either[InferenceRule[Judgement, F], Proof[Judgement[Fix[F]]]]] =
+    val conclusionUnification = conclusionUnificationOpt.get
+    val proofOrFailure        =
       for
-        conclusion <- rule.conclusion.substitute(conclusionUnification.get)
-        premises   <- rule.premises.toSeq.traverse { premise => premise.substitute(conclusionUnification.get) }
+        conclusion <- rule.conclusion.substitute(conclusionUnification)
+        premises   <- rule.premises.toSeq.traverse { premise => premise.substitute(conclusionUnification) }
       yield
         if conclusion == judgement then
           Right(Proof(conclusion, premises.reverse.map(Proof(_, List.empty)).toList))
@@ -60,10 +60,7 @@ object Assistant {
         case Left(rule)   => ProofResult.SubstitutionFailure(rule)
       }
 
-    val (assertionUnification, assumptionsUnification, freeUnification) = conclusionUnification.get
-    val substitutedRule                                                 = rule.map { j =>
-      substitutePartial(j, assertionUnification, assumptionsUnification, freeUnification)
-    }
+    val substitutedRule = rule.map(_.substitutePartial(conclusionUnification))
     ProofResult.SubstitutionFailure(substitutedRule)
   }
 

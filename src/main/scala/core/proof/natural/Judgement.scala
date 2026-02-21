@@ -1,10 +1,25 @@
 package proofPlayground
 package core.proof.natural
 
-import core.meta.{CaptureAvoidingSub, FreeVars, MapUnification, MapUnifier, MetaVariable, MetaVars, Pattern, Substitute, Unify}
+import proofPlayground.core.Fix
+import proofPlayground.core.meta.PatternF
+
+import core.meta.AsPattern
 import core.meta.Pattern.given
 import core.meta.Unify.given
 import core.meta.Substitute.given
+import core.meta.SubstitutePartial
+import core.meta.{
+  CaptureAvoidingSub,
+  FreeVars,
+  MapUnification,
+  MapUnifier,
+  MetaVariable,
+  MetaVars,
+  Pattern,
+  Substitute,
+  Unify
+}
 import core.{Algebra, Functor}
 
 /** Representation of a judgement in natural deduction.
@@ -95,6 +110,27 @@ case object Judgement {
           assumptions <- judgement.assumptions.toSeq.substitute(unification._2)
           free        <- judgement.free.toSeq.substitute(unification._3)
         yield Judgement(assertion, assumptions, free)
+  }
+
+  /** [[SubstitutePartial]] instance for [[Judgement]]. */
+  given [T: AsPattern[F], F[_]: Functor] => (Algebra[F, MapUnifier[T]]) => Judgement is SubstitutePartial[T, F] {
+    override type Unification = JudgementUnify.Unification
+    private val JudgementUnify = Judgement.given_is_Judgement_Unify
+
+    extension (unification: Unification[T])
+      override def merge(aux: MapUnification[T]): Option[Unification[T]] =
+        JudgementUnify.merge(unification)(aux)
+
+    extension (judgement: Judgement[Pattern[F]])
+      override def unifier: Unifier =
+        JudgementUnify.unifier(judgement)
+
+    extension (judgement: Judgement[Pattern[F]])
+      override def substitutePartial(unification: Unification[T]): Judgement[Pattern[F]] =
+        val assertion   = judgement.assertion.substitutePartial(unification._1)
+        val assumptions = judgement.assumptions.toSeq.substitutePartial(unification._2)
+        val free        = judgement.free.toSeq.substitutePartial(unification._3)
+        Judgement(assertion, assumptions, free)
   }
 
   extension [F](assumptions: Seq[F]) {

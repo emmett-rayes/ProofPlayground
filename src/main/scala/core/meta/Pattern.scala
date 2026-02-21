@@ -1,6 +1,8 @@
 package proofPlayground
 package core.meta
 
+import scala.language.implicitConversions
+
 import core.{Algebra, Fix, Functor, catamorphism, fix}
 import core.meta.PatternF.*
 
@@ -100,6 +102,41 @@ object Pattern {
             yield formula.substituteWithoutCapturing(variable, replacement)
         }
         catamorphism(pattern)(algebra)
+  }
+
+  /** [[SubstitutePartial]] instance for Identity.
+    * The fact that this instance if for Identity is technical. It is effectively an instance for [[Pattern]]. */
+  given [T: AsPattern[F], F[_]: Functor]
+    => (Algebra[F, MapUnifier[T]]) 
+      => ([X] =>> X) is SubstitutePartial[T, F] {
+    override type Unification = PatternUnify.Unification
+    private val PatternUnify = Pattern.given_is_X_Unify
+
+    extension (unification: Unification[T])
+      override def merge(aux: MapUnification[T]): Option[Unification[T]] =
+        PatternUnify.merge(unification)(aux)
+
+    extension (pattern: Pattern[F])
+      override def unifier: Unifier =
+        PatternUnify.unifier(pattern)
+
+    extension (pattern: Pattern[F])
+      override def substitutePartial(unification: Unification[T]): Pattern[F] =
+        def substitute(pattern: Pattern[F], unification: MapUnification[Pattern[F]]): Pattern[F] =
+            pattern.unfix match {
+              case pattern @ PatternF.Meta(_) =>
+                unification.getOrElse(pattern, pattern)
+              case PatternF.Substitution(variable, replacement, formula) =>
+                substitution(
+                  substitute(variable, unification),
+                  substitute(replacement, unification),
+                  substitute(formula, unification),
+                )
+              case PatternF.Formula(formula) =>
+                concrete(formula.map(substitute(_, unification)))
+            }
+        val patternUnification = unification.view.mapValues(_.asPattern).toMap
+        substitute(pattern, patternUnification)
   }
 }
 
