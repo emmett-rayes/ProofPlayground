@@ -48,3 +48,6 @@ build/
 .bloop/
 .metals/
 metals.sbt
+
+### AI ###
+.ai/
