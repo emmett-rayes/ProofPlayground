@@ -272,9 +272,11 @@ case object FormulaF {
   /** Marker trait for propositional logic variables. */
   sealed trait Propositional
 
-  /** Algebra for collapsing a [[FormulaF]] into an `Option[T]`. */
-  given OptionAlgebra: [T] => (Conversion[FormulaF[T], T]) => Algebra[FormulaF, Option[T]] {
-    override def apply(formula: FormulaF[Option[T]]): Option[T] = {
+  /** Algebra for collapsing a [[FormulaF]] into an `Option[Formula]`. */
+  given OptionAlgebra: Algebra[FormulaF, Option[Formula]] {
+    import Formula.given
+
+    override def apply(formula: FormulaF[Option[Formula]]): Option[Formula] = {
       formula match {
         case FormulaF.Variable(sym)            => Some(variable(sym))
         case FormulaF.True(_)                  => Some(tru)
