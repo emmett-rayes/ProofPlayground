@@ -40,7 +40,7 @@ object Pattern {
   }
 
   /** [[Unify]] instance for Identity.
-    * The fact that this instance if for Identity is technical. It is effectly an instance for [[Pattern]]. */
+    * The fact that this instance if for Identity is technical. It is effectively an instance for [[Pattern]]. */
   given [T, F[_] : Functor] =>(Algebra[F, MapUnifier[T]]) =>([X] =>> X) is Unify[T, F] {
     override type Unification = MapUnification
 

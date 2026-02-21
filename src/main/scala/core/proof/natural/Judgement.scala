@@ -2,9 +2,9 @@ package proofPlayground
 package core.proof.natural
 
 import core.meta.*
-import core.{Algebra, Functor}
-import core.meta.Unify.given
 import core.meta.Pattern.given
+import core.meta.Unify.given
+import core.{Algebra, Functor}
 
 /** Representation of a judgement in natural deduction.
   *
@@ -17,10 +17,16 @@ import core.meta.Pattern.given
   * @param free the collection of variables that are not allowed to appear in the conclusion.
   *             this is used for the side conditions of existential and universal quantifiers.
   */
-case class Judgement[F](assertion: F, assumptions: Seq[F], free: Seq[F])
+case class Judgement[F](assertion: F, assumptions: Seq[F], free: Seq[F]) {
+  def sideConditionViolations(using FreeVars { type Self = F }): Seq[F] =
+    free.collect[F] {
+      case free if assertion.freevariables.contains(free) => free
+    }
+}
 
 case object Judgement {
 
+  /** Used as an intermediate type while constructing [[Judgement]] using DSL methods. */
   opaque type DSLContext[F] = (Seq[F], Seq[F])
 
   /** [[Functor]] instance for [[Judgement]]. */

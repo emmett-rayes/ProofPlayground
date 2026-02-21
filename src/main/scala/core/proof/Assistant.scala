@@ -34,10 +34,9 @@ object Assistant {
     rule: InferenceRule[Judgement, F],
     auxUnification: MapUnification[Fix[F]] = Map.empty[MetaVariable, Fix[F]]
   ): ProofResult[Judgement, F] = {
-    val sideCondition = judgement.free.find { free =>
-      judgement.assertion.freevariables.contains(free)
-    }
-    if sideCondition.isDefined then return ProofResult.SideConditionFailure(sideCondition.get)
+
+    val violations = judgement.sideConditionViolations
+    if violations.nonEmpty then return ProofResult.SideConditionFailure(violations)
 
     val conclusionUnification =
       for
@@ -84,7 +83,7 @@ object Assistant {
       *
       * @param variable the variable that violates the boundary condition.
       */
-    case SideConditionFailure(variable: Fix[F])
+    case SideConditionFailure(variable: Seq[Fix[F]])
 
     /** Substitution failure during proof construction.
       *
