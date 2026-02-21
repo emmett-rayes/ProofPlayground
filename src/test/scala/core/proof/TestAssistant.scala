@@ -7,7 +7,7 @@ import core.logic.propositional.{Formula, FormulaF}
 import core.meta.Pattern
 import core.meta.Pattern.given
 import core.meta.PatternF.{concrete, meta}
-import core.meta.Unifier.given
+import core.meta.Unify.given
 import core.proof.Assistant
 import core.proof.Assistant.ProofResult
 import core.proof.natural.Judgement.*

@@ -8,7 +8,7 @@ import core.logic.symbol
 import core.meta.Pattern.given
 import core.meta.PatternF.{concrete, meta}
 import core.meta.Substitute.{substitute, given}
-import core.meta.{Pattern, Unification}
+import core.meta.{Pattern, MapUnification}
 
 import org.scalatest.funsuite.AnyFunSuite
 import core.fix
@@ -25,7 +25,7 @@ class TestSubstitution extends AnyFunSuite {
     val metavariable = meta[FormulaF, Pattern[FormulaF]]("phi")
     val pattern      = metavariable: Pattern[FormulaF]
     val formula      = formulaGenerator.arbitrary.sample.get
-    val unification  = Map(metavariable -> formula): Unification[Formula]
+    val unification  = Map(metavariable -> formula): MapUnification[Formula]
     val result       = substitute[Formula, FormulaF](pattern, unification)
 
     assert(result.isDefined)
@@ -80,7 +80,7 @@ class TestSubstitution extends AnyFunSuite {
     val pattern     = (phi: Pattern[FormulaF]) /\ (psi: Pattern[FormulaF])
     val formula1    = formulaGenerator.arbitrary.sample.get
     val formula2    = formulaGenerator.arbitrary.sample.get
-    val unification = Map(phi -> formula1, psi -> formula2): Unification[Formula]
+    val unification = Map(phi -> formula1, psi -> formula2): MapUnification[Formula]
     val result      = substitute[Formula, FormulaF](pattern, unification)
 
     assert(result.isDefined)
@@ -93,7 +93,7 @@ class TestSubstitution extends AnyFunSuite {
     val pattern     = (phi: Pattern[FormulaF]) \/ (psi: Pattern[FormulaF])
     val formula1    = formulaGenerator.arbitrary.sample.get
     val formula2    = formulaGenerator.arbitrary.sample.get
-    val unification = Map(phi -> formula1, psi -> formula2): Unification[Formula]
+    val unification = Map(phi -> formula1, psi -> formula2): MapUnification[Formula]
     val result      = substitute[Formula, FormulaF](pattern, unification)
 
     assert(result.isDefined)
@@ -106,7 +106,7 @@ class TestSubstitution extends AnyFunSuite {
     val pattern     = (phi: Pattern[FormulaF]) --> (psi: Pattern[FormulaF])
     val formula1    = formulaGenerator.arbitrary.sample.get
     val formula2    = formulaGenerator.arbitrary.sample.get
-    val unification = Map(phi -> formula1, psi -> formula2): Unification[Formula]
+    val unification = Map(phi -> formula1, psi -> formula2): MapUnification[Formula]
     val result      = substitute[Formula, FormulaF](pattern, unification)
 
     assert(result.isDefined)

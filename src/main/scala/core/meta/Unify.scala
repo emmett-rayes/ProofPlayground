@@ -1,28 +1,17 @@
 package proofPlayground
 package core.meta
 
-import core.{Algebra, Functor, catamorphism}
+import core.meta.Pattern.given
+import core.{Algebra, Functor}
 
-import scala.annotation.targetName
+/** A commonly used unifier type from scrutinees to unifications over scrutinees. */
+type MapUnifier[T] = T => Option[MapUnification[T]]
 
-/** A successful unifier mapping meta-variables from a pattern to concrete values. */
-type Unification[T] = Map[MetaVariable, T]
+/** A successful unification mapping meta-variables from a pattern to concrete values. */
+type MapUnification[T] = Map[MetaVariable, T]
 
-/** Type alias for a unifier function that attempts to produce a unification.
-  *
-  * This is the carrier type for the unification algebras.
-  * It is a function because a unifier can be applied to different scrutinees.
-  */
-trait Unifier[T] {
-  type Self
-  type Fn = T => Option[Unification[T]]
-
-  extension (self: Self)
-    def unifier: Fn
-}
-
-object Unifier {
-  import core.meta.Pattern.given
+object MapUnification:
+  import scala.annotation.targetName
 
   /** Merge two unifications if they agree on shared variables, otherwise fail.
     *
@@ -31,7 +20,7 @@ object Unifier {
     * @tparam T the type of the values produced by the unifications
     * @return Some(merged) when consistent; None on conflict
     */
-  def merge[T](fst: Unification[T], snd: Unification[T]): Option[Unification[T]] = {
+  def merge[T](fst: MapUnification[T], snd: MapUnification[T]): Option[MapUnification[T]] = {
     val intersection = fst.keySet.intersect(snd.keySet)
     if intersection.exists(key => fst(key) != snd(key)) then None else Some(fst ++ snd)
   }
@@ -49,13 +38,37 @@ object Unifier {
     * @return Some(merged) when consistent; None on conflict
     */
   @targetName("mergeSeq")
-  def merge[T](fst: Unification[Seq[T]], snd: Unification[T]): Option[Unification[Seq[T]]] = {
+  def merge[T](fst: MapUnification[Seq[T]], snd: MapUnification[T]): Option[MapUnification[Seq[T]]] = {
     val intersection = fst.keySet.intersect(snd.keySet)
     if intersection.exists(key => !fst(key).contains(snd(key))) then None else Some(fst ++ snd.view.mapValues(Seq(_)))
   }
 
-  /** [[Unifier]] instance for `Seq[Pattern[F]]`. */
-  given [T, F[_]: Functor] => (Algebra[F, Unifier[T]#Fn]) => Seq[Pattern[F]] is Unifier[Seq[T]] {
+/** Type alias for a unifier function that attempts to produce a unification.
+  *
+  * This is the carrier type for the unification algebras.
+  * It is a function because a unifier can be applied to different scrutinees.
+  */
+trait Unify[T, F[_]] {
+  type Self[_]
+  type Unification[_]
+  type Unifier = Self[T] => Option[Unification[T]]
+
+  extension (unification: Unification[T])
+    def merge(aux: MapUnification[T]): Option[Unification[T]]
+
+  extension (self: Self[Pattern[F]])
+    def unifier: Unifier
+}
+
+object Unify {
+
+  /** [[Unify]] instance for [[Seq]]. */
+  given [T, F[_]: Functor] => (Algebra[F, MapUnifier[T]]) => Seq is Unify[T, F] {
+    override type Unification = [X] =>> MapUnification[Seq[X]]
+
+    extension (unification: Unification[T])
+      override def merge(aux: MapUnification[T]): Option[Unification[T]] =
+        MapUnification.merge(unification, aux)
 
     /** Attempt to unify a sequence of formula patterns with a sequence of concrete formulas.
       *
@@ -71,14 +84,13 @@ object Unifier {
       *       are assigned scrutinees. This function returns the unification where the first meta-variable
       *       is assigned as many scrutinees as possible. The following adjacent meta-variables are then assigned
       *       an empty sequence until the next concrete pattern is matched.
-      *
       * @return Some(unification) if a consistent unification exists; None otherwise
       */
     extension (patterns: Seq[Pattern[F]])
-      override def unifier: Unifier[Seq[T]]#Fn = {
+      override def unifier: Unifier = {
         scrutinees =>
           {
-            val emptyContext: (Unification[T], Map[Int, Int]) = (Map.empty, Map.empty)
+            val emptyContext: (MapUnification[T], Map[Int, Int]) = (Map.empty, Map.empty)
             val unificationConcrete = patterns.zipWithIndex.foldLeft(Option(emptyContext)) { (ctx, pWithIdx) =>
               val (pattern, idx) = pWithIdx
               pattern.unfix match {
@@ -91,7 +103,7 @@ object Unifier {
                     last = idxMap.maxByOption(_._2).map(_._2).getOrElse(0)
                     (unification, idxMatch) <-
                       scrutinees.drop(last).map(pattern.unifier(_)).zipWithIndex.find(_._1.isDefined)
-                    merged <- merge(unificationAcc, unification.get)
+                    merged <- MapUnification.merge(unificationAcc, unification.get)
                   yield (merged, idxMap + (idx -> idxMatch))
               }
             }

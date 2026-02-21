@@ -1,8 +1,10 @@
 package proofPlayground
 package core.proof.natural
 
-import core.Functor
-import core.meta.{MetaVariable, MetaVars}
+import core.meta.*
+import core.{Algebra, Functor}
+import core.meta.Unify.given
+import core.meta.Pattern.given
 
 /** Representation of a judgement in natural deduction.
   *
@@ -19,7 +21,7 @@ case class Judgement[F](assertion: F, assumptions: Seq[F], free: Seq[F])
 
 case object Judgement {
 
-  opaque type Context[F] = (Seq[F], Seq[F])
+  opaque type DSLContext[F] = (Seq[F], Seq[F])
 
   /** [[Functor]] instance for [[Judgement]]. */
   given Functor[Judgement] {
@@ -37,6 +39,31 @@ case object Judgement {
     }
   }
 
+  /** [[Unify]] instance for [[Judgement]]. */
+  given [T, F[_]: Functor] => (Algebra[F, MapUnifier[T]]) => Judgement is Unify[T, F] {
+    override type Unification = [X] =>> (MapUnification[X], MapUnification[Seq[X]], MapUnification[Seq[X]])
+
+    extension (unification: Unification[T])
+      override def merge(aux: MapUnification[T]): Option[Unification[T]] = {
+        for
+          assertionUnification   <- MapUnification.merge(unification._1, aux)
+          assumptionsUnification <- MapUnification.merge(unification._2, assertionUnification)
+          freeUnification        <- MapUnification.merge(unification._3, assertionUnification)
+        yield (assertionUnification, assumptionsUnification, freeUnification)
+      }
+
+    extension (judgement: Judgement[Pattern[F]])
+      override def unifier: Unifier = { scrutinee =>
+        for {
+          assertionUnification        <- judgement.assertion.unifier(scrutinee.assertion)
+          assumptionsUnification      <- judgement.assumptions.unifier(scrutinee.assumptions)
+          freeUnification             <- judgement.free.unifier(scrutinee.free)
+          mergedAssumptionUnification <- MapUnification.merge(assumptionsUnification, assertionUnification)
+          mergedFreeUnification       <- MapUnification.merge(freeUnification, assertionUnification)
+        } yield (assertionUnification, mergedAssumptionUnification, mergedFreeUnification)
+      }
+  }
+
   extension [F](assumptions: Seq[F]) {
 
     /** Judgement infix constructor. */
@@ -46,10 +73,10 @@ case object Judgement {
   extension [F](free: Seq[F]) {
 
     /** Infix operator for combining assumptions and free sequences */
-    def %(assumptions: Seq[F]): Context[F] = (free, assumptions)
+    def %(assumptions: Seq[F]): DSLContext[F] = (free, assumptions)
   }
 
-  extension [F](context: Context[F]) {
+  extension [F](context: DSLContext[F]) {
 
     /** Judgement infix constructor. */
     def |-(assertion: F): Judgement[F] = Judgement(assertion, context._2, context._1)

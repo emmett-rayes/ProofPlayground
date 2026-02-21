@@ -8,14 +8,14 @@ import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
 import core.meta.Pattern.given
 import core.meta.PatternF.{concrete, meta}
-import core.meta.Unifier.given
-import core.meta.{Pattern, Unification}
+import core.meta.Unify.given
+import core.meta.{Pattern, MapUnification}
 
 import org.scalatest.funsuite.AnyFunSuite
 
 import scala.language.implicitConversions
 
-/** Tests for the [[Unification]] functions. */
+/** Tests for the [[MapUnification]] functions. */
 class TestUnification extends AnyFunSuite {
   private val formulaGenerator = FormulaGenerationUtil.arbitraryGenerator
 

@@ -2,7 +2,6 @@ package proofPlayground
 package core.meta
 
 import core.{Algebra, Fix, Functor, catamorphism, fix}
-
 import core.meta.PatternF.*
 
 type MetaVariable = PatternF.Meta[?, ?]
@@ -40,8 +39,14 @@ object Pattern {
     }
   }
 
-  /** [[Unifier]] instance for [[Pattern]]. */
-  given [T, F[_]: Functor] =>(Algebra[F, Unifier[T]#Fn]) => Pattern[F] is Unifier[T] {
+  /** [[Unify]] instance for Identity.
+    * The fact that this instance if for Identity is technical. It is effectly an instance for [[Pattern]]. */
+  given [T, F[_] : Functor] =>(Algebra[F, MapUnifier[T]]) =>([X] =>> X) is Unify[T, F] {
+    override type Unification = MapUnification
+
+    extension (unification: Unification[T])
+      override def merge(aux: MapUnification[T]): Option[Unification[T]] =
+        MapUnification.merge(unification, aux)
 
     /** Attempt to unify a pattern with a concrete formula.
       *
@@ -57,9 +62,9 @@ object Pattern {
       * @return Some(unification) if a consistent unification exists; None otherwise
       */
     extension (pattern: Pattern[F])
-      override def unifier: Unifier[T]#Fn =
-        val algebra = PatternF.algebra[Unifier[T]#Fn, F](summon) {
-          case PatternF.Meta(name)            => scrutinee => Some(Map(meta(name) -> scrutinee))
+      override def unifier: Unifier =
+        val algebra = PatternF.algebra(summon) {
+          case PatternF.Meta(name) => scrutinee => Some(Map(meta(name) -> scrutinee))
           case PatternF.Substitution(_, _, _) => _ => Some(Map.empty)
         }
         catamorphism(pattern)(algebra)

@@ -4,9 +4,8 @@ package core.logic.propositional
 import core.*
 import core.logic.propositional.FormulaF.*
 import core.logic.symbol
+import core.meta.*
 import core.meta.PatternF.*
-import core.meta.Unifier.merge
-import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, Pattern, Unifier}
 
 import scala.annotation.tailrec
 import scala.language.implicitConversions
@@ -203,7 +202,7 @@ case object FormulaF {
   }
 
   /** An algebra that reduces a [[Formula]] to a `Unifier[Formula]`. */
-  given UnifierAlgebra: Algebra[FormulaF, Unifier[Formula]#Fn] = {
+  given UnifierAlgebra: Algebra[FormulaF, MapUnifier[Formula]] = {
     formula =>
       {
         // noinspection DuplicatedCode
@@ -211,7 +210,7 @@ case object FormulaF {
           {
             (scrutinee.unfix, formula) match {
               case (FormulaF.Variable(variable), FormulaF.Variable(pattern)) =>
-                if pattern == variable then Some(Map.empty) else None
+                if pattern == variable then Some(Map.empty[MetaVariable, Formula]) else None
               case (FormulaF.True(_), FormulaF.True(_)) =>
                 Some(Map.empty)
               case (FormulaF.False(_), FormulaF.False(_)) =>
@@ -222,31 +221,31 @@ case object FormulaF {
                 for
                   lhs    <- pattern.lhs(conjunction.lhs)
                   rhs    <- pattern.rhs(conjunction.rhs)
-                  merged <- merge(lhs, rhs)
+                  merged <- MapUnification.merge(lhs, rhs)
                 yield merged
               case (FormulaF.Disjunction(disjunction), FormulaF.Disjunction(pattern)) =>
                 for
                   lhs    <- pattern.lhs(disjunction.lhs)
                   rhs    <- pattern.rhs(disjunction.rhs)
-                  merged <- merge(lhs, rhs)
+                  merged <- MapUnification.merge(lhs, rhs)
                 yield merged
               case (FormulaF.Implication(implication), FormulaF.Implication(pattern)) =>
                 for
                   lhs    <- pattern.lhs(implication.lhs)
                   rhs    <- pattern.rhs(implication.rhs)
-                  merged <- merge(lhs, rhs)
+                  merged <- MapUnification.merge(lhs, rhs)
                 yield merged
               case (FormulaF.Universal(universal), FormulaF.Universal(pattern)) =>
                 for
                   variable <- pattern.variable(universal.variable)
                   body     <- pattern.body(universal.body)
-                  merged   <- merge(variable, body)
+                  merged   <- MapUnification.merge(variable, body)
                 yield merged
               case (FormulaF.Existential(existential), FormulaF.Existential(pattern)) =>
                 for
                   variable <- pattern.variable(existential.variable)
                   body     <- pattern.body(existential.body)
-                  merged   <- merge(variable, body)
+                  merged   <- MapUnification.merge(variable, body)
                 yield merged
               case _ => None
             }

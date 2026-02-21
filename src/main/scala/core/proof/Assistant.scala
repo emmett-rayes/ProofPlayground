@@ -1,11 +1,10 @@
 package proofPlayground
 package core.proof
 
-import core.meta.Pattern.given
-import core.meta.Substitute.{substitute, substitutePartial}
-import core.meta.Unifier.{merge, given}
 import core.meta.*
+import core.meta.Substitute.{substitute, substitutePartial}
 import core.proof.natural.Judgement
+import core.proof.natural.Judgement.given
 import core.{Algebra, Fix, Functor, traverse}
 
 object Assistant {
@@ -25,7 +24,7 @@ object Assistant {
     */
   def proof[F[_]: Functor](using
     Algebra[F, Option[Fix[F]]],
-    Algebra[F, Unifier[Fix[F]]#Fn],
+    Algebra[F, Fix[F] => Option[MapUnification[Fix[F]]]],
     Algebra[F, Set[MetaVariable]],
     FreeVars { type Self = Fix[F] },
     AsPattern[F] { type Self = Fix[F] },
@@ -33,25 +32,21 @@ object Assistant {
   )(
     judgement: Judgement[Fix[F]],
     rule: InferenceRule[Judgement, F],
-    auxUnification: Unification[Fix[F]] = Map.empty[MetaVariable, Fix[F]]
+    auxUnification: MapUnification[Fix[F]] = Map.empty[MetaVariable, Fix[F]]
   ): ProofResult[Judgement, F] = {
     val sideCondition = judgement.free.find { free =>
       judgement.assertion.freevariables.contains(free)
     }
     if sideCondition.isDefined then return ProofResult.SideConditionFailure(sideCondition.get)
 
-    val unificationOpt =
+    val conclusionUnification =
       for
-        assertionUnification       <- rule.conclusion.assertion.unifier(judgement.assertion)
-        assumptionsUnification     <- rule.conclusion.assumptions.toSeq.unifier(judgement.assumptions.toSeq)
-        freeUnification            <- rule.conclusion.free.toSeq.unifier(judgement.free.toSeq)
-        totalUnification           <- merge(assertionUnification, auxUnification)
-        totalAssumptionUnification <- merge(assumptionsUnification, totalUnification)
-        totalFreeUnification       <- merge(freeUnification, totalUnification)
-      yield (totalUnification, totalAssumptionUnification, totalFreeUnification)
-    if unificationOpt.isEmpty then return ProofResult.UnificationFailure()
+        unification      <- rule.conclusion.unifier(judgement)
+        totalUnification <- unification.merge(auxUnification)
+      yield totalUnification
+    if conclusionUnification.isEmpty then return ProofResult.UnificationFailure()
+    val (unification, assumptionUnification, freeUnification) = conclusionUnification.get
 
-    val (unification, assumptionUnification, freeUnification)                                 = unificationOpt.get
     val proofOrFailure: Option[Either[InferenceRule[Judgement, F], Proof[Judgement[Fix[F]]]]] =
       for
         conclusion <- substitute[Fix[F], F](rule.conclusion, unification, assumptionUnification, freeUnification)

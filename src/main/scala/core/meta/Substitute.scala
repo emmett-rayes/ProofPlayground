@@ -22,10 +22,10 @@ object Substitute {
   def substitute[T: CaptureAvoidingSub, F[_]: Functor](using
     Algebra[F, Option[T]]
   )(
-    judgement: Judgement[Pattern[F]],
-    unification: Unification[T],
-    assumptionUnification: Unification[Seq[T]],
-    freeUnification: Unification[Seq[T]],
+                                                        judgement: Judgement[Pattern[F]],
+                                                        unification: MapUnification[T],
+                                                        assumptionUnification: MapUnification[Seq[T]],
+                                                        freeUnification: MapUnification[Seq[T]],
   ): Option[Judgement[T]] =
     for
       assertion   <- substitute[T, F](judgement.assertion, unification)
@@ -46,7 +46,7 @@ object Substitute {
     */
   def substitute[T: CaptureAvoidingSub, F[_]: Functor](using
     Algebra[F, Option[T]]
-  )(patterns: Seq[Pattern[F]], unification: Unification[Seq[T]]): Option[Seq[T]] =
+  )(patterns: Seq[Pattern[F]], unification: MapUnification[Seq[T]]): Option[Seq[T]] =
     patterns.traverse { pattern =>
       pattern.unfix match {
         case pattern @ PatternF.Meta(name) =>
@@ -70,7 +70,7 @@ object Substitute {
     */
   def substitute[T: CaptureAvoidingSub, F[_]: Functor](using
     Algebra[F, Option[T]]
-  )(pattern: Pattern[F], unification: Unification[T]): Option[T] = {
+  )(pattern: Pattern[F], unification: MapUnification[T]): Option[T] = {
     val algebra = PatternF.algebra[Option[T], F](summon) {
       case pattern @ PatternF.Meta(_) =>
         unification.get(pattern)
@@ -97,10 +97,10 @@ object Substitute {
     * @param freeUnification The unification mapping free meta-variables to sequences of concrete formulas.
     */
   def substitutePartial[T: AsPattern[F], F[_]: Functor](
-    judgement: Judgement[Pattern[F]],
-    unification: Unification[T],
-    assumptionUnification: Unification[Seq[T]],
-    freeUnification: Unification[Seq[T]],
+                                                         judgement: Judgement[Pattern[F]],
+                                                         unification: MapUnification[T],
+                                                         assumptionUnification: MapUnification[Seq[T]],
+                                                         freeUnification: MapUnification[Seq[T]],
   ): Judgement[Pattern[F]] = {
     val assertion   = substitutePartial[T, F](judgement.assertion, unification)
     val assumptions = substitutePartial[T, F](judgement.assumptions.toSeq, assumptionUnification)
@@ -122,9 +122,9 @@ object Substitute {
     */
   def substitutePartial[T: AsPattern[F], F[_]: Functor](
     pattern: Pattern[F],
-    unification: Unification[T]
+    unification: MapUnification[T]
   ): Pattern[F] = {
-    def substitute(pattern: Pattern[F], unification: Unification[Pattern[F]]): Pattern[F] =
+    def substitute(pattern: Pattern[F], unification: MapUnification[Pattern[F]]): Pattern[F] =
       pattern.unfix match {
         case pattern @ PatternF.Meta(_) =>
           unification.getOrElse(pattern, pattern)
@@ -143,9 +143,9 @@ object Substitute {
 
   def substitutePartial[T: AsPattern[F], F[_]: Functor](
     patterns: Seq[Pattern[F]],
-    unification: Unification[Seq[T]]
+    unification: MapUnification[Seq[T]]
   ): Seq[Pattern[F]] = {
-    def substitute(patterns: Seq[Pattern[F]], unification: Unification[Seq[Pattern[F]]]): Seq[Pattern[F]] =
+    def substitute(patterns: Seq[Pattern[F]], unification: MapUnification[Seq[Pattern[F]]]): Seq[Pattern[F]] =
       patterns.flatMap { pattern =>
         pattern.unfix match {
           case pattern @ PatternF.Meta(_) =>
@@ -157,7 +157,7 @@ object Substitute {
             substitute(Seq(concrete(formula)), unification)
         }
       }
-    val patternUnification: Unification[Seq[Pattern[F]]] = unification.view.mapValues(_.map(_.asPattern)).toMap
+    val patternUnification: MapUnification[Seq[Pattern[F]]] = unification.view.mapValues(_.map(_.asPattern)).toMap
     substitute(patterns, patternUnification)
   }
 }

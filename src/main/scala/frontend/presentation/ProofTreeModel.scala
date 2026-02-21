@@ -4,8 +4,8 @@ package frontend.presentation
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.given
-import core.meta.Unifier.given
-import core.meta.{MetaVariable, Unification}
+import core.meta.Unify.given
+import core.meta.{MetaVariable, MapUnification}
 import core.proof.Assistant.ProofResult
 import core.proof.ProofZipper.given
 import core.meta.Pattern.given
@@ -121,8 +121,8 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
   private def handleMissingMetaVariables(
     rule: InferenceRule[Judgement, FormulaF],
     metavariables: Seq[MetaVariable]
-  )(unification: Unification[Formula])(
-    callback: Unification[Formula] => Unit
+  )(unification: MapUnification[Formula])(
+    callback: MapUnification[Formula] => Unit
   ): Unit =
     if metavariables.isEmpty then
       callback(unification)
@@ -134,8 +134,8 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
       }
 
   private def applyRule(
-    rule: InferenceRule[Judgement, FormulaF],
-    unification: Unification[Formula] = Map.empty,
+                         rule: InferenceRule[Judgement, FormulaF],
+                         unification: MapUnification[Formula] = Map.empty,
   )(substitutionFailure: InferenceRule[Judgement, FormulaF] => Unit): Unit = {
     def replace(replacement: Proof[Judgement[Formula]]): Unit = {
       rulesInFocus = false
