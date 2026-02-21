@@ -1,12 +1,12 @@
 package proofPlayground
 package frontend.tui.components
 
-import frontend.tui.Screen.EventResult
-import frontend.tui.{Renderer, Screen}
-
 import tui.*
 import tui.crossterm.{Event, KeyCode}
 import tui.widgets.{BlockWidget, ParagraphWidget}
+
+import frontend.tui.Screen.EventResult
+import frontend.tui.{Renderer, Screen}
 
 class TextInput(
   callback: String => Either[Unit, String],

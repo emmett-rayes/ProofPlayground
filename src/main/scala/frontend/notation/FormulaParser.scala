@@ -1,6 +1,9 @@
 package proofPlayground
 package frontend.notation
 
+import scala.language.{implicitConversions, postfixOps}
+import scala.reflect.ClassTag
+
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
@@ -8,9 +11,6 @@ import core.logic.symbol
 import parser.Combinators.*
 import parser.{LiteralParser, Parser, Tokens}
 import frontend.notation.SymbolParser.*
-
-import scala.language.{implicitConversions, postfixOps}
-import scala.reflect.ClassTag
 
 private def variableParser[K: ClassTag] = symbol.Variable.parser[K]
 

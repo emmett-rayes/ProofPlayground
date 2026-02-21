@@ -1,13 +1,13 @@
 package proofPlayground
 package core.proof.natural
 
+import scala.language.implicitConversions
+
 import core.meta.PatternF.{concrete, substitution}
 import core.meta.{MetaVariable, Pattern, PatternF}
 import core.meta.Pattern.given
 import core.proof.natural.Judgement.*
 import core.proof.{Inference, InferenceRule}
-
-import scala.language.implicitConversions
 
 /** Collection of inference rules for natural deduction. */
 case object InferenceRules {

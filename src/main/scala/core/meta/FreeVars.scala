@@ -1,11 +1,11 @@
 package proofPlayground
 package core.meta
 
+import scala.language.implicitConversions
+
 import core.logic.propositional.Formula.given
 import core.logic.propositional.{Formula, FormulaF}
 import core.{Algebra, catamorphism}
-
-import scala.language.implicitConversions
 
 /** A typeclass for extracting free-variables from a formula. */
 trait FreeVars {

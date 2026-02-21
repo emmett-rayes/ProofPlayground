@@ -1,16 +1,16 @@
 package proofPlayground
 package frontend.tui.views
 
+import tui.*
+import tui.crossterm.{Event, KeyCode, KeyModifiers, MouseEventKind}
+import tui.widgets.{BlockWidget, ListWidget, ParagraphWidget}
+
 import core.logic.propositional.Formula
 import frontend.tui.Screen.EventResult
 import frontend.tui.widgets.{ScrollViewState, ScrollViewWidget, Size}
 import frontend.tui.{Navigation, Renderer, Screen}
 import tree.Tree
 import frontend.presentation.ProofTreeModel
-
-import tui.*
-import tui.crossterm.{Event, KeyCode, KeyModifiers, MouseEventKind}
-import tui.widgets.{BlockWidget, ListWidget, ParagraphWidget}
 
 extension [A](tree: Tree[A]) {
   private def width: Int =

@@ -1,7 +1,7 @@
 package proofPlayground
 package core.proof
 
-import core.meta.*
+import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, MapUnification, MetaVariable}
 import core.meta.Substitute.substitutePartial
 import core.proof.natural.Judgement
 import core.proof.natural.Judgement.given

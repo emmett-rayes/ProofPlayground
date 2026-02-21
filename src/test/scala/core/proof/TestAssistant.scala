@@ -1,6 +1,10 @@
 package proofPlayground
 package core.proof
 
+import org.scalatest.funsuite.AnyFunSuite
+
+import scala.language.implicitConversions
+
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.{*, given}
 import core.logic.propositional.{Formula, FormulaF}
@@ -12,10 +16,6 @@ import core.proof.Assistant
 import core.proof.Assistant.ProofResult
 import core.proof.natural.Judgement.*
 import core.proof.natural.{InferenceRules, Judgement}
-
-import org.scalatest.funsuite.AnyFunSuite
-
-import scala.language.implicitConversions
 
 class TestAssistant extends AnyFunSuite {
   import InferenceRules.IntuitionisticPropositional.*

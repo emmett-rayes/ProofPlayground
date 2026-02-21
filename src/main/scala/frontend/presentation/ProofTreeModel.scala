@@ -1,6 +1,9 @@
 package proofPlayground
 package frontend.presentation
 
+import java.util
+import scala.compiletime.uninitialized
+
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.given
@@ -15,9 +18,6 @@ import frontend.Show.given
 import frontend.tui.Navigation
 import tree.Tree
 import tree.Zipper.root
-
-import java.util
-import scala.compiletime.uninitialized
 
 object ProofTreeModel {
   trait Data {

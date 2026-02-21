@@ -1,13 +1,13 @@
 package proofPlayground
 package core.meta
 
+import scala.language.implicitConversions
+
 import core.meta.Pattern.given
 import core.meta.PatternF.{concrete, substitution}
 import core.meta.Unify
 import core.proof.natural.Judgement
 import core.{Algebra, Functor, traverse}
-
-import scala.language.implicitConversions
 
 trait Substitute[T, F[_]] extends Unify[T, F] {
   extension (self: Self[Pattern[F]])

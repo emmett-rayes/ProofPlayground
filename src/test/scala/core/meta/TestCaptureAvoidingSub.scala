@@ -1,13 +1,13 @@
 package proofPlayground
 package core.meta
 
-import core.logic.propositional.Formula.given
-import core.logic.propositional.FormulaF.*
-import core.logic.propositional.Formula
-
 import org.scalatest.funsuite.AnyFunSuite
 
 import scala.language.implicitConversions
+
+import core.logic.propositional.Formula.given
+import core.logic.propositional.FormulaF.*
+import core.logic.propositional.Formula
 
 /** Tests for [[CaptureAvoidingSub]] trait and implementation. */
 class TestCaptureAvoidingSub extends AnyFunSuite {

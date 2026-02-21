@@ -1,13 +1,13 @@
 package proofPlayground
 package core.meta
 
-import core.logic.propositional.Formula
-import core.logic.propositional.Formula.given
-import core.logic.propositional.FormulaF.*
+import org.scalacheck.{Arbitrary, Gen}
 
 import scala.language.implicitConversions
 
-import org.scalacheck.{Arbitrary, Gen}
+import core.logic.propositional.Formula
+import core.logic.propositional.Formula.given
+import core.logic.propositional.FormulaF.*
 
 object FormulaGenerationUtil {
 

@@ -1,11 +1,11 @@
 package proofPlayground
 package frontend.tui
 
-import frontend.tui.Screen.EventResult
-
 import tui.*
 import tui.crossterm.Event
 import tui.widgets.{BlockWidget, ParagraphWidget}
+
+import frontend.tui.Screen.EventResult
 
 class MainScreen(screens: List[Screen]) extends Screen {
   override def handleEvent(event: Event): EventResult = screens.head.handleEvent(event)

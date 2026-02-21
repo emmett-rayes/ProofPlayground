@@ -1,11 +1,11 @@
 package proofPlayground
 package frontend.tui
 
-import frontend.tui.components.ConfirmPopup
-import frontend.tui.views.{FormulaInput, MissingMetaVariable, ProofTree}
-
 import tui.*
 import tui.crossterm.Event
+
+import frontend.tui.components.ConfirmPopup
+import frontend.tui.views.{FormulaInput, MissingMetaVariable, ProofTree}
 
 extension (frame: Frame) {
   private def renderer: Renderer = new Renderer {

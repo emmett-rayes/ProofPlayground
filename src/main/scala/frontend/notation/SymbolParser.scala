@@ -1,11 +1,11 @@
 package proofPlayground
 package frontend.notation
 
+import scala.reflect.ClassTag
+
 import core.logic.symbol.*
 import parser.Combinators.*
 import parser.{LiteralParser, Parser, RegexParser, Tokens}
-
-import scala.reflect.ClassTag
 
 object SymbolParser {
   extension ($ : Variable.type) {

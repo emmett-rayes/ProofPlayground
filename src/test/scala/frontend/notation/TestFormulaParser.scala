@@ -1,14 +1,14 @@
 package proofPlayground
 package frontend.notation
 
+import org.scalatest.funsuite.AnyFunSuite
+
+import scala.language.implicitConversions
+
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
 import parser.asTokens
-
-import org.scalatest.funsuite.AnyFunSuite
-
-import scala.language.implicitConversions
 
 /** Tests for [[FormulaParser]] functions. */
 class TestFormulaParser extends AnyFunSuite {

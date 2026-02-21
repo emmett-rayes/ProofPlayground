@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "scala",
+      "request": "launch",
+      "name": "main",
+      "mainClass": "proofPlayground.frontend.tui.main",
+      "buildTarget": "file:/Users/emmett/Projects/ProofPlayground/#root/Compile",
+      "args": [],
+      "jvmOptions": [],
+      "env": {}
+    }
+  ]
+}

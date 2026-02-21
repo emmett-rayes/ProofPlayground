@@ -1,6 +1,10 @@
 package proofPlayground
 package frontend.tui.views
 
+import tui.*
+import tui.crossterm.{Event, KeyCode}
+import tui.widgets.{BlockWidget, ClearWidget, ParagraphWidget}
+
 import core.logic.propositional.{Formula, FormulaF}
 import core.meta.MetaVariable
 import core.proof.InferenceRule
@@ -9,10 +13,6 @@ import frontend.tui.Screen.EventResult
 import frontend.tui.components.TextInput
 import frontend.tui.{Rectangle, Renderer, Screen}
 import frontend.presentation.MissingMetaVariableModel
-
-import tui.*
-import tui.crossterm.{Event, KeyCode}
-import tui.widgets.{BlockWidget, ClearWidget, ParagraphWidget}
 
 object MissingMetaVariable {
   def apply(metavariable: MetaVariable, rule: InferenceRule[Judgement, FormulaF])(

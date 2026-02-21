@@ -1,12 +1,12 @@
 package proofPlayground
 package frontend.tui.components
 
-import frontend.tui.Screen.EventResult
-import frontend.tui.{Rectangle, Renderer, Screen}
-
 import tui.*
 import tui.crossterm.{Event, KeyCode}
 import tui.widgets.{BlockWidget, ClearWidget, ParagraphWidget}
+
+import frontend.tui.Screen.EventResult
+import frontend.tui.{Rectangle, Renderer, Screen}
 
 class InputPopup(message: String, title: Option[String] = None, inputTitle: Option[String] = None)(
   confirm: String => Either[Unit, String],

@@ -1,12 +1,12 @@
 package proofPlayground
 package frontend.tui.components
 
-import frontend.tui.Screen.EventResult
-import frontend.tui.{Rectangle, Renderer, Screen}
-
 import tui.*
 import tui.crossterm.{Event, KeyCode}
 import tui.widgets.{BlockWidget, ClearWidget, ParagraphWidget}
+
+import frontend.tui.Screen.EventResult
+import frontend.tui.{Rectangle, Renderer, Screen}
 
 class ConfirmPopup(message: String, title: Option[String] = None)(confirm: Option[() => Unit], dismiss: () => Unit)
     extends Screen {

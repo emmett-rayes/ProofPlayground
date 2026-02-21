@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "ProofPlayground-metals": {
+      "url": "http://localhost:50424/mcp",
+      "type": "http"
+    }
+  }
+}

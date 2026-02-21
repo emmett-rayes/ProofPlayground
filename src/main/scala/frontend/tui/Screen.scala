@@ -1,9 +1,9 @@
 package proofPlayground
 package frontend.tui
 
-import frontend.tui.Screen.EventResult
-
 import tui.{Rect, Text}
+
+import frontend.tui.Screen.EventResult
 
 object Screen {
   enum EventResult {

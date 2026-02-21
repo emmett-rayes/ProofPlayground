@@ -1,11 +1,11 @@
 package proofPlayground
 package frontend.presentation
 
+import scala.util.Success
+
 import core.logic.propositional.Formula
 import frontend.notation.FormulaParser.parser
 import frontend.tui.Navigation
-
-import scala.util.Success
 
 object FormulaInputModel {
   trait Data {

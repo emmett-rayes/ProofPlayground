@@ -1,6 +1,10 @@
 package proofPlayground
 package core.meta
 
+import org.scalatest.funsuite.AnyFunSuite
+
+import scala.language.implicitConversions
+
 import core.fix
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.*
@@ -10,10 +14,6 @@ import core.meta.Pattern.given
 import core.meta.PatternF.{concrete, meta}
 import core.meta.Unify.given
 import core.meta.{Pattern, MapUnification}
-
-import org.scalatest.funsuite.AnyFunSuite
-
-import scala.language.implicitConversions
 
 /** Tests for the [[MapUnification]] functions. */
 class TestUnification extends AnyFunSuite {

@@ -1,14 +1,14 @@
 package proofPlayground
 package frontend.tui.views
 
+import tui.*
+import tui.crossterm.{Event, KeyCode}
+import tui.widgets.ParagraphWidget
+
 import frontend.tui.Screen.EventResult
 import frontend.tui.components.TextInput
 import frontend.tui.{Navigation, Renderer, Screen}
 import frontend.presentation.FormulaInputModel
-
-import tui.*
-import tui.crossterm.{Event, KeyCode}
-import tui.widgets.ParagraphWidget
 
 object FormulaInput {
   def apply(navigation: Navigation): FormulaInput = {

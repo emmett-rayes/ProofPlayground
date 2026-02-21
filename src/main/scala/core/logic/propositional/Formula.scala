@@ -1,14 +1,14 @@
 package proofPlayground
 package core.logic.propositional
 
-import core.*
-import core.logic.propositional.FormulaF.*
-import core.logic.symbol
-import core.meta.*
-import core.meta.PatternF.*
-
 import scala.annotation.tailrec
 import scala.language.implicitConversions
+
+import core.logic.propositional.FormulaF.*
+import core.logic.symbol
+import core.meta.PatternF.*
+import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, MapUnification, MapUnifier, MetaVariable, Pattern}
+import core.{Algebra, Fix, Functor, catamorphism, fix}
 
 /** Representation of a propositional formula.
   *
