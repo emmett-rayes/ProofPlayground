@@ -69,6 +69,38 @@ object Pattern {
         }
         catamorphism(pattern)(algebra)
   }
+
+  /** [[Substitute]] instance for Identity.
+    * The fact that this instance if for Identity is technical. It is effectively an instance for [[Pattern]]. */
+  given [T: CaptureAvoidingSub, F[_] : Functor]
+    => (Algebra[F, Option[T]])
+    => (Algebra[F, MapUnifier[T]])
+      => ([X] =>> X) is Substitute[T, F] {
+    override type Unification = PatternUnify.Unification
+    private val PatternUnify = Pattern.given_is_X_Unify
+
+    extension (unification: Unification[T])
+      override def merge(aux: MapUnification[T]): Option[Unification[T]] =
+        PatternUnify.merge(unification)(aux)
+
+    extension (pattern: Pattern[F])
+      override def unifier: Unifier =
+        PatternUnify.unifier(pattern)
+
+    extension (pattern: Pattern[F])
+      override def substitute(unification: Unification[T]): Option[T] =
+        val algebra = PatternF.algebra[Option[T], F](summon) {
+          case pattern@PatternF.Meta(_) =>
+            unification.get(pattern)
+          case PatternF.Substitution(variable, replacement, formula) =>
+            for
+              variable <- variable
+              replacement <- replacement
+              formula <- formula
+            yield formula.substituteWithoutCapturing(variable, replacement)
+        }
+        catamorphism(pattern)(algebra)
+  }
 }
 
 /** The functor representing patterns.

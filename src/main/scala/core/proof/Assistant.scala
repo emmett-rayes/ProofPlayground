@@ -2,7 +2,7 @@ package proofPlayground
 package core.proof
 
 import core.meta.*
-import core.meta.Substitute.{substitute, substitutePartial}
+import core.meta.Substitute.substitutePartial
 import core.proof.natural.Judgement
 import core.proof.natural.Judgement.given
 import core.{Algebra, Fix, Functor, traverse}
@@ -44,14 +44,11 @@ object Assistant {
         totalUnification <- unification.merge(auxUnification)
       yield totalUnification
     if conclusionUnification.isEmpty then return ProofResult.UnificationFailure()
-    val (unification, assumptionUnification, freeUnification) = conclusionUnification.get
 
     val proofOrFailure: Option[Either[InferenceRule[Judgement, F], Proof[Judgement[Fix[F]]]]] =
       for
-        conclusion <- substitute[Fix[F], F](rule.conclusion, unification, assumptionUnification, freeUnification)
-        premises   <- rule.premises.toSeq.traverse { premise =>
-          substitute[Fix[F], F](premise, unification, assumptionUnification, freeUnification)
-        }
+        conclusion <- rule.conclusion.substitute(conclusionUnification.get)
+        premises   <- rule.premises.toSeq.traverse { premise => premise.substitute(conclusionUnification.get) }
       yield
         if conclusion == judgement then
           Right(Proof(conclusion, premises.reverse.map(Proof(_, List.empty)).toList))
@@ -63,7 +60,10 @@ object Assistant {
         case Left(rule)   => ProofResult.SubstitutionFailure(rule)
       }
 
-    val substitutedRule = rule.map { j => substitutePartial(j, unification, assumptionUnification, freeUnification) }
+    val (assertionUnification, assumptionsUnification, freeUnification) = conclusionUnification.get
+    val substitutedRule                                                 = rule.map { j =>
+      substitutePartial(j, assertionUnification, assumptionsUnification, freeUnification)
+    }
     ProofResult.SubstitutionFailure(substitutedRule)
   }
 

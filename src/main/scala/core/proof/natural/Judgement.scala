@@ -4,6 +4,7 @@ package core.proof.natural
 import core.meta.*
 import core.meta.Pattern.given
 import core.meta.Unify.given
+import core.meta.Substitute.given
 import core.{Algebra, Functor}
 
 /** Representation of a judgement in natural deduction.
@@ -68,6 +69,32 @@ case object Judgement {
           mergedFreeUnification       <- MapUnification.merge(freeUnification, assertionUnification)
         } yield (assertionUnification, mergedAssumptionUnification, mergedFreeUnification)
       }
+  }
+
+  /** [[Substitute]] instance for [[Judgement]]. */
+  given [T: CaptureAvoidingSub, F[_]: Functor]
+    => (Algebra[F, Option[T]])
+    => (Algebra[F, MapUnifier[T]])
+      => Judgement is Substitute[T, F] {
+
+    override type Unification = JudgementUnify.Unification
+    private val JudgementUnify = Judgement.given_is_Judgement_Unify
+
+    extension (unification: Unification[T])
+      override def merge(aux: MapUnification[T]): Option[Unification[T]] =
+        JudgementUnify.merge(unification)(aux)
+
+    extension (judgement: Self[Pattern[F]])
+      override def unifier: Unifier =
+        JudgementUnify.unifier(judgement)
+
+    extension (judgement: Self[Pattern[F]])
+      override def substitute(unification: Unification[T]): Option[Self[T]] =
+        for
+          assertion   <- judgement.assertion.substitute(unification._1)
+          assumptions <- judgement.assumptions.toSeq.substitute(unification._2)
+          free        <- judgement.free.toSeq.substitute(unification._3)
+        yield Judgement(assertion, assumptions, free)
   }
 
   extension [F](assumptions: Seq[F]) {
