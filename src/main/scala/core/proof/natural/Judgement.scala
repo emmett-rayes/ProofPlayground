@@ -1,11 +1,10 @@
 package proofPlayground
 package core.proof.natural
 
-import proofPlayground.core.Fix
-import proofPlayground.core.meta.PatternF
-
+import core.Fix
 import core.meta.AsPattern
 import core.meta.Pattern.given
+import core.meta.PatternF
 import core.meta.Unify.given
 import core.meta.Substitute.given
 import core.meta.SubstitutePartial
@@ -18,7 +17,7 @@ import core.meta.{
   MetaVars,
   Pattern,
   Substitute,
-  Unify
+  Unify,
 }
 import core.{Algebra, Functor}
 
@@ -34,7 +33,7 @@ import core.{Algebra, Functor}
   *             this is used for the side conditions of existential and universal quantifiers.
   */
 case class Judgement[F](assertion: F, assumptions: Seq[F], free: Seq[F]) {
-  def sideConditionViolations(using FreeVars { type Self = F }): Seq[F] =
+  def sideConditionViolations(using F is FreeVars): Seq[F] =
     free.collect[F] {
       case free if assertion.freevariables.contains(free) => free
     }

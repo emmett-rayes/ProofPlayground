@@ -1,6 +1,7 @@
 package proofPlayground
 package core.proof
 
+import core.meta.MapUnifier
 import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, MapUnification, MetaVariable}
 import core.proof.natural.Judgement
 import core.proof.natural.Judgement.given
@@ -22,12 +23,11 @@ object Assistant {
     * @return Some(proof) if it is constructible, None otherwise.
     */
   def proof[F[_]: Functor](using
+    Fix[F] is FreeVars,
+    Fix[F] is AsPattern[F],
+    Fix[F] is CaptureAvoidingSub,
     Algebra[F, Option[Fix[F]]],
-    Algebra[F, Fix[F] => Option[MapUnification[Fix[F]]]],
-    Algebra[F, Set[MetaVariable]],
-    FreeVars { type Self = Fix[F] },
-    AsPattern[F] { type Self = Fix[F] },
-    CaptureAvoidingSub { type Self = Fix[F] },
+    Algebra[F, MapUnifier[Fix[F]]],
   )(
     judgement: Judgement[Fix[F]],
     rule: InferenceRule[Judgement, F],
@@ -76,9 +76,9 @@ object Assistant {
     /** Unification failure during proof construction. */
     case UnificationFailure()
 
-    /** Boundary condition failure during proof construction.
+    /** Side-condition failure during proof construction.
       *
-      * @param variable the variable that violates the boundary condition.
+      * @param variable the variable that violates the side-condition.
       */
     case SideConditionFailure(variable: Seq[Fix[F]])
 

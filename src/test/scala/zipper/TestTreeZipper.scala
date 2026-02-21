@@ -5,7 +5,7 @@ import org.scalatest.funsuite.AnyFunSuite
 
 import Zipper.root
 import TreeZipper.given
-import proofPlayground.zipper.{Tree, TreeZipper, Zipper}
+import zipper.{Tree, TreeZipper, Zipper}
 
 class TestTreeZipper extends AnyFunSuite {
 
