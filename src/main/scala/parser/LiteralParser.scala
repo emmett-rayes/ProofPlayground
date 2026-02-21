@@ -4,6 +4,7 @@ package parser
 import scala.util.Try
 
 object LiteralParser {
+
   /** Creates a parser that matches the given literal string.
     *
     * @tparam S the literal string to match.

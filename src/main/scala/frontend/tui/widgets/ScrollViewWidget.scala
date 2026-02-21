@@ -40,7 +40,7 @@ case class ScrollViewWidget(
 
   override type State = ScrollViewState
 
-  val area        = Rect(x = 0, y = 0, width = size.width, height = size.height)
+  val area                = Rect(x = 0, y = 0, width = size.width, height = size.height)
   private val buf: Buffer = Buffer.empty(area)
 
   /** The content size of the scroll view */
@@ -127,8 +127,7 @@ case class ScrollViewWidget(
       // render scrollbar, update available space
       renderHorizontalScrollbar(renderArea, buf, state)
       area.height - 1
-    }
-    else
+    } else
       area.height
 
     val newWidth = if showVertical then {
@@ -138,8 +137,7 @@ case class ScrollViewWidget(
       // render scrollbar, update available space
       renderVerticalScrollbar(renderArea, buf, state)
       area.width - 1
-    }
-    else
+    } else
       area.width
 
     Rect(x = state.offset.x, y = state.offset.y, width = newWidth, height = newHeight)

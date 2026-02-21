@@ -14,6 +14,7 @@ object NonRecursiveParser {
   }
 
   extension [Input <: { def size: Int }, Output: ClassTag](self: => Parser[Input, Output]) {
+
     /** Creates a non-recursive version of this parser that rejects left-recursion.
       *
       * This is a convenience parser that helps avoid having to refactor left-recursive grammars.

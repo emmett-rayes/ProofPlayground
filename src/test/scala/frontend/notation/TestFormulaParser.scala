@@ -565,7 +565,10 @@ class TestFormulaParser extends AnyFunSuite {
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === forall[Formula](variable[Formula]("X"), variable[Formula]("A") /\ variable[Formula]("B")))
+    assert(result.get.parsed === forall[Formula](
+      variable[Formula]("X"),
+      variable[Formula]("A") /\ variable[Formula]("B")
+    ))
   }
 
   test("existential quantification with disjunction in body") {
@@ -575,7 +578,10 @@ class TestFormulaParser extends AnyFunSuite {
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === exists[Formula](variable[Formula]("X"), variable[Formula]("A") \/ variable[Formula]("B")))
+    assert(result.get.parsed === exists[Formula](
+      variable[Formula]("X"),
+      variable[Formula]("A") \/ variable[Formula]("B")
+    ))
   }
 
   test("universal quantification with negation in body") {
@@ -595,7 +601,10 @@ class TestFormulaParser extends AnyFunSuite {
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === exists[Formula](variable[Formula]("X"), variable[Formula]("A") --> variable[Formula]("B")))
+    assert(result.get.parsed === exists[Formula](
+      variable[Formula]("X"),
+      variable[Formula]("A") --> variable[Formula]("B")
+    ))
   }
 
   test("nested universal quantifications") {
@@ -605,7 +614,10 @@ class TestFormulaParser extends AnyFunSuite {
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === forall[Formula](variable[Formula]("X"), forall[Formula](variable[Formula]("Y"), variable[Formula]("A"))))
+    assert(result.get.parsed === forall[Formula](
+      variable[Formula]("X"),
+      forall[Formula](variable[Formula]("Y"), variable[Formula]("A"))
+    ))
   }
 
   test("nested existential quantifications") {
@@ -615,7 +627,10 @@ class TestFormulaParser extends AnyFunSuite {
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === exists[Formula](variable[Formula]("X"), exists[Formula](variable[Formula]("Y"), variable[Formula]("A"))))
+    assert(result.get.parsed === exists[Formula](
+      variable[Formula]("X"),
+      exists[Formula](variable[Formula]("Y"), variable[Formula]("A"))
+    ))
   }
 
   test("mixed nested quantifications - universal then existential") {
@@ -625,7 +640,10 @@ class TestFormulaParser extends AnyFunSuite {
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === forall[Formula](variable[Formula]("X"), exists[Formula](variable[Formula]("Y"), variable[Formula]("A"))))
+    assert(result.get.parsed === forall[Formula](
+      variable[Formula]("X"),
+      exists[Formula](variable[Formula]("Y"), variable[Formula]("A"))
+    ))
   }
 
   test("mixed nested quantifications - existential then universal") {
@@ -635,7 +653,10 @@ class TestFormulaParser extends AnyFunSuite {
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === exists[Formula](variable[Formula]("X"), forall[Formula](variable[Formula]("Y"), variable[Formula]("A"))))
+    assert(result.get.parsed === exists[Formula](
+      variable[Formula]("X"),
+      forall[Formula](variable[Formula]("Y"), variable[Formula]("A"))
+    ))
   }
 
   test("universal quantification with parenthesized body") {
@@ -645,7 +666,10 @@ class TestFormulaParser extends AnyFunSuite {
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === forall[Formula](variable[Formula]("X"), variable[Formula]("A") /\ variable[Formula]("B")))
+    assert(result.get.parsed === forall[Formula](
+      variable[Formula]("X"),
+      variable[Formula]("A") /\ variable[Formula]("B")
+    ))
   }
 
   test("existential quantification with parenthesized body") {
@@ -655,7 +679,10 @@ class TestFormulaParser extends AnyFunSuite {
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === exists[Formula](variable[Formula]("X"), variable[Formula]("A") \/ variable[Formula]("B")))
+    assert(result.get.parsed === exists[Formula](
+      variable[Formula]("X"),
+      variable[Formula]("A") \/ variable[Formula]("B")
+    ))
   }
 
   test("universal quantification with complex nested formula") {
@@ -665,8 +692,10 @@ class TestFormulaParser extends AnyFunSuite {
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === forall[Formula](variable[Formula]("X"),
-      (variable[Formula]("A") /\ variable[Formula]("B")) \/ ((~variable[Formula]("C")) --> variable[Formula]("D"))))
+    assert(result.get.parsed === forall[Formula](
+      variable[Formula]("X"),
+      (variable[Formula]("A") /\ variable[Formula]("B")) \/ ((~variable[Formula]("C")) --> variable[Formula]("D"))
+    ))
   }
 
   test("existential quantification with complex nested formula") {
@@ -676,8 +705,10 @@ class TestFormulaParser extends AnyFunSuite {
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === exists[Formula](variable[Formula]("X"),
-      (variable[Formula]("A") --> variable[Formula]("B")) /\ (variable[Formula]("C") \/ ~variable[Formula]("D"))))
+    assert(result.get.parsed === exists[Formula](
+      variable[Formula]("X"),
+      (variable[Formula]("A") --> variable[Formula]("B")) /\ (variable[Formula]("C") \/ ~variable[Formula]("D"))
+    ))
   }
 
   test("triple nested quantifications") {
@@ -687,9 +718,13 @@ class TestFormulaParser extends AnyFunSuite {
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === forall[Formula](variable[Formula]("X"),
-      exists[Formula](variable[Formula]("Y"),
-        forall[Formula](variable[Formula]("Z"), variable[Formula]("A")))))
+    assert(result.get.parsed === forall[Formula](
+      variable[Formula]("X"),
+      exists[Formula](
+        variable[Formula]("Y"),
+        forall[Formula](variable[Formula]("Z"), variable[Formula]("A"))
+      )
+    ))
   }
 
   test("universal quantification over True constant") {
@@ -759,8 +794,10 @@ class TestFormulaParser extends AnyFunSuite {
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === forall[Formula](variable[Formula]("X"),
-      ((variable[Formula]("A") /\ variable[Formula]("B")) \/ (~variable[Formula]("C"))) --> variable[Formula]("D")))
+    assert(result.get.parsed === forall[Formula](
+      variable[Formula]("X"),
+      ((variable[Formula]("A") /\ variable[Formula]("B")) \/ (~variable[Formula]("C"))) --> variable[Formula]("D")
+    ))
   }
 
   test("existential quantification with mixed operators using Unicode symbols") {
@@ -770,8 +807,10 @@ class TestFormulaParser extends AnyFunSuite {
     val result = parser.parse(input)
     assert(result.isSuccess)
     assert(result.get.remaining.isEmpty)
-    assert(result.get.parsed === exists[Formula](variable[Formula]("X"),
-      (variable[Formula]("A") \/ (variable[Formula]("B") /\ ~variable[Formula]("C"))) --> variable[Formula]("D")))
+    assert(result.get.parsed === exists[Formula](
+      variable[Formula]("X"),
+      (variable[Formula]("A") \/ (variable[Formula]("B") /\ ~variable[Formula]("C"))) --> variable[Formula]("D")
+    ))
   }
 
   test("formula parsing fails on quantification without body") {
@@ -810,4 +849,3 @@ class TestFormulaParser extends AnyFunSuite {
     assert(result.get.parsed === exists[Formula](variable[Formula]("X"), ~(~variable[Formula]("A"))))
   }
 }
-

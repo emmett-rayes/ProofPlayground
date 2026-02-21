@@ -20,6 +20,7 @@ trait Substitute[T, F[_]] extends Unify[T, F] {
 }
 
 object Substitute {
+
   /** Substitutes meta-variables in the judgement according to the provided unifications.
     *
     * Meta-variables are replaced by concrete formulas if they are present in the unification.

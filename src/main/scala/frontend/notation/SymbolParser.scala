@@ -9,6 +9,7 @@ import scala.reflect.ClassTag
 
 object SymbolParser {
   extension ($ : Variable.type) {
+
     /** Parser for variable symbols.
       *
       * @tparam K the type of the variable identifiers.
@@ -19,6 +20,7 @@ object SymbolParser {
   }
 
   extension ($ : True.type) {
+
     /** Parser for the true constant.
       *
       * @return a parser that recognizes and produces the True constant.
@@ -30,6 +32,7 @@ object SymbolParser {
   }
 
   extension ($ : False.type) {
+
     /** Parser for the false constant.
       *
       * @return a parser that recognizes and produces the True constant.
@@ -41,6 +44,7 @@ object SymbolParser {
   }
 
   extension ($ : Negation.type) {
+
     /** Parser for unary negation.
       *
       * @param subparser the parser for the subformula.
@@ -67,6 +71,7 @@ object SymbolParser {
   }
 
   extension ($ : Conjunction.type) {
+
     /** Parser for binary conjunction.
       *
       * @param subparser the parser for the subformulas.
@@ -85,7 +90,8 @@ object SymbolParser {
       * @param converter a function to convert a conjunction of two subformulas into a single formula.
       * @return a parser that recognizes and produces lists of subformulas as left-associated conjunctions.
       */
-    def chainedParser[F](subparser: Parser[Tokens, F])(converter: Conjunction[F] => F): Parser[Tokens, Conjunction[F]] = {
+    def chainedParser[F](subparser: Parser[Tokens, F])(converter: Conjunction[F] => F)
+      : Parser[Tokens, Conjunction[F]] = {
       val op = LiteralParser.parser["/\\"].orElse(LiteralParser.parser["∧"])
       subparser.andThen(op.skipThen(subparser).atLeast(1)).map { (first, rest) =>
         val lhs = rest.dropRight(1).foldLeft(first)((acc, curr) => converter(Conjunction(acc, curr)))
@@ -95,6 +101,7 @@ object SymbolParser {
   }
 
   extension ($ : Disjunction.type) {
+
     /** Parser for binary disjunction.
       *
       * @param subparser the parser for the subformulas.
@@ -113,7 +120,8 @@ object SymbolParser {
       * @param converter a function to convert a disjunction of two subformulas into a single formula.
       * @return a parser that recognizes and produces lists of subformulas as left-associated disjunctions.
       */
-    def chainedParser[F](subparser: Parser[Tokens, F])(converter: Disjunction[F] => F): Parser[Tokens, Disjunction[F]] = {
+    def chainedParser[F](subparser: Parser[Tokens, F])(converter: Disjunction[F] => F)
+      : Parser[Tokens, Disjunction[F]] = {
       val op = LiteralParser.parser["\\/"].orElse(LiteralParser.parser["∨"])
       subparser.andThen(op.skipThen(subparser).atLeast(1)).map { (first, rest) =>
         val lhs = rest.dropRight(1).foldLeft(first)((acc, curr) => converter(Disjunction(acc, curr)))
@@ -123,6 +131,7 @@ object SymbolParser {
   }
 
   extension ($ : Implication.type) {
+
     /** Parser for implication.
       *
       * @param subparser the parser for the subformulas.
@@ -141,7 +150,8 @@ object SymbolParser {
       * @param converter a function to convert an implication of two subformulas into a single formula.
       * @return a parser that recognizes and produces lists of subformulas as right-associated implications.
       */
-    def chainedParser[F](subparser: Parser[Tokens, F])(converter: Implication[F] => F): Parser[Tokens, Implication[F]] = {
+    def chainedParser[F](subparser: Parser[Tokens, F])(converter: Implication[F] => F)
+      : Parser[Tokens, Implication[F]] = {
       val op = LiteralParser.parser["-->"].orElse(LiteralParser.parser["->"].orElse(LiteralParser.parser["→"]))
       subparser.andThen(op.skipThen(subparser).atLeast(1)).map { (first, rest) =>
         val rhs = rest.reduceRight((curr, acc) => converter(Implication(curr, acc)))
@@ -151,6 +161,7 @@ object SymbolParser {
   }
 
   extension ($ : Difference.type) {
+
     /** Parser for difference.
       *
       * @param subparser the parser for the subformulas.
@@ -179,6 +190,7 @@ object SymbolParser {
   }
 
   extension ($ : Universal.type) {
+
     /** Parser for universal quantification.
       *
       * @param varparser the parser for the quantification variable.
@@ -194,6 +206,7 @@ object SymbolParser {
   }
 
   extension ($ : Existential.type) {
+
     /** Parser for existential quantification.
       *
       * @param varparser the parser for the quantification variable.

@@ -11,6 +11,7 @@ trait Show {
   type Self
 
   extension (self: Self) {
+
     /** Returns a string representation of `self`. */
     def show: String
   }

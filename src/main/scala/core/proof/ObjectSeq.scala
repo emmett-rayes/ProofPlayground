@@ -4,6 +4,7 @@ package core.proof
 import scala.quoted.{Expr, Quotes, Type}
 
 object ObjectSeq {
+
   /** A macro that extracts all inference rules defined as values in an object.
     *
     * This is a helper macro that saves us from manually listing all inference rules in the proof system twice.

@@ -19,8 +19,7 @@ object TracingParser {
           println(s"${childIndent}Successfully parsed $output")
           println(s"${childIndentPlusOne}Remaining: \"${result.get.remaining}\"")
           println(s"${childIndentPlusOne}Parsed:    ${result.get.parsed}")
-        }
-        else {
+        } else {
           println(s"${childIndent}Failed to parse $output")
           println(s"${childIndentPlusOne}Reason: ${result.failed.get.getMessage}")
         }

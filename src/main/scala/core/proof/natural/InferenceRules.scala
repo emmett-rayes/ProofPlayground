@@ -20,6 +20,7 @@ case object InferenceRules {
   private given [F[_]] => Conversion[Pattern[F], Seq[Pattern[F]]] = Seq(_)
 
   extension [F[_]](pattern: Pattern[F]) {
+
     /** Add a pattern to a sequence of patterns.
       *
       * @param other The sequence of patterns to add to.

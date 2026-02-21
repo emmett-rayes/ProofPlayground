@@ -7,10 +7,12 @@ package tree
   *         This should correspond to the antiderivative of `Self`.
   */
 trait Zipper[T[_]] {
+
   /** The type of zippers for the underlying structure `T`. */
   type Self[_]
 
   extension [A](self: Self[A]) {
+
     /** Gets the underlying structure at the current position.
       *
       * @return the underlying structure at the current position.
@@ -52,6 +54,7 @@ trait Zipper[T[_]] {
 
 object Zipper {
   extension [T[_]: Zipper, A](zipper: T.Self[A]) {
+
     /** Gets the zipper at the root of the underlying structure reachable from the current position.
       *
       * A root is a node that has no parent.

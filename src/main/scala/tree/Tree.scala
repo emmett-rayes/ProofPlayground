@@ -12,6 +12,7 @@ import core.Functor
   * @tparam A the type of values stored in the tree.
   */
 case class Tree[+A](value: A, children: List[Tree[A]] = List.empty) {
+
   /** Checks if this tree is a leaf node.
     *
     * @return true if this tree is a leaf node, false otherwise.
@@ -20,6 +21,7 @@ case class Tree[+A](value: A, children: List[Tree[A]] = List.empty) {
 }
 
 object Tree {
+
   /** [[Functor]] instance for [[Tree]]. */
   given Functor[Tree] {
     extension [A](fa: Tree[A]) {

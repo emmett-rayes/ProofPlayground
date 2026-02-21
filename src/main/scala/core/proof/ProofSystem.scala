@@ -24,6 +24,7 @@ type InferenceRule[J[_], F[_]] = Inference[J[Pattern[F]]]
 case class ProofSystem[J[_], F[_]](rules: Set[InferenceRule[J, F]])
 
 object ProofSystem {
+
   /** Proof system for intuitionistic propositional natural deduction. */
   val IntuitionisticPropositionalNaturalDeduction: ProofSystem[natural.Judgement, propositional.FormulaF] = {
     import natural.InferenceRules.IntuitionisticPropositional

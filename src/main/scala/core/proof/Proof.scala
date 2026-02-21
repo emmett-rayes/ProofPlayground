@@ -28,6 +28,7 @@ object Proof {
   def unapply[J](proof: Proof[J]): Option[(J, List[Proof[J]])] = Some(proof.value, proof.children)
 
   extension [J](proof: Proof[J]) {
+
     /** Returns the conclusion of the proof. */
     def conclusion: J = proof.value
 

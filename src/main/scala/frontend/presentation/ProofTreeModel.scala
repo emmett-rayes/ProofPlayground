@@ -134,8 +134,8 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
       }
 
   private def applyRule(
-                         rule: InferenceRule[Judgement, FormulaF],
-                         unification: MapUnification[Formula] = Map.empty,
+    rule: InferenceRule[Judgement, FormulaF],
+    unification: MapUnification[Formula] = Map.empty,
   )(substitutionFailure: InferenceRule[Judgement, FormulaF] => Unit): Unit = {
     def replace(replacement: Proof[Judgement[Formula]]): Unit = {
       rulesInFocus = false

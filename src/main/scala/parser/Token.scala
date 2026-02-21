@@ -8,6 +8,7 @@ type Token = Char
 type Tokens = IndexedSeq[Token]
 
 extension (self: String) {
+
   /** Converts the string into a sequence of tokens.
     *
     * @return the sequence of tokens representing the string.
@@ -16,6 +17,7 @@ extension (self: String) {
 }
 
 extension (tokens: Tokens) {
+
   /** Skips leading whitespace tokens and returns the remaining tokens.
     *
     * @return the remaining tokens after skipping leading whitespace.
