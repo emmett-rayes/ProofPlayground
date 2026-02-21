@@ -7,8 +7,10 @@
         "source.organizeImports": "explicit"
     },
     "metals.autoImportBuilds": "all",
+    "metals.defaultBspToBuildTool": true,
     "metals.enableBestEffort": true,
     "metals.enableIndentOnPaste": true,
+    "metals.serverVersion": "1.6.5",
     "metals.startMcpServer": true,
     "metals.suggestLatestUpgrade": "on"
 }
