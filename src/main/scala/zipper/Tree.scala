@@ -29,4 +29,20 @@ object Tree {
         Tree(f(fa.value), fa.children.map(_.map(f)))
     }
   }
+
+  extension [A](tree: Tree[A]) {
+    def width: Int =
+      if tree.isLeaf then 1
+      else
+        tree.children.foldLeft(tree.children.length) { (acc, child) => acc.max(child.width) }
+
+    def height: Int =
+      if tree.isLeaf then 1
+      else
+        tree.children.foldLeft(0) { (acc, child) => acc.max(child.height) } + 1
+
+    def leaves: Seq[Tree[A]] =
+      if tree.isLeaf then Seq(tree)
+      else tree.children.flatMap(_.leaves)
+  }
 }

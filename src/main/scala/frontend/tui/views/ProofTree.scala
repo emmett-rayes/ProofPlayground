@@ -12,22 +12,6 @@ import frontend.tui.{Navigation, Renderer, Screen}
 import zipper.Tree
 import frontend.presentation.ProofTreeModel
 
-extension [A](tree: Tree[A]) {
-  private def width: Int =
-    if tree.isLeaf then 1
-    else
-      tree.children.foldLeft(tree.children.length) { (acc, child) => acc.max(child.width) }
-
-  private def height: Int =
-    if tree.isLeaf then 1
-    else
-      tree.children.foldLeft(0) { (acc, child) => acc.max(child.height) } + 1
-
-  private def leaves: Seq[Tree[A]] =
-    if tree.isLeaf then Seq(tree)
-    else tree.children.flatMap(_.leaves)
-}
-
 extension (view: ScrollViewWidget) {
   private def renderer: Renderer = renderer(None)
 
@@ -202,7 +186,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
 
     // render children
     if !tree.isLeaf then {
-      val childrenSizes  = tree.children.map(width)
+      val childrenSizes  = tree.children.map(Tree.width)
       val childrenLayout = Layout(
         direction = Direction.Horizontal,
         constraints = Array.tabulate(tree.children.length) { idx =>
