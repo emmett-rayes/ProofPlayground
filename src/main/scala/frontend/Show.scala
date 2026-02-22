@@ -64,7 +64,7 @@ object Show {
         val assertion   = judgement.assertion.show
         val assumptions = judgement.assumptions.map(_.show).mkString(", ")
         val free        = judgement.free.map(_.show).mkString(", ")
-        val lhs         = if assumptions.nonEmpty && free.nonEmpty then s"$free ; $assumptions" else free + assumptions
+        val lhs         = if free.isEmpty then assumptions else s"$free ; $assumptions"
         s"$lhs ⊢ $assertion"
       }
     }

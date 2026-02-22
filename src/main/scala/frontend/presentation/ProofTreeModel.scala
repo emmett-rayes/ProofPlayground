@@ -69,7 +69,7 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
   override def proofTree: Tree[ProofTreeModel.ProofStep] =
     zipper.root.get.asTree.map { judgement =>
       val label =
-        if judgement.free.contains(judgement.assertion) then "!"
+        if judgement.assertion.freevariables.exists(judgement.free.contains(_)) then "!"
         else if judgement.assumptions.contains(judgement.assertion) then " "
         else proofStepLabels.getOrDefault(judgement, "?")
       val result = ProofTreeModel.ProofStep(judgement.show, label)
