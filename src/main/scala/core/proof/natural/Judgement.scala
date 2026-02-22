@@ -2,6 +2,7 @@ package proofPlayground
 package core.proof.natural
 
 import core.Fix
+import core.{Algebra, Functor}
 import core.meta.AsPattern
 import core.meta.Pattern.given
 import core.meta.PatternF
@@ -20,7 +21,7 @@ import core.meta.{
   Substitute,
   Unify,
 }
-import core.{Algebra, Functor}
+import core.proof.SideCondition
 
 /** Representation of a judgement in natural deduction.
   *
@@ -33,12 +34,7 @@ import core.{Algebra, Functor}
   * @param free the collection of variables that are not allowed to appear in the conclusion.
   *             this is used for the side conditions of existential and universal quantifiers.
   */
-case class Judgement[F](assertion: F, assumptions: Seq[F], free: Seq[F]) {
-  def sideConditionViolations(using F is FreeVars): Seq[F] =
-    free.collect[F] {
-      case free if assertion.freevariables.contains(free) => free
-    }
-}
+case class Judgement[F](assertion: F, assumptions: Seq[F], free: Seq[F])
 
 case object Judgement {
 
@@ -58,6 +54,16 @@ case object Judgement {
     extension (judgement: Judgement[F]) {
       override def metavariables: Set[MetaVariable] =
         judgement.assertion.metavariables ++ judgement.assumptions.flatMap(_.metavariables)
+    }
+  }
+
+  /** [[SideCondition]] instance for [[Judgement]]. */
+  given [F: FreeVars] => Judgement[F] is SideCondition[F] {
+    extension (judgement: Judgement[F]) {
+      override def violations: Seq[F] =
+        judgement.free.collect {
+          case free if judgement.assertion.freevariables.contains(free) => free
+        }
     }
   }
 

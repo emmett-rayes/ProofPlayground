@@ -4,15 +4,15 @@ package frontend.presentation
 import java.util
 import scala.compiletime.uninitialized
 
-import core.logic.propositional.{Formula, FormulaF}
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.given
-import core.meta.Unify.given
+import core.logic.propositional.{Formula, FormulaF}
 import core.meta.{MetaVariable, MapUnification}
 import core.proof.Assistant.ProofResult
 import core.proof.ProofZipper.given
 import core.meta.Pattern.given
 import core.proof.natural.Judgement
+import core.proof.natural.Judgement.given
 import core.proof.{Assistant, InferenceRule, Proof, ProofSystem}
 import frontend.Show.given
 import frontend.tui.Navigation

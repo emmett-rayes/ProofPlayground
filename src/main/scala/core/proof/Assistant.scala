@@ -1,8 +1,9 @@
 package proofPlayground
 package core.proof
 
-import core.meta.{AsPattern, MapUnification, MetaVariable, Substitute}
 import core.{Fix, Functor, traverse}
+import core.meta.{AsPattern, MapUnification, MetaVariable, Substitute}
+import core.proof.SideCondition
 
 object Assistant {
 
@@ -20,15 +21,16 @@ object Assistant {
     * @return A result indicating whether the proof was constructible, or if there was a failure.
     */
   def proof[F[_]: Functor, J[_]: {Functor, Substitute[Fix[F], F]}](using
-    Fix[F] is AsPattern[F]
+    Fix[F] is AsPattern[F],
+    J[Fix[F]] is SideCondition[Fix[F]],
   )(
     judgement: J[Fix[F]],
     rule: InferenceRule[J, F],
     auxUnification: MapUnification[Fix[F]] = Map.empty[MetaVariable, Fix[F]],
   ): ProofResult[J, F] = {
 
-    // val violations = judgement.sideConditionViolations
-    // if violations.nonEmpty then return ProofResult.SideConditionFailure(violations)
+    val violations = judgement.violations
+    if violations.nonEmpty then return ProofResult.SideConditionFailure(violations)
 
     val conclusionUnificationOpt =
       for

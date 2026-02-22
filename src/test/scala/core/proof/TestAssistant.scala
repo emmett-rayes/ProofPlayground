@@ -15,6 +15,7 @@ import core.meta.Unify.given
 import core.proof.Assistant
 import core.proof.Assistant.ProofResult
 import core.proof.natural.Judgement.*
+import core.proof.natural.Judgement.given
 import core.proof.natural.{InferenceRules, Judgement}
 
 class TestAssistant extends AnyFunSuite {
