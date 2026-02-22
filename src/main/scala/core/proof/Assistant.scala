@@ -1,41 +1,34 @@
 package proofPlayground
 package core.proof
 
-import core.meta.MapUnifier
-import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, MapUnification, MetaVariable}
-import core.proof.natural.Judgement
-import core.proof.natural.Judgement.given
-import core.{Algebra, Fix, Functor, traverse}
+import core.meta.{AsPattern, MapUnification, MetaVariable, Substitute}
+import core.{Fix, Functor, traverse}
 
 object Assistant {
 
   /** Attempts to produce a proof for the given judgement by applying the given inference rule.
     *
     * The proof is constructible if the judgement can be proved by applying the inference rule to the judgement.
-    * Unification is used to match the patterns in the inference rule with the concrete formulas in the judgement.
     * Substitution is used to substitute the unification results into the patterns in the inference rule.
     * Thus producing new premises as given by the inference rule.
     *
     * @tparam F The type of the formula functor used in patterns in the inference rule.
+    * @tparam J The type of the judgement functor used in the inference rule.
     * @param judgement The judgement to be proved.
     * @param rule The inference rule to be applied.
     * @param auxUnification A unification for the meta-variables appearing in the premises but not in the conclusion.
-    * @return Some(proof) if it is constructible, None otherwise.
+    * @return A result indicating whether the proof was constructible, or if there was a failure.
     */
-  def proof[F[_]: Functor](using
-    Fix[F] is FreeVars,
-    Fix[F] is AsPattern[F],
-    Fix[F] is CaptureAvoidingSub,
-    Algebra[F, Option[Fix[F]]],
-    Algebra[F, MapUnifier[Fix[F]]],
+  def proof[F[_]: Functor, J[_]: {Functor, Substitute[Fix[F], F]}](using
+    Fix[F] is AsPattern[F]
   )(
-    judgement: Judgement[Fix[F]],
-    rule: InferenceRule[Judgement, F],
-    auxUnification: MapUnification[Fix[F]] = Map.empty[MetaVariable, Fix[F]]
-  ): ProofResult[Judgement, F] = {
+    judgement: J[Fix[F]],
+    rule: InferenceRule[J, F],
+    auxUnification: MapUnification[Fix[F]] = Map.empty[MetaVariable, Fix[F]],
+  ): ProofResult[J, F] = {
 
-    val violations = judgement.sideConditionViolations
-    if violations.nonEmpty then return ProofResult.SideConditionFailure(violations)
+    // val violations = judgement.sideConditionViolations
+    // if violations.nonEmpty then return ProofResult.SideConditionFailure(violations)
 
     val conclusionUnificationOpt =
       for

@@ -9,16 +9,6 @@ import core.meta.Unify
 import core.proof.natural.Judgement
 import core.{Algebra, Functor, traverse}
 
-trait Substitute[T, F[_]] extends Unify[T, F] {
-  extension (self: Self[Pattern[F]])
-    /** Substitutes meta-variables in the pattern according to the provided unification.
-      *
-      * @param unification The unification mapping meta-variables to concrete formulas.
-      * @return Some(substituted) if the substitution is successful; None otherwise.
-      */
-    def substitute(unification: Unification[T]): Option[Self[T]]
-}
-
 trait SubstitutePartial[T, F[_]] extends Unify[T, F] {
   extension (self: Self[Pattern[F]])
     /** Substitutes meta-variables in the pattern according to the provided unification.
@@ -32,7 +22,17 @@ trait SubstitutePartial[T, F[_]] extends Unify[T, F] {
     def substitutePartial(unification: Unification[T]): Self[Pattern[F]]
 }
 
-object Substitute {
+trait Substitute[T, F[_]] extends SubstitutePartial[T, F] {
+  extension (self: Self[Pattern[F]])
+    /** Substitutes meta-variables in the pattern according to the provided unification.
+      *
+      * @param unification The unification mapping meta-variables to concrete formulas.
+      * @return Some(substituted) if the substitution is successful; None otherwise.
+      */
+    def substitute(unification: Unification[T]): Option[Self[T]]
+}
+
+object SubstitutePartial {
 
   /** [[SubstitutePartial]] instance for [[Seq]]. */
   given [T: AsPattern[F], F[_]: Functor]
@@ -67,22 +67,29 @@ object Substitute {
         val patternUnification: MapUnification[Seq[Pattern[F]]] = unification.view.mapValues(_.map(_.asPattern)).toMap
         substitute(patterns, patternUnification)
   }
+}
+
+object Substitute {
 
   /** [[Substitute]] instance for [[Seq]]. */
-  given [T: CaptureAvoidingSub, F[_]: Functor]
+  given [T: {AsPattern[F], CaptureAvoidingSub}, F[_]: Functor]
     => (Algebra[F, Option[T]])
     => (Algebra[F, MapUnifier[T]])
       => Seq is Substitute[T, F] {
-    override type Unification = SeqUnify.Unification
-    private val SeqUnify = Unify.given_is_Seq_Unify
+    override type Unification = SeqSubstitutePartial.Unification
+    private val SeqSubstitutePartial = SubstitutePartial.given_is_Seq_SubstitutePartial
 
     extension (unification: Unification[T])
       override def merge(aux: MapUnification[T]): Option[Unification[T]] =
-        SeqUnify.merge(unification)(aux)
+        SeqSubstitutePartial.merge(unification)(aux)
 
     extension (patterns: Seq[Pattern[F]])
       override def unifier: Unifier =
-        SeqUnify.unifier(patterns)
+        SeqSubstitutePartial.unifier(patterns)
+
+    extension (patterns: Seq[Pattern[F]])
+      override def substitutePartial(unification: Unification[T]): Seq[Pattern[F]] =
+        SeqSubstitutePartial.substitutePartial(patterns)(unification)
 
     extension (patterns: Seq[Pattern[F]])
       override def substitute(unification: Unification[T]): Option[Seq[T]] =
