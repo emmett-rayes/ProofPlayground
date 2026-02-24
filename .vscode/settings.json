@@ -10,7 +10,7 @@
     "metals.defaultBspToBuildTool": true,
     "metals.enableBestEffort": true,
     "metals.enableIndentOnPaste": true,
-    "metals.serverVersion": "1.6.5",
+    "metals.serverVersion": "1.6.5+61-683485a8-SNAPSHOT",
     "metals.startMcpServer": true,
     "metals.suggestLatestUpgrade": "on"
 }
