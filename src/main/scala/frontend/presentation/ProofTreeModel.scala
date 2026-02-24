@@ -58,19 +58,20 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
 
   override def rules: Vector[ProofTreeModel.ProofRule] = inferenceRules.map { rule =>
     val active = Assistant.proof(zipper.get.conclusion, rule) match {
-      case ProofResult.UnificationFailure()    => false
-      case ProofResult.SideConditionFailure(_) => false
-      case ProofResult.Success(_)              => true
-      case ProofResult.SubstitutionFailure(_)  => true // substitution failures can be fixed by user input
+      case ProofResult.UnificationFailure()   => false
+      case ProofResult.Success(_)             => true
+      case ProofResult.SubstitutionFailure(_) => true // substitution failures can be fixed by user input
     }
     ProofTreeModel.ProofRule(active, rule.label)
   }
 
   override def proofTree: Tree[ProofTreeModel.ProofStep] =
-    zipper.root.get.asTree.map { judgement =>
+    val tree   = zipper.root.get.asTree
+    val leaves = tree.leaves.map(_.value).toSet
+    tree.map { judgement =>
       val label =
-        if judgement.assertion.freevariables.exists(judgement.free.contains(_)) then "!"
-        else if judgement.assumptions.contains(judgement.assertion) then " "
+        if judgement.violations.nonEmpty then "!"
+        else if !judgement.open then " "
         else proofStepLabels.getOrDefault(judgement, "?")
       val result = ProofTreeModel.ProofStep(judgement.show, label)
       // remember the current position for `isNodeSelected`
@@ -146,7 +147,6 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
 
     Assistant.proof(zipper.get.conclusion, rule, unification) match {
       case ProofResult.UnificationFailure()                 => ()
-      case ProofResult.SideConditionFailure(_)              => ()
       case ProofResult.Success(proof)                       => replace(proof)
       case ProofResult.SubstitutionFailure(substitutedRule) => substitutionFailure(substitutedRule)
     }

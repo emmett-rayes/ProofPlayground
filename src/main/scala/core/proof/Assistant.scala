@@ -3,7 +3,6 @@ package core.proof
 
 import core.{Fix, Functor, traverse}
 import core.meta.{AsPattern, MapUnification, MetaVariable, Substitute}
-import core.proof.SideCondition
 
 object Assistant {
 
@@ -21,16 +20,12 @@ object Assistant {
     * @return A result indicating whether the proof was constructible, or if there was a failure.
     */
   def proof[F[_]: Functor, J[_]: {Functor, Substitute[Fix[F], F]}](using
-    Fix[F] is AsPattern[F],
-    J[Fix[F]] is SideCondition[Fix[F]],
+    Fix[F] is AsPattern[F]
   )(
     judgement: J[Fix[F]],
     rule: InferenceRule[J, F],
     auxUnification: MapUnification[Fix[F]] = Map.empty[MetaVariable, Fix[F]],
   ): ProofResult[J, F] = {
-
-    val violations = judgement.violations
-    if violations.nonEmpty then return ProofResult.SideConditionFailure(violations)
 
     val conclusionUnificationOpt =
       for
@@ -70,12 +65,6 @@ object Assistant {
 
     /** Unification failure during proof construction. */
     case UnificationFailure()
-
-    /** Side-condition failure during proof construction.
-      *
-      * @param variable the variable that violates the side-condition.
-      */
-    case SideConditionFailure(variable: Seq[Fix[F]])
 
     /** Substitution failure during proof construction.
       *
