@@ -19,6 +19,7 @@ type ParserResult[Input, Output] = Try[(remaining: Input, parsed: Output)]
   * @tparam Output the type of the output produced by the parser.
   */
 trait Parser[Input, +Output] {
+
   /** Parses the given input and returns a `ParserResult`.
     *
     * @param input the input to be parsed.
@@ -55,6 +56,7 @@ trait Parser[Input, +Output] {
 }
 
 object Parser {
+
   /** Creates a parser that always succeeds with the given output without consuming any input.
     *
     * @param output the output to be produced by the parser.
