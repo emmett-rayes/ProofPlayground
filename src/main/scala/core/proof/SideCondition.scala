@@ -6,8 +6,11 @@ import core.meta.FreeVars
 trait SideCondition[F: FreeVars] {
   type Self
 
-  /** Returns the collection of formulas that violate the side condition, if any. */
   extension (self: Self) {
+    /** Returns whether the proof step is open */
+    def open: Boolean
+
+    /** Returns the collection of formulas that violate the side condition, if any. */
     def violations: Seq[F]
   }
 }
