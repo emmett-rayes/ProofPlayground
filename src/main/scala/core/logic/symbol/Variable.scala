@@ -15,7 +15,7 @@ final class Variable[K] private (val id: String) {
   override def hashCode(): Int = (getClass, id).hashCode()
 }
 
-case object Variable {
+object Variable {
   private val registry = mutable.Map[(Class[?], String), Variable[?]]()
 
   /** Creates or gets the unique variable for the given type and identifier.

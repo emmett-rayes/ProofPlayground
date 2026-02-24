@@ -166,7 +166,7 @@ enum FormulaF[T] {
   case Existential(existential: symbol.Existential[T, T])
 }
 
-case object FormulaF {
+object FormulaF {
 
   /** Create a propositional variable formula using a variable identifier. */
   def variable[T](id: String)(using Conversion[FormulaF[T], T]): T = Variable(symbol.Variable[Propositional](id))

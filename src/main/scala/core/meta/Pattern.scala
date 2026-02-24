@@ -178,7 +178,7 @@ enum PatternF[F[_], T] {
   case Formula(formula: F[T])
 }
 
-case object PatternF {
+object PatternF {
 
   /** Implicit conversion from a meta-variable name to a meta-variable pattern. */
   given [F[_], T] => Conversion[String, PatternF[F, T]] = meta(_)
