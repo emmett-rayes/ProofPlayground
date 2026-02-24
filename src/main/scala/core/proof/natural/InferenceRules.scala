@@ -279,10 +279,12 @@ case object InferenceRules {
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
 
+      // we use `++` instead of `::` to denote that `nu` may not appear in the free variables of the open leaves
+      // above the premise, but it can appear in the free variables of `rho`.
       Inference(
         "∀I",
         Seq(
-          (omega :: nu) % gamma |- phi
+          (omega ++ nu) % gamma |- phi
         ),
         omega % gamma |- forall(nu, phi)
       )
@@ -333,13 +335,15 @@ case object InferenceRules {
       val phi   = Pattern[FormulaF]("phi")
       val rho   = Pattern[FormulaF]("rho")
 
+      // we use `::` instead of `++` to denote that `nu` may not appear in the free variables of the open leaves
+      // above the premise, as well as in the free variables of `rho`.
       Inference(
         "∃E",
         Seq(
           omega         % gamma |- exists(nu, phi),
           (omega :: nu) % (gamma :: phi) |- rho,
         ),
-        omega % gamma |- rho,
+        (omega % gamma |- rho),
       )
     }
   }

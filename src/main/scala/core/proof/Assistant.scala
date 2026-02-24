@@ -41,13 +41,17 @@ object Assistant {
         premises   <- rule.premises.toSeq.traverse { premise => premise.substitute(conclusionUnification) }
       yield
         if conclusion == judgement then
-          Right(Proof(conclusion, premises.reverse.map(Proof(_, List.empty)).toList))
+          // it is important to return judgement here, not the substituted conclusion, because the judgement may contain
+          // further judgement specific information internally.
+          Right(Proof(judgement, premises.reverse.map(Proof(_, List.empty)).toList))
         else
           Left(Inference(rule.label, premises, conclusion).map(j => j.map(_.asPattern)))
     if proofOrFailure.isDefined then
       return proofOrFailure.get match {
         case Right(proof) => ProofResult.Success(proof)
-        case Left(rule)   => ProofResult.SubstitutionFailure(rule)
+        case Left(rule)   =>
+          throw RuntimeException(rule.toString)
+          ProofResult.SubstitutionFailure(rule)
       }
 
     val substitutedRule = rule.map(_.substitutePartial(conclusionUnification))

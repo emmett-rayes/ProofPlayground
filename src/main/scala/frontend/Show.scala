@@ -63,8 +63,11 @@ object Show {
       override def show: String = {
         val assertion   = judgement.assertion.show
         val assumptions = judgement.assumptions.map(_.show).mkString(", ")
-        val free        = judgement.free.map(_.show).mkString(", ")
-        val lhs         = if free.isEmpty then assumptions else s"$free ; $assumptions"
+        val free        = judgement.nonfree.filter { nf =>
+          !judgement.assumptions.contains(nf) && judgement.exclude.map(nf != _).getOrElse(true)
+        }.map(_.show).mkString(", ")
+
+        val lhs = if free.isEmpty then assumptions else s"$free ; $assumptions"
         s"$lhs ⊢ $assertion"
       }
     }

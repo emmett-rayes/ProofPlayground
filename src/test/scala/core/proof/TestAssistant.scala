@@ -155,7 +155,7 @@ class TestAssistant extends AnyFunSuite {
         // The premise should be: X ; exists X.X |- X
         assert(premises.length == 1)
         val premise = premises.head
-        assert(premise.free.contains(X))
+        assert(premise.nonfree.contains(X))
         assert(premise.assumptions.contains(exists[Formula](X, X)))
         assert(premise.assertion == X)
       case _ => fail("Expected successful proof construction")
