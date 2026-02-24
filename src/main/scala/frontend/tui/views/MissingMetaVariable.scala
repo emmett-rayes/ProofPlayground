@@ -132,7 +132,7 @@ class MissingMetaVariable(data: MissingMetaVariableModel.Data)(signals: MissingM
     }
 
   private def findVariable(text: String): Option[Int] = {
-    val boundaryChars = Set('(', ')', '[', ']', '.', '/', '∀', '∃')
+    val boundaryChars = Set('(', ')', '[', ']', '.', ',', '/', '∀', '∃')
     text.indexOf(data.variable) match {
       case -1       => None
       case varIndex =>
