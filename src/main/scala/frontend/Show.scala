@@ -5,6 +5,7 @@ import core.logic.propositional.{Formula, FormulaF}
 import core.meta.{Pattern, PatternF}
 import core.proof.natural.Judgement
 import core.{Algebra, Functor, catamorphism}
+import core.proof.natural.Judgement.NonFreeSideCondition
 
 /** A typeclass for showing a value of type `Self` as a string. */
 trait Show {
@@ -63,8 +64,9 @@ object Show {
       override def show: String = {
         val assertion   = judgement.assertion.show
         val assumptions = judgement.assumptions.toSet.map(_.show).mkString(", ")
-        val free        = judgement.nonfree.toSet.filter { nf =>
-          judgement.exclude.map(nf != _).getOrElse(true)
+        val free        = judgement.nonfree.toSet.filter { nonfree =>
+          judgement.sidecondition.collect { case NonFreeSideCondition.OpenLeaves(nf) => nf }
+            .map(nonfree != _).getOrElse(true)
         }.map(_.show).mkString(", ")
 
         val lhs = if free.isEmpty then assumptions else s"$free ; $assumptions"

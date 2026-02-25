@@ -1,6 +1,8 @@
 package proofPlayground
 package core.proof.natural
 
+import proofPlayground.core.proof.natural.Judgement.NonFreeSideCondition
+
 import core.Fix
 import core.{Algebra, Functor}
 import core.meta.AsPattern
@@ -34,9 +36,13 @@ import core.proof.SideCondition
   * @param nonfree     a collection of variables that are not allowed to appear in the conclusion.
   *                     this is used for the side conditions of existential and universal quantifiers.
   */
-case class Judgement[F] private (assertion: F, assumptions: Seq[F], nonfree: Seq[F])(val exclude: Option[F]) {
+case class Judgement[F] private (
+  assertion: F,
+  assumptions: Seq[F],
+  nonfree: Seq[F],
+)(val sidecondition: Option[NonFreeSideCondition[F]]) {
   private def clone(assertion: F, assumptions: Seq[F], nonfree: Seq[F]): Judgement[F] =
-    Judgement(assertion, assumptions, nonfree)(exclude)
+    Judgement(assertion, assumptions, nonfree)(sidecondition)
 }
 
 object Judgement {
@@ -51,7 +57,7 @@ object Judgement {
           f(judgement.assertion),
           judgement.assumptions.map(f),
           judgement.nonfree.map(f),
-        )(judgement.exclude.map(f))
+        )(judgement.sidecondition.map(_.map(f)))
     }
   }
 
@@ -71,16 +77,22 @@ object Judgement {
         !judgement.assumptions.contains(judgement.assertion)
 
       override def violations: Seq[F] =
-        val closed = !judgement.open
-        if closed then Seq.empty
-        else
-          judgement.nonfree.collect {
-            // exclude any nonfree variables that were introduced in this judgement,
-            // since the side condition applies to free variables in the derivation of the judgement
-            case nonfree
-                if (judgement.exclude.isEmpty || nonfree != judgement.exclude.get) &&
-                  judgement.assertion.freevariables.contains(nonfree) => nonfree
-          }
+        // if the judgement is closed, the side condition trivially holds, therefore we exclude all nonfree variables,
+        // if the judgement is open exclude any nonfree variables that were introduced in this judgement,
+        // since the side condition applies to free variables in the derivation of the judgement
+        // we only remove the first ocurrence of the nonfree variable, in case it was already introduced before
+        val exclude = judgement.sidecondition.toSeq.collect {
+          case NonFreeSideCondition.OpenLeaves(nf) =>
+            if judgement.open then Seq(nf) else judgement.nonfree
+        }.flatten
+
+        // if the side condition refers to the assertion,
+        // include any nonfree variables that were introduced in this judgement
+        val include = judgement.sidecondition.toSeq.collect {
+          case NonFreeSideCondition.Assertion(nf) => Seq(nf)
+        }.flatten
+
+        judgement.nonfree.diff(exclude).union(include).filter(judgement.assertion.freevariables.contains(_))
     }
   }
 
@@ -158,12 +170,34 @@ object Judgement {
           assumptions <- judgement.assumptions.toSeq.substitute(unification._2)
           nonfree     <- judgement.nonfree.toSeq.substitute(unification._3)
         yield
-          val exclude = judgement.exclude.flatMap(_.substitute(unification._1))
-          Judgement(assertion, assumptions, nonfree)(exclude)
+          val sidecondition = judgement.sidecondition.flatMap(_.traverse(_.substitute(unification._1)))
+          Judgement(assertion, assumptions, nonfree)(sidecondition)
   }
 
   /** Used as an intermediate type while constructing [[Judgement]] using DSL methods. */
-  opaque type DSLContext[F] = (Option[F], Seq[F], Seq[F])
+  opaque type DSLContext[F] = (nonfreeHead: Option[NonFreeSideCondition[F]], nonfree: Seq[F], assumptions: Seq[F])
+
+  enum NonFreeSideCondition[F] {
+    case OpenLeaves(nf: F)
+    case Assertion(nf: F)
+
+    def nonfree: F = this match {
+      case OpenLeaves(nf) => nf
+      case Assertion(nf)  => nf
+    }
+
+    def map[F2](f: F => F2): NonFreeSideCondition[F2] = this match {
+      case OpenLeaves(nf) => OpenLeaves(f(nf))
+      case Assertion(nf)  => Assertion(f(nf))
+    }
+
+    def traverse[F2](f: F => Option[F2]): Option[NonFreeSideCondition[F2]] = this match {
+      case OpenLeaves(nf) => f(nf).map(OpenLeaves(_))
+      case Assertion(nf)  => f(nf).map(Assertion(_))
+    }
+  }
+
+  opaque type DSLContextNonFree[F] = (Option[NonFreeSideCondition[F]], Seq[F])
 
   extension [F](assumptions: Seq[F]) {
 
@@ -177,19 +211,23 @@ object Judgement {
     def %(assumptions: Seq[F]): DSLContext[F] = (None, nonfree, assumptions)
 
     /** Infix operator for constructing nonfree sequences while keeping track of the new element */
-    def ++(head: F): (F, Seq[F]) = (head, nonfree)
+    def ++(head: F): DSLContextNonFree[F] = (Some(NonFreeSideCondition.OpenLeaves(head)), nonfree)
+
+    /** Infix operator for constructing nonfree sequences while keeping track of the new element */
+    def ##(head: F): DSLContextNonFree[F] = (Some(NonFreeSideCondition.Assertion(head)), nonfree)
   }
 
-  extension [F](nonfree: (F, Seq[F])) {
+  extension [F](nonfree: DSLContextNonFree[F]) {
 
     /** Infix operator for combining assumptions and nonfree sequences */
-    def %(assumptions: Seq[F]): DSLContext[F] = (Some(nonfree._1), nonfree._2, assumptions)
+    def %(assumptions: Seq[F]): DSLContext[F] = (nonfree._1, nonfree._2, assumptions)
   }
 
   extension [F](context: DSLContext[F]) {
 
     /** Judgement infix constructor. */
     def |-(assertion: F): Judgement[F] =
-      Judgement(assertion, context._3, (context._2 ++ context._1.toSeq).distinct)(context._1)
+      val nonfree = (context.nonfree ++ context.nonfreeHead.map(_.nonfree).toSeq)
+      Judgement(assertion, context.assumptions, nonfree)(context.nonfreeHead)
   }
 }

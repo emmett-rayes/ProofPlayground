@@ -335,13 +335,13 @@ case object InferenceRules {
       val phi   = Pattern[FormulaF]("phi")
       val rho   = Pattern[FormulaF]("rho")
 
-      // we use `::` instead of `++` to denote that `nu` may not appear in the free variables of the open leaves
+      // we use `##` instead of `++` to denote that `nu` may not appear in the free variables of the open leaves
       // above the premise, as well as in the free variables of `rho`.
       Inference(
         "∃E",
         Seq(
           omega         % gamma |- exists(nu, phi),
-          (omega :: nu) % (gamma :: phi) |- rho,
+          (omega ## nu) % (gamma :: phi) |- rho,
         ),
         (omega % gamma |- rho),
       )
