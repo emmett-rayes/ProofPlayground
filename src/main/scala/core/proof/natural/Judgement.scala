@@ -65,8 +65,7 @@ object Judgement {
   given [F: MetaVars] => Judgement[F] is MetaVars {
     extension (judgement: Judgement[F]) {
       override def metavariables: Set[MetaVariable] =
-        judgement.assertion.metavariables ++ judgement.assumptions.flatMap(_.metavariables) ++
-          judgement.nonfree.flatMap(_.metavariables)
+        judgement.assertion.metavariables
     }
   }
 
