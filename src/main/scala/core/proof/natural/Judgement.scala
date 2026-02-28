@@ -91,7 +91,8 @@ object Judgement {
           case NonFreeSideCondition.Assertion(nf) => Seq(nf)
         }.flatten
 
-        judgement.nonfree.diff(exclude).union(include).filter(judgement.assertion.freevariables.contains(_))
+        val nonfree = judgement.nonfree.diff(exclude).union(include)
+        judgement.assertion.freevariables.filter(nonfree.contains(_)).toSeq
     }
   }
 
