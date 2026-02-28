@@ -2,7 +2,8 @@ package proofPlayground
 package core.proof.sequent
 
 import core.Functor
-import core.meta.{MetaVariable, MetaVars}
+import core.meta.{FreeVars, MetaVariable, MetaVars}
+import core.proof.SideCondition
 
 /** Representation of a judgement in sequent calculus.
   *
@@ -33,6 +34,17 @@ object Judgement {
       override def metavariables: Set[MetaVariable] =
         judgement.antecedents.flatMap(_.metavariables).toSet ++
           judgement.succedents.flatMap(_.metavariables).toSet
+    }
+  }
+
+  /** [[SideCondition]] instance for [[Judgement]]. */
+  given [F: FreeVars] => Judgement[F] is SideCondition[F] {
+    extension (judgement: Judgement[F]) {
+      override def open: Boolean = true
+
+      override def violations: Seq[F] =
+        judgement.antecedents.filter(judgement.nonfree.contains(_)) ++
+          judgement.succedents.filter(judgement.nonfree.contains(_))
     }
   }
 
