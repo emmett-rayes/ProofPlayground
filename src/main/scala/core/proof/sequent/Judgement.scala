@@ -15,6 +15,17 @@ case class Judgement[F](antecedents: Seq[F], succedents: Seq[F], nonfree: Option
 
 object Judgement {
 
+  /** [[Functor]] instance for [[Judgement]]. */
+  given Functor[Judgement] {
+    extension [A](judgement: Judgement[A]) {
+      override def map[B](f: A => B): Judgement[B] =
+        Judgement(
+          judgement.antecedents.map(f),
+          judgement.succedents.map(f),
+        )
+    }
+  }
+
   extension [F](judgement: Judgement[F]) {
 
     /** Add a side-condition to the judgement. */
