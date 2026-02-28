@@ -3,40 +3,17 @@ package core.proof.natural
 
 import scala.language.implicitConversions
 
-import core.meta.PatternF.{concrete, substitution}
-import core.meta.{MetaVariable, Pattern, PatternF}
-import core.meta.Pattern.given
+import core.meta.Pattern
 import core.proof.natural.Judgement.*
 import core.proof.{Inference, InferenceRule}
+import core.proof.InferenceDsl.{*, given}
 
 /** Collection of inference rules for natural deduction. */
 case object InferenceRules {
-  opaque type SubstitutionContext[F[_]] = (Pattern[F], Pattern[F])
-
-  /** Implicit conversion from a formula over patterns to a pattern. */
-  private given [F[_]] => Conversion[F[Pattern[F]], Pattern[F]] = f => Pattern(concrete(f))
-
-  /** Implicit conversion from a pattern to a singleton sequence containing that pattern. */
-  private given [F[_]] => Conversion[Pattern[F], Seq[Pattern[F]]] = Seq(_)
-
-  extension [F[_]](pattern: Pattern[F]) {
-
-    /** Add a pattern to a sequence of patterns.
-      *
-      * @param other The sequence of patterns to add to.
-      * @return A new sequence containing the original patterns and the added pattern.
-      */
-    private def ::(other: Seq[Pattern[F]]): Seq[Pattern[F]] = other :+ pattern
-
-    private def /(other: Pattern[F]): SubstitutionContext[F] = (pattern, other)
-
-    private def apply(context: SubstitutionContext[F]): Pattern[F] =
-      substitution(context._2, context._1, pattern)
-  }
 
   /** Inference rules for intuitionistic propositional logic. */
   // noinspection DuplicatedCode
-  case object IntuitionisticPropositional {
+  object IntuitionisticPropositional {
     import core.logic.propositional.FormulaF
     import core.logic.propositional.FormulaF.*
 
@@ -246,7 +223,7 @@ case object InferenceRules {
 
       Inference(
         "⊤I",
-        Seq(),
+        Seq.empty,
         omega % gamma |- tru,
       )
     }
@@ -265,13 +242,15 @@ case object InferenceRules {
       Inference(
         "⊥E",
         Seq(
-          omega % gamma |- fls
+          omega % gamma |- fls,
         ),
         omega % gamma |- phi,
       )
     }
 
     /** Universal introduction (∀I).
+      *
+      * If Γ ⊢ A, then Γ ⊢ ∀X.A, where X is not free in Γ.
       */
     val UniversalIntroduction: InferenceRule[Judgement, FormulaF] = {
       val omega = Pattern[FormulaF]("Omega")
@@ -284,13 +263,15 @@ case object InferenceRules {
       Inference(
         "∀I",
         Seq(
-          (omega ++ nu) % gamma |- phi
+          (omega ++ nu) % gamma |- phi,
         ),
-        omega % gamma |- forall(nu, phi)
+        omega % gamma |- forall(nu, phi),
       )
     }
 
     /** Universal elimination (∀E).
+      *
+      * If Γ ⊢ ∀X.A, then Γ ⊢ A[B/X].
       */
     val UniversalElimination: InferenceRule[Judgement, FormulaF] = {
       val omega = Pattern[FormulaF]("Omega")
@@ -302,13 +283,15 @@ case object InferenceRules {
       Inference(
         "∀E",
         Seq(
-          omega % gamma |- forall(nu, phi)
+          omega % gamma |- forall(nu, phi),
         ),
-        omega % gamma |- phi(psi / nu)
+        omega % gamma |- phi(psi / nu),
       )
     }
 
     /** Existential introduction (∃I).
+      *
+      * If Γ ⊢ A[B/X], then Γ ⊢ ∃X.A.
       */
     val ExistentialIntroduction: InferenceRule[Judgement, FormulaF] = {
       val omega = Pattern[FormulaF]("Omega")
@@ -320,13 +303,14 @@ case object InferenceRules {
       Inference(
         "∃I",
         Seq(
-          omega % gamma |- phi(psi / nu)
+          omega % gamma |- phi(psi / nu),
         ),
-        omega % gamma |- exists(nu, phi)
+        omega % gamma |- exists(nu, phi),
       )
     }
 
     /** Existential elimination (∃E).
+      * If Γ ⊢ ∃X.A and Γ,A ⊢ B, then Γ ⊢ B, where X is not free in Γ or B.
       */
     val ExistentialElimination: InferenceRule[Judgement, FormulaF] = {
       val omega = Pattern[FormulaF]("Omega")
@@ -340,7 +324,7 @@ case object InferenceRules {
       Inference(
         "∃E",
         Seq(
-          omega         % gamma |- exists(nu, phi),
+          omega % gamma |- exists(nu, phi),
           (omega ## nu) % (gamma :: phi) |- rho,
         ),
         (omega % gamma |- rho),
