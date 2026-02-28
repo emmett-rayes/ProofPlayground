@@ -2,6 +2,7 @@ package proofPlayground
 package core.proof.sequent
 
 import core.Functor
+import core.meta.{MetaVariable, MetaVars}
 
 /** Representation of a judgement in sequent calculus.
   *
@@ -23,6 +24,15 @@ object Judgement {
           judgement.antecedents.map(f),
           judgement.succedents.map(f),
         )
+    }
+  }
+
+  /** [[MetaVars]] instance for [[Judgement]]. */
+  given [F: MetaVars] => Judgement[F] is MetaVars {
+    extension (judgement: Judgement[F]) {
+      override def metavariables: Set[MetaVariable] =
+        judgement.antecedents.flatMap(_.metavariables).toSet ++
+          judgement.succedents.flatMap(_.metavariables).toSet
     }
   }
 
