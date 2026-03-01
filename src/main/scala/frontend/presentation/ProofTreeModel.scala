@@ -38,13 +38,13 @@ object ProofTreeModel {
   case class ProofRule(active: Boolean, rule: String)
 }
 
-class ProofTreeModel[J[_] <: AnyRef: {Functor, Substitute[Formula, FormulaF]}](using
+class ProofTreeModel[J[_] <: AnyRef: {Functor,
+  Substitute[Formula, FormulaF]}](navigation: Navigation)(system: ProofSystem[J, FormulaF], judgement: J[Formula])(using
   J[Formula] is Show,
   J[Pattern[FormulaF]] is Show,
   J[Pattern[FormulaF]] is MetaVars,
   J[Formula] is SideCondition[Formula],
-)(navigation: Navigation)(system: ProofSystem[J, FormulaF], judgement: J[Formula])
-    extends ProofTreeModel.Data, ProofTreeModel.Signals {
+) extends ProofTreeModel.Data, ProofTreeModel.Signals {
 
   private val inferenceRules = system.rules.toVector.sortBy(_.label)
 

@@ -23,10 +23,10 @@ object MissingMetaVariableModel {
   }
 }
 
-class MissingMetaVariableModel[J[_]](using J[Pattern[FormulaF]] is Show)(confirm: Formula => Unit, dismiss: () => Unit)(
+class MissingMetaVariableModel[J[_]](confirm: Formula => Unit, dismiss: () => Unit)(
   metavariable: MetaVariable,
   rule: InferenceRule[J, FormulaF],
-) extends MissingMetaVariableModel.Data, MissingMetaVariableModel.Signals {
+)(using J[Pattern[FormulaF]] is Show) extends MissingMetaVariableModel.Data, MissingMetaVariableModel.Signals {
   override def variable: String = metavariable.name
 
   override def inferenceRule: MissingMetaVariableModel.InferenceRuleString =

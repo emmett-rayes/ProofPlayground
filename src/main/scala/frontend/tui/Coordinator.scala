@@ -55,7 +55,7 @@ class Coordinator extends Navigation {
       case p @ Navigation.Popup.Confirm(message, title) =>
         ConfirmPopup(message, title)(callback.asInstanceOf[p.Callback], dismiss)
       case p: Navigation.Popup.MissingMetaVariable[?] =>
-        MissingMetaVariable(using p.show)(p.metavariable, p.rule)(callback.asInstanceOf[p.Callback], dismiss)
+        MissingMetaVariable(p.metavariable, p.rule)(callback.asInstanceOf[p.Callback], dismiss)(using p.show)
     }
     screens = screen :: screens
   }

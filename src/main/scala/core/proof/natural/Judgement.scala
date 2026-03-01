@@ -8,7 +8,6 @@ import core.meta.Pattern.given
 import core.meta.PatternF
 import core.meta.Unify.given
 import core.meta.Substitute.given
-import core.meta.SubstitutePartial
 import core.meta.SubstitutePartial.given
 import core.meta.{
   CaptureAvoidingSub,
@@ -19,6 +18,7 @@ import core.meta.{
   MetaVars,
   Pattern,
   Substitute,
+  SubstitutePartial,
   Unify,
 }
 import core.proof.SideCondition
@@ -38,10 +38,7 @@ case class Judgement[F] private (
   assertion: F,
   assumptions: Seq[F],
   nonfree: Seq[F],
-)(val sidecondition: Option[Judgement.NonFreeSideCondition[F]]) {
-  private def clone(assertion: F, assumptions: Seq[F], nonfree: Seq[F]): Judgement[F] =
-    Judgement(assertion, assumptions, nonfree)(sidecondition)
-}
+)(val sidecondition: Option[Judgement.NonFreeSideCondition[F]])
 
 object Judgement {
   def apply[F](assertion: F, assumptions: Seq[F], nonfree: Seq[F]): Judgement[F] =
@@ -138,7 +135,7 @@ object Judgement {
         val assertion   = judgement.assertion.substitutePartial(unification._1)
         val assumptions = judgement.assumptions.toSeq.substitutePartial(unification._2)
         val nonfree     = judgement.nonfree.toSeq.substitutePartial(unification._3)
-        judgement.clone(assertion, assumptions, nonfree)
+        Judgement(assertion, assumptions, nonfree)(judgement.sidecondition)
   }
 
   /** [[Substitute]] instance for [[Judgement]]. */

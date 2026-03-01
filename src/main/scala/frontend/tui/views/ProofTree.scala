@@ -31,13 +31,21 @@ object ProofTree {
   def apply(navigation: Navigation)(formula: Formula): ProofTree = {
     import core.logic.propositional.Formula.given
     import core.meta.Pattern.given
-    import core.proof.natural.Judgement
-    import core.proof.natural.Judgement.given
     import core.proof.ProofSystem
     import frontend.Show.given
 
-    val system = ProofSystem.IntuitionisticPropositionalNaturalDeduction
-    val model  = ProofTreeModel(navigation)(system, Judgement(formula, Seq.empty, Seq.empty))
+    val model =
+      if false then
+        import core.proof.natural
+        import core.proof.natural.Judgement.given
+        val system = ProofSystem.IntuitionisticPropositionalNaturalDeduction
+        ProofTreeModel(navigation)(system, natural.Judgement(formula, Seq.empty, Seq.empty))
+      else
+        import core.proof.sequent
+        import core.proof.sequent.Judgement.given
+        val system = ProofSystem.ClassicalPropositionalSequentCalculus
+        ProofTreeModel(navigation)(system, sequent.Judgement(Seq.empty, Seq(formula)))
+
     new ProofTree(model)(model)
   }
 }

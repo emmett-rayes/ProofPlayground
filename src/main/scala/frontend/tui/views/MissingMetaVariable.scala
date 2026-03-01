@@ -15,10 +15,10 @@ import frontend.tui.{Rectangle, Renderer, Screen}
 import frontend.presentation.MissingMetaVariableModel
 
 object MissingMetaVariable {
-  def apply[J[_]](using J[Pattern[FormulaF]] is Show)(metavariable: MetaVariable, rule: InferenceRule[J, FormulaF])(
+  def apply[J[_]](metavariable: MetaVariable, rule: InferenceRule[J, FormulaF])(
     confirm: Formula => Unit,
     dismiss: () => Unit
-  ): MissingMetaVariable = {
+  )(using J[Pattern[FormulaF]] is Show): MissingMetaVariable = {
     val model = MissingMetaVariableModel(confirm, dismiss)(metavariable, rule)
     new MissingMetaVariable(model)(model)
   }
