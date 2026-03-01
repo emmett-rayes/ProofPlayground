@@ -80,9 +80,9 @@ object Judgement {
         // if the judgement is open exclude any nonfree variables that were introduced in this judgement,
         // since the side condition applies to free variables in the derivation of the judgement
         // we only remove the first ocurrence of the nonfree variable, in case it was already introduced before
-        val exclude = judgement.sidecondition.toSeq.collect {
-          case NonFreeSideCondition.OpenLeaves(nf) =>
-            if judgement.open then Seq(nf) else judgement.nonfree
+        val exclude = if !judgement.open then judgement.nonfree else 
+          judgement.sidecondition.toSeq.collect {
+            case NonFreeSideCondition.OpenLeaves(nf) => Seq(nf)
         }.flatten
 
         // if the side condition refers to the assertion,
