@@ -30,4 +30,10 @@ object ProofSystem {
     import natural.InferenceRules.IntuitionisticPropositional
     ProofSystem(objectSeq(IntuitionisticPropositional).toSet)
   }
+
+  /** Proof system for classical propositional sequent calculus. */
+  val ClassicalPropositionalSequentCalculus: ProofSystem[sequent.Judgement, propositional.FormulaF] = {
+    import sequent.InferenceRules.ClassicalPropositional
+    ProofSystem(objectSeq(ClassicalPropositional).toSet)
+  }
 }
