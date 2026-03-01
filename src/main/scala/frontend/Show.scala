@@ -3,9 +3,9 @@ package frontend
 
 import core.logic.propositional.{Formula, FormulaF}
 import core.meta.{Pattern, PatternF}
-import core.proof.natural.Judgement
+import core.proof.natural
+import core.proof.sequent
 import core.{Algebra, Functor, catamorphism}
-import core.proof.natural.Judgement.NonFreeSideCondition
 
 /** A typeclass for showing a value of type `Self` as a string. */
 trait Show {
@@ -58,19 +58,30 @@ object Show {
     }
   }
 
-  /** [[Show]] instance for [[Judgement]]. */
-  given [F: Show] => Judgement[F] is Show {
-    extension (judgement: Judgement[F]) {
+  /** [[Show]] instance for [[natural.Judgement]]. */
+  given NaturalJudgementShow: [F: Show] => natural.Judgement[F] is Show {
+    extension (judgement: natural.Judgement[F]) {
       override def show: String = {
         val assertion   = judgement.assertion.show
         val assumptions = judgement.assumptions.toSet.map(_.show).mkString(", ")
         val free        = judgement.nonfree.toSet.filter { nonfree =>
-          judgement.sidecondition.collect { case NonFreeSideCondition.OpenLeaves(nf) => nf }
+          judgement.sidecondition.collect { case natural.Judgement.NonFreeSideCondition.OpenLeaves(nf) => nf }
             .map(nonfree != _).getOrElse(true)
         }.map(_.show).mkString(", ")
 
         val lhs = if free.isEmpty then assumptions else s"$free ; $assumptions"
         s"$lhs ⊢ $assertion"
+      }
+    }
+  }
+
+  /** [[Show]] instance for [[sequent.Judgement]]. */
+  given SequentJudgementShow: [F: Show] => sequent.Judgement[F] is Show {
+    extension (judgement: sequent.Judgement[F]) {
+      override def show: String = {
+        val lhs = judgement.antecedents.toSet.map(_.show).mkString(", ")
+        val rhs = judgement.succedents.toSet.map(_.show).mkString(", ")
+        s"$lhs ⊢ $rhs"
       }
     }
   }
