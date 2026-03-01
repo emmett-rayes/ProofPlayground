@@ -1,8 +1,6 @@
 package proofPlayground
 package core.proof.natural
 
-import proofPlayground.core.proof.natural.Judgement.NonFreeSideCondition
-
 import core.Fix
 import core.{Algebra, Functor}
 import core.meta.AsPattern
@@ -40,7 +38,7 @@ case class Judgement[F] private (
   assertion: F,
   assumptions: Seq[F],
   nonfree: Seq[F],
-)(val sidecondition: Option[NonFreeSideCondition[F]]) {
+)(val sidecondition: Option[Judgement.NonFreeSideCondition[F]]) {
   private def clone(assertion: F, assumptions: Seq[F], nonfree: Seq[F]): Judgement[F] =
     Judgement(assertion, assumptions, nonfree)(sidecondition)
 }
@@ -80,10 +78,11 @@ object Judgement {
         // if the judgement is open exclude any nonfree variables that were introduced in this judgement,
         // since the side condition applies to free variables in the derivation of the judgement
         // we only remove the first ocurrence of the nonfree variable, in case it was already introduced before
-        val exclude = if !judgement.open then judgement.nonfree else 
+        val exclude = if !judgement.open then judgement.nonfree
+        else
           judgement.sidecondition.toSeq.collect {
             case NonFreeSideCondition.OpenLeaves(nf) => Seq(nf)
-        }.flatten
+          }.flatten
 
         // if the side condition refers to the assertion,
         // include any nonfree variables that were introduced in this judgement
