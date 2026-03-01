@@ -4,17 +4,14 @@ package frontend.presentation
 import java.util
 import scala.compiletime.uninitialized
 
+import core.Functor
 import core.logic.propositional.Formula.given
-import core.logic.propositional.FormulaF.given
 import core.logic.propositional.{Formula, FormulaF}
-import core.meta.{MetaVariable, MapUnification}
+import core.meta.{MetaVariable, MetaVars, MapUnification, Pattern, Substitute}
 import core.proof.Assistant.ProofResult
 import core.proof.ProofZipper.given
-import core.meta.Pattern.given
-import core.proof.natural.Judgement
-import core.proof.natural.Judgement.given
-import core.proof.{Assistant, InferenceRule, Proof, ProofSystem}
-import frontend.Show.given
+import core.proof.{Assistant, InferenceRule, Proof, ProofSystem, SideCondition}
+import frontend.Show
 import frontend.tui.Navigation
 import zipper.Tree
 import zipper.Zipper.root
@@ -41,18 +38,24 @@ object ProofTreeModel {
   case class ProofRule(active: Boolean, rule: String)
 }
 
-class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTreeModel.Data, ProofTreeModel.Signals {
-  private val proofSystem    = ProofSystem.IntuitionisticPropositionalNaturalDeduction
-  private val inferenceRules = proofSystem.rules.toVector.sortBy(_.label)
+class ProofTreeModel[J[_] <: AnyRef: {Functor, Substitute[Formula, FormulaF]}](using
+  J[Formula] is Show,
+  J[Pattern[FormulaF]] is Show,
+  J[Pattern[FormulaF]] is MetaVars,
+  J[Formula] is SideCondition[Formula],
+)(navigation: Navigation)(system: ProofSystem[J, FormulaF], judgement: J[Formula])
+    extends ProofTreeModel.Data, ProofTreeModel.Signals {
+
+  private val inferenceRules = system.rules.toVector.sortBy(_.label)
 
   // hack to remember the label of the proof step for each judgement
   // uses `IdentityHashMap` which compares keys by reference equality (eq) instead of structural equality
-  private val proofStepLabels = util.IdentityHashMap[Judgement[Formula], String]()
+  private val proofStepLabels = util.IdentityHashMap[J[Formula], String]()
 
   private var selected: ProofTreeModel.ProofStep = uninitialized
 
   private var rulesInFocus = false
-  private var zipper       = Proof(Judgement(formula, Seq.empty, Seq.empty), List.empty).zipper
+  private var zipper       = Proof(judgement, List.empty).zipper
 
   override def focusOnRules: Boolean = rulesInFocus
 
@@ -120,7 +123,7 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
     ))
 
   private def handleMissingMetaVariables(
-    rule: InferenceRule[Judgement, FormulaF],
+    rule: InferenceRule[J, FormulaF],
     metavariables: Seq[MetaVariable]
   )(unification: MapUnification[Formula])(
     callback: MapUnification[Formula] => Unit
@@ -135,10 +138,10 @@ class ProofTreeModel(navigation: Navigation)(formula: Formula) extends ProofTree
       }
 
   private def applyRule(
-    rule: InferenceRule[Judgement, FormulaF],
+    rule: InferenceRule[J, FormulaF],
     unification: MapUnification[Formula] = Map.empty,
-  )(substitutionFailure: InferenceRule[Judgement, FormulaF] => Unit): Unit = {
-    def replace(replacement: Proof[Judgement[Formula]]): Unit = {
+  )(substitutionFailure: InferenceRule[J, FormulaF] => Unit): Unit = {
+    def replace(replacement: Proof[J[Formula]]): Unit = {
       rulesInFocus = false
       zipper = zipper.replace(replacement)
       proofStepLabels.put(zipper.get.conclusion, rule.label)

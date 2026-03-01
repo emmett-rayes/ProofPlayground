@@ -29,7 +29,15 @@ extension (view: ScrollViewWidget) {
 
 object ProofTree {
   def apply(navigation: Navigation)(formula: Formula): ProofTree = {
-    val model = ProofTreeModel(navigation)(formula)
+    import core.logic.propositional.Formula.given
+    import core.meta.Pattern.given
+    import core.proof.natural.Judgement
+    import core.proof.natural.Judgement.given
+    import core.proof.ProofSystem
+    import frontend.Show.given
+
+    val system = ProofSystem.IntuitionisticPropositionalNaturalDeduction
+    val model  = ProofTreeModel(navigation)(system, Judgement(formula, Seq.empty, Seq.empty))
     new ProofTree(model)(model)
   }
 }

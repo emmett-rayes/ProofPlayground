@@ -6,16 +6,16 @@ import tui.crossterm.{Event, KeyCode}
 import tui.widgets.{BlockWidget, ClearWidget, ParagraphWidget}
 
 import core.logic.propositional.{Formula, FormulaF}
-import core.meta.MetaVariable
+import core.meta.{MetaVariable, Pattern}
 import core.proof.InferenceRule
-import core.proof.natural.Judgement
+import frontend.Show
 import frontend.tui.Screen.EventResult
 import frontend.tui.components.TextInput
 import frontend.tui.{Rectangle, Renderer, Screen}
 import frontend.presentation.MissingMetaVariableModel
 
 object MissingMetaVariable {
-  def apply(metavariable: MetaVariable, rule: InferenceRule[Judgement, FormulaF])(
+  def apply[J[_]](using J[Pattern[FormulaF]] is Show)(metavariable: MetaVariable, rule: InferenceRule[J, FormulaF])(
     confirm: Formula => Unit,
     dismiss: () => Unit
   ): MissingMetaVariable = {

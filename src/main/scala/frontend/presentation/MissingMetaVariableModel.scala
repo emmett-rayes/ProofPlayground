@@ -4,10 +4,9 @@ package frontend.presentation
 import scala.util.Success
 
 import core.logic.propositional.{Formula, FormulaF}
-import core.meta.MetaVariable
+import core.meta.{MetaVariable, Pattern}
 import core.proof.InferenceRule
-import core.proof.natural.Judgement
-import frontend.Show.given
+import frontend.Show
 import frontend.notation.FormulaParser.parser
 
 object MissingMetaVariableModel {
@@ -24,9 +23,9 @@ object MissingMetaVariableModel {
   }
 }
 
-class MissingMetaVariableModel(confirm: Formula => Unit, dismiss: () => Unit)(
+class MissingMetaVariableModel[J[_]](using J[Pattern[FormulaF]] is Show)(confirm: Formula => Unit, dismiss: () => Unit)(
   metavariable: MetaVariable,
-  rule: InferenceRule[Judgement, FormulaF]
+  rule: InferenceRule[J, FormulaF],
 ) extends MissingMetaVariableModel.Data, MissingMetaVariableModel.Signals {
   override def variable: String = metavariable.name
 

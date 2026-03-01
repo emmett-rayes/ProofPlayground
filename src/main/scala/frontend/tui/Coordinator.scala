@@ -54,8 +54,8 @@ class Coordinator extends Navigation {
     val screen  = popup match {
       case p @ Navigation.Popup.Confirm(message, title) =>
         ConfirmPopup(message, title)(callback.asInstanceOf[p.Callback], dismiss)
-      case p @ Navigation.Popup.MissingMetaVariable(metavariable, rule) =>
-        MissingMetaVariable(metavariable, rule)(callback.asInstanceOf[p.Callback], dismiss)
+      case p: Navigation.Popup.MissingMetaVariable[?] =>
+        MissingMetaVariable(using p.show)(p.metavariable, p.rule)(callback.asInstanceOf[p.Callback], dismiss)
     }
     screens = screen :: screens
   }

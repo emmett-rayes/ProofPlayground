@@ -2,9 +2,9 @@ package proofPlayground
 package frontend.tui
 
 import core.logic.propositional.{Formula, FormulaF}
-import core.meta.MetaVariable
+import core.meta.{MetaVariable, Pattern}
 import core.proof.InferenceRule
-import core.proof.natural.Judgement
+import frontend.Show
 
 object Navigation {
   sealed trait Popup {
@@ -21,7 +21,9 @@ object Navigation {
       override type Callback = Option[() => Unit]
     }
 
-    case class MissingMetaVariable(metavariable: MetaVariable, rule: InferenceRule[Judgement, FormulaF]) extends Popup {
+    case class MissingMetaVariable[J[_]](metavariable: MetaVariable, rule: InferenceRule[J, FormulaF])(using
+      val show: J[Pattern[FormulaF]] is Show
+    ) extends Popup {
       override type Callback = Formula => Unit
     }
   }
