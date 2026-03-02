@@ -29,9 +29,6 @@ object MapUnification:
     *
     * This overload allows for unifications over sequences to be merged.
     *
-    * If both unifications share a meta-variable, the values of the meta-variable in the second unification
-    * must be already contained in the first unification.
-    *
     * @param fst the first unification to merge
     * @param snd the second unification to merge
     * @tparam T the type of the values produced by the unifications
@@ -39,8 +36,7 @@ object MapUnification:
     */
   @targetName("mergeSeq")
   def merge[T](fst: MapUnification[Seq[T]], snd: MapUnification[T]): Option[MapUnification[Seq[T]]] = {
-    val intersection = fst.keySet.intersect(snd.keySet)
-    if intersection.exists(key => !fst(key).contains(snd(key))) then None else Some(fst ++ snd.view.mapValues(Seq(_)))
+    merge[Seq[T]](fst, snd.map { (k, v) => k -> Seq(v) })
   }
 
 /** Type alias for a unifier function that attempts to produce a unification.
