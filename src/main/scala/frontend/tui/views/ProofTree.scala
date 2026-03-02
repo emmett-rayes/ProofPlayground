@@ -10,6 +10,7 @@ import frontend.tui.Screen.EventResult
 import frontend.tui.widgets.{ScrollViewState, ScrollViewWidget, Size}
 import frontend.tui.{Navigation, Renderer, Screen}
 import zipper.Tree
+import frontend.presentation.FormulaInputModel.ProofSystemChoice
 import frontend.presentation.ProofTreeModel
 
 extension (view: ScrollViewWidget) {
@@ -28,24 +29,8 @@ extension (view: ScrollViewWidget) {
 }
 
 object ProofTree {
-  def apply(navigation: Navigation)(formula: Formula): ProofTree = {
-    import core.logic.propositional.Formula.given
-    import core.meta.Pattern.given
-    import core.proof.ProofSystem
-    import frontend.Show.given
-
-    val model =
-      if false then
-        import core.proof.natural
-        import core.proof.natural.Judgement.given
-        val system = ProofSystem.IntuitionisticPropositionalNaturalDeduction
-        ProofTreeModel(navigation)(system, natural.Judgement(formula, Seq.empty, Seq.empty))
-      else
-        import core.proof.sequent
-        import core.proof.sequent.Judgement.given
-        val system = ProofSystem.ClassicalPropositionalSequentCalculus
-        ProofTreeModel(navigation)(system, sequent.Judgement(Seq.empty, Seq(formula)))
-
+  def apply(navigation: Navigation)(formula: Formula, system: ProofSystemChoice): ProofTree = {
+    val model = ProofTreeModel(navigation)(formula, system)
     new ProofTree(model)(model)
   }
 }
@@ -58,16 +43,26 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
     Text.from(Span.styled("Proof Tree", Style.DEFAULT.fg(Color.Cyan)))
 
   override def footerText: Text =
-    Text.from(
-      Span.nostyle("Use "),
-      Span.styled("Arrow Keys", Style.DEFAULT.addModifier(Modifier.BOLD)),
-      Span.nostyle(" to navigate, "),
-      Span.styled("Enter", Style.DEFAULT.addModifier(Modifier.BOLD)),
-      Span.nostyle(if data.focusOnRules then " to apply rule" else " to select node"),
-      Span.nostyle(", "),
-      Span.styled(if data.focusOnRules then "Esc" else "q", Style.DEFAULT.addModifier(Modifier.BOLD)),
-      Span.nostyle(" to " + (if data.focusOnRules then "cancel" else "exit") + "."),
-    )
+    if data.focusOnRules then
+      Text.from(
+        Span.nostyle("Press "),
+        Span.styled("Arrow Up/Down", Style.DEFAULT.addModifier(Modifier.BOLD)),
+        Span.nostyle(" to select rule, "),
+        Span.styled("Enter", Style.DEFAULT.addModifier(Modifier.BOLD)),
+        Span.nostyle(" to apply rule, "),
+        Span.styled("Esc", Style.DEFAULT.addModifier(Modifier.BOLD)),
+        Span.nostyle(" to cancel."),
+      )
+    else
+      Text.from(
+        Span.nostyle("Press "),
+        Span.styled("Arrow Keys", Style.DEFAULT.addModifier(Modifier.BOLD)),
+        Span.nostyle(" to navigate, "),
+        Span.styled("Enter", Style.DEFAULT.addModifier(Modifier.BOLD)),
+        Span.nostyle(" to select node, "),
+        Span.styled("q", Style.DEFAULT.addModifier(Modifier.BOLD)),
+        Span.nostyle(" to exit."),
+      )
 
   override def handleEvent(event: Event): EventResult = {
     import scala.language.implicitConversions
@@ -144,7 +139,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
     val list = ListWidget(
       items = items,
       block = Some(BlockWidget(
-        title = Some(Spans.nostyle("Inference Rules")),
+        title = Some(Spans.nostyle(" Inference Rules ")),
         titleAlignment = Alignment.Center,
         borders = Borders.ALL,
         borderStyle = if data.focusOnRules then Style(fg = Some(Color.Yellow)) else Style.DEFAULT

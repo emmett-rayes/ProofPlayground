@@ -12,6 +12,7 @@ import core.proof.Assistant.ProofResult
 import core.proof.ProofZipper.given
 import core.proof.{Assistant, InferenceRule, Proof, ProofSystem, SideCondition}
 import frontend.Show
+import frontend.presentation.FormulaInputModel.ProofSystemChoice
 import frontend.tui.Navigation
 import zipper.Tree
 import zipper.Zipper.root
@@ -36,6 +37,31 @@ object ProofTreeModel {
 
   case class ProofStep(formula: String, rule: String)
   case class ProofRule(active: Boolean, rule: String)
+
+  def apply(navigation: Navigation)(
+    formula: Formula,
+    system: FormulaInputModel.ProofSystemChoice
+  ): ProofTreeModel[?] = {
+    import core.meta.Pattern.given
+    import frontend.Show.given
+
+    system match {
+      case ProofSystemChoice.IntuitionisticNaturalDeduction =>
+        import core.proof.natural
+        import core.proof.natural.Judgement.given
+        new ProofTreeModel(navigation)(
+          ProofSystem.IntuitionisticPropositionalNaturalDeduction,
+          natural.Judgement(formula, Seq.empty, Seq.empty)
+        )
+      case ProofSystemChoice.ClassicalSequentCalculus =>
+        import core.proof.sequent
+        import core.proof.sequent.Judgement.given
+        new ProofTreeModel(navigation)(
+          ProofSystem.ClassicalPropositionalSequentCalculus,
+          sequent.Judgement(Seq.empty, Seq(formula))
+        )
+    }
+  }
 }
 
 class ProofTreeModel[J[_] <: AnyRef: {Functor,

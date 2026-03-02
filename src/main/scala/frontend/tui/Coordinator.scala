@@ -42,8 +42,8 @@ class Coordinator extends Navigation {
 
   override def navigateTo(destination: Navigation.Screen): Unit = {
     val screen = destination match {
-      case Navigation.Screen.FormulaInput       => FormulaInput(this)
-      case Navigation.Screen.ProofTree(formula) => ProofTree(this)(formula)
+      case Navigation.Screen.FormulaInput               => FormulaInput(this)
+      case Navigation.Screen.ProofTree(formula, system) => ProofTree(this)(formula, system)
     }
     screens = screen :: List.empty
   }

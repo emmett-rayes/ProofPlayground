@@ -21,6 +21,8 @@ class TextInput(
     if startInEditMode then edit()
   }
 
+  def isNormal: Boolean = mode == InputMode.Normal
+
   override def handleEvent(event: Event): EventResult = {
     import scala.language.implicitConversions
     given Conversion[Unit, EventResult.Handled.type] = _ => EventResult.Handled
@@ -165,7 +167,7 @@ class TextInput(
         )
       case InputMode.Error(message) =>
         Text.from(
-          Span.nostyle(" Press "),
+          Span.nostyle("Press "),
           Span.styled("Enter", Style.DEFAULT.addModifier(Modifier.BOLD)),
           Span.nostyle(" or "),
           Span.styled("Esc", Style.DEFAULT.addModifier(Modifier.BOLD)),

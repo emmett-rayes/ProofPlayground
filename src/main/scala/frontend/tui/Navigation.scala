@@ -5,6 +5,7 @@ import core.logic.propositional.{Formula, FormulaF}
 import core.meta.{MetaVariable, Pattern}
 import core.proof.InferenceRule
 import frontend.Show
+import frontend.presentation.FormulaInputModel.ProofSystemChoice
 
 object Navigation {
   sealed trait Popup {
@@ -13,7 +14,7 @@ object Navigation {
 
   enum Screen {
     case FormulaInput
-    case ProofTree(formula: Formula)
+    case ProofTree(formula: Formula, system: ProofSystemChoice)
   }
 
   object Popup {
