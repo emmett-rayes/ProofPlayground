@@ -1,8 +1,24 @@
 package proofPlayground
 package core.proof.sequent
 
-import core.Functor
-import core.meta.{FreeVars, MetaVariable, MetaVars}
+import core.{Algebra, Functor}
+import core.meta.Pattern.given
+import core.meta.Unify.given
+import core.meta.Substitute.given
+import core.meta.SubstitutePartial.given
+import core.meta.{
+  AsPattern,
+  CaptureAvoidingSub,
+  FreeVars,
+  MapUnification,
+  MapUnifier,
+  MetaVariable,
+  MetaVars,
+  Pattern,
+  Substitute,
+  SubstitutePartial,
+  Unify,
+}
 import core.proof.SideCondition
 
 /** Representation of a judgement in sequent calculus.
@@ -46,6 +62,81 @@ object Judgement {
         judgement.antecedents.filter(judgement.nonfree.contains(_)) ++
           judgement.succedents.filter(judgement.nonfree.contains(_))
     }
+  }
+
+  /** [[Unify]] instance for [[Judgement]]. */
+  given [T, F[_]: Functor] => (Algebra[F, MapUnifier[T]]) => Judgement is Unify[T, F] {
+    override type Unification = [X] =>> MapUnification[Seq[X]]
+
+    extension (unification: Unification[T])
+      override def merge(aux: MapUnification[T]): Option[Unification[T]] =
+        MapUnification.merge(unification, aux)
+
+    extension (judgement: Judgement[Pattern[F]])
+      override def unifier: Unifier = { scrutinee =>
+        for {
+          antecendentsUnification <- judgement.antecedents.unifier(scrutinee.antecedents)
+          succedentsUnification   <- judgement.succedents.unifier(scrutinee.succedents)
+          mergedUnification       <- MapUnification.merge[Seq[T]](antecendentsUnification, succedentsUnification)
+        } yield mergedUnification
+      }
+  }
+
+  /** [[SubstitutePartial]] instance for [[Judgement]]. */
+  given [T: AsPattern[F], F[_]: Functor] => (Algebra[F, MapUnifier[T]]) => Judgement is SubstitutePartial[T, F] {
+    override type Unification = JudgementUnify.Unification
+    private val JudgementUnify = Judgement.given_is_Judgement_Unify
+
+    extension (unification: Unification[T])
+      override def merge(aux: MapUnification[T]): Option[Unification[T]] =
+        JudgementUnify.merge(unification)(aux)
+
+    extension (judgement: Judgement[Pattern[F]])
+      override def unifier: Unifier =
+        JudgementUnify.unifier(judgement)
+
+    extension (judgement: Judgement[Pattern[F]])
+      override def substitutePartial(unification: Unification[T]): Judgement[Pattern[F]] =
+        val antecedents = judgement.antecedents.substitutePartial(unification)
+        val succedents  = judgement.succedents.substitutePartial(unification)
+        val nonfree     = judgement.nonfree.map { nf =>
+          val simpleUnification = unification.filter { (_, v) => v.size == 1 }.map { (k, v) => k -> v.head }
+          nf.substitutePartial(simpleUnification)
+        }
+        Judgement(antecedents, succedents, nonfree)
+  }
+
+  /** [[Substitute]] instance for [[Judgement]]. */
+  given [T: {AsPattern[F], CaptureAvoidingSub}, F[_]: Functor]
+    => (Algebra[F, Option[T]])
+    => (Algebra[F, MapUnifier[T]])
+      => Judgement is Substitute[T, F] {
+
+    override type Unification = JudgementSubstitutePartial.Unification
+    private val JudgementSubstitutePartial = Judgement.given_is_Judgement_SubstitutePartial
+
+    extension (unification: Unification[T])
+      override def merge(aux: MapUnification[T]): Option[Unification[T]] =
+        JudgementSubstitutePartial.merge(unification)(aux)
+
+    extension (judgement: Judgement[Pattern[F]])
+      override def unifier: Unifier =
+        JudgementSubstitutePartial.unifier(judgement)
+
+    extension (judgement: Judgement[Pattern[F]])
+      override def substitutePartial(unification: Unification[T]): Judgement[Pattern[F]] =
+        JudgementSubstitutePartial.substitutePartial(judgement)(unification)
+
+    extension (judgement: Judgement[Pattern[F]])
+      override def substitute(unification: Unification[T]): Option[Judgement[T]] =
+        for
+          antecedents <- judgement.antecedents.substitute(unification)
+          succedents  <- judgement.succedents.substitute(unification)
+          nonfree     <- judgement.nonfree.map { nf =>
+            val simpleUnification = unification.filter { (_, v) => v.size == 1 }.map { (k, v) => k -> v.head }
+            nf.substitute(simpleUnification)
+          }
+        yield Judgement(antecedents, succedents, nonfree)
   }
 
   extension [F](judgement: Judgement[F]) {
