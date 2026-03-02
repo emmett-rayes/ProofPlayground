@@ -50,7 +50,6 @@ object Assistant {
       return proofOrFailure.get match {
         case Right(proof) => ProofResult.Success(proof)
         case Left(rule)   =>
-          throw RuntimeException(rule.toString)
           ProofResult.SubstitutionFailure(rule)
       }
 
