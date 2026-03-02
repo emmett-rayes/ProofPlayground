@@ -95,6 +95,7 @@ object Substitute {
 
     extension (patterns: Seq[Pattern[F]])
       override def substitute(unification: Unification[T]): Option[Seq[T]] =
+        val simpleUnification  = unification.filter { (_, v) => v.size == 1 }.map { (k, v) => k -> v.head }
         patterns.traverse { pattern =>
           pattern.unfix match {
             case pattern @ PatternF.Meta(name) =>
@@ -103,8 +104,7 @@ object Substitute {
               // substitution pattern with sequence meta-variables are not supported
               None
             case PatternF.Formula(formula) =>
-              // substituting with the empty unification converts a pattern without variables to a formula
-              pattern.substitute(Map.empty[MetaVariable, T]).map(Seq(_))
+              pattern.substitute(simpleUnification).map(Seq(_))
           }
         }.map(_.flatten)
   }

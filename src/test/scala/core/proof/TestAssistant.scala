@@ -14,12 +14,12 @@ import core.meta.PatternF.{concrete, meta}
 import core.meta.Unify.given
 import core.proof.Assistant
 import core.proof.Assistant.ProofResult
-import core.proof.natural.Judgement.*
-import core.proof.natural.Judgement.given
-import core.proof.natural.{InferenceRules, Judgement}
+import core.proof.natural.Judgement
+import core.proof.sequent.Judgement
 
 class TestAssistant extends AnyFunSuite {
-  import InferenceRules.IntuitionisticPropositional.*
+  import core.proof.natural.InferenceRules.IntuitionisticPropositional.*
+  import core.proof.sequent.InferenceRules.ClassicalPropositional.*
 
   /** Implicit conversion from a formula to a singleton sequence containing that formula. */
   private given Conversion[Formula, Seq[Formula]] = Seq(_)
@@ -41,6 +41,9 @@ class TestAssistant extends AnyFunSuite {
   }
 
   test("conjunction introduction for two propositional variables") {
+    import core.proof.natural.Judgement.*
+    import core.proof.natural.Judgement.given
+
     val A         = variable[Formula]("A")
     val B         = variable[Formula]("B")
     val judgement = Seq.empty |- (A /\ B)
@@ -57,6 +60,9 @@ class TestAssistant extends AnyFunSuite {
   }
 
   test("disjunction elimination fails for two propositional variables") {
+    import core.proof.natural.Judgement.*
+    import core.proof.natural.Judgement.given
+
     val A         = variable[Formula]("A")
     val B         = variable[Formula]("B")
     val judgement = Seq.empty |- (A /\ B)
@@ -67,6 +73,9 @@ class TestAssistant extends AnyFunSuite {
   }
 
   test("disjunction introduction for two propositional variables (left)") {
+    import core.proof.natural.Judgement.*
+    import core.proof.natural.Judgement.given
+
     val A         = variable[Formula]("A")
     val B         = variable[Formula]("B")
     val judgement = Seq.empty |- (A \/ B)
@@ -83,6 +92,9 @@ class TestAssistant extends AnyFunSuite {
   }
 
   test("disjunction introduction for two propositional variables (right)") {
+    import core.proof.natural.Judgement.*
+    import core.proof.natural.Judgement.given
+
     val A         = variable[Formula]("A")
     val B         = variable[Formula]("B")
     val judgement = Seq.empty |- (A \/ B)
@@ -99,6 +111,9 @@ class TestAssistant extends AnyFunSuite {
   }
 
   test("disjunction elimination for two propositional variables with meta-variables in premises only") {
+    import core.proof.natural.Judgement.*
+    import core.proof.natural.Judgement.given
+
     val A         = variable[Formula]("A")
     val B         = variable[Formula]("B")
     val C         = variable[Formula]("C")
@@ -116,6 +131,9 @@ class TestAssistant extends AnyFunSuite {
   }
 
   test("disjunction elimination for a single propositional variable") {
+    import core.proof.natural.Judgement.*
+    import core.proof.natural.Judgement.given
+
     val phi       = meta("phi"): Pattern[FormulaF]
     val psi       = meta("psi"): Pattern[FormulaF]
     val A         = variable[Formula]("A")
@@ -140,6 +158,9 @@ class TestAssistant extends AnyFunSuite {
   }
 
   test("universal introduction with same variable name in different scopes") {
+    import core.proof.natural.Judgement.*
+    import core.proof.natural.Judgement.given
+
     val X         = variable[Formula]("X")
     val judgement = Seq(exists[Formula](X, X)) |- forall[Formula](X, X)
     val rule      = UniversalIntroduction
@@ -158,6 +179,25 @@ class TestAssistant extends AnyFunSuite {
         assert(premise.nonfree.contains(X))
         assert(premise.assumptions.contains(exists[Formula](X, X)))
         assert(premise.assertion == X)
+      case _ => fail("Expected successful proof construction")
+    }
+  }
+
+  test("sequent calculus implication right introduction") {
+    import core.proof.sequent.Judgement.*
+    import core.proof.sequent.Judgement.given
+
+    val A         = variable[Formula]("A")
+    val B         = variable[Formula]("B")
+    val judgement = Seq.empty |- (A --> B)
+    val rule      = ImplicationRightIntroduction
+
+    val result = Assistant.proof(judgement, rule)
+    result match {
+      case ProofResult.Success(proof) =>
+        val premises = proof.subproofs.map(_.conclusion)
+        assert(proof.conclusion == judgement)
+        assert(premises == Seq(A |- B))
       case _ => fail("Expected successful proof construction")
     }
   }

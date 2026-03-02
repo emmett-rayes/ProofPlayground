@@ -132,11 +132,8 @@ object Judgement {
         for
           antecedents <- judgement.antecedents.substitute(unification)
           succedents  <- judgement.succedents.substitute(unification)
-          nonfree     <- judgement.nonfree.map { nf =>
-            val simpleUnification = unification.filter { (_, v) => v.size == 1 }.map { (k, v) => k -> v.head }
-            nf.substitute(simpleUnification)
-          }
-        yield Judgement(antecedents, succedents, nonfree)
+          nonfree     <- judgement.nonfree.toSeq.substitute(unification)
+        yield Judgement(antecedents, succedents, nonfree.headOption.map(Some(_)).getOrElse(None))
   }
 
   extension [F](judgement: Judgement[F]) {
