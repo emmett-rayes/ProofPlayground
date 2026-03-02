@@ -52,20 +52,22 @@ object SubstitutePartial {
 
     extension (patterns: Seq[Pattern[F]])
       override def substitutePartial(unification: Unification[T]): Seq[Pattern[F]] =
-        def substitute(patterns: Seq[Pattern[F]], unification: MapUnification[Seq[Pattern[F]]]): Seq[Pattern[F]] =
+        val patternUnification = unification.view.mapValues(_.map(_.asPattern)).toMap
+        val simpleUnification  = unification.filter { (_, v) => v.size == 1 }.map { (k, v) => k -> v.head }
+        def substitute(patterns: Seq[Pattern[F]]): Seq[Pattern[F]] =
           patterns.flatMap { pattern =>
             pattern.unfix match {
               case pattern @ PatternF.Meta(_) =>
-                unification.getOrElse(pattern, Seq(pattern)): Seq[Pattern[F]]
-              case PatternF.Substitution(variable, replacement, formula) =>
+                patternUnification.getOrElse(pattern, Seq(pattern)): Seq[Pattern[F]]
+              case PatternF.Substitution(_, _, _) =>
                 // substitution pattern with sequence meta-variables are not supported
-                None
-              case PatternF.Formula(formula) =>
-                substitute(Seq(concrete(formula)), unification)
+                Seq.empty
+              case PatternF.Formula(_) =>
+                // only non sequence meta-variables are relevant for concrete formulas
+                Seq(pattern.substitutePartial(simpleUnification))
             }
           }
-        val patternUnification: MapUnification[Seq[Pattern[F]]] = unification.view.mapValues(_.map(_.asPattern)).toMap
-        substitute(patterns, patternUnification)
+        substitute(patterns)
   }
 }
 

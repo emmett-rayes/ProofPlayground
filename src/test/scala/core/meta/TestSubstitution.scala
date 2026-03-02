@@ -5,14 +5,15 @@ import org.scalatest.funsuite.AnyFunSuite
 
 import scala.language.implicitConversions
 
+import core.fix
 import core.logic.propositional.Formula.given
 import core.logic.propositional.FormulaF.*
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.symbol
 import core.meta.Pattern.given
 import core.meta.PatternF.{concrete, meta}
+import core.meta.Substitute.given
 import core.meta.{Pattern, MapUnification}
-import core.fix
 
 /** Tests for [[Substitution]] functions. */
 class TestSubstitution extends AnyFunSuite {
@@ -110,5 +111,27 @@ class TestSubstitution extends AnyFunSuite {
 
     assert(result.isDefined)
     assert(result.get === formula1 --> formula2)
+  }
+
+  test("partial substitutaion does not loop") {
+    val gamma   = meta[FormulaF, Pattern[FormulaF]]("Gamma")
+    val delta   = meta[FormulaF, Pattern[FormulaF]]("Delta")
+    val phi     = meta[FormulaF, Pattern[FormulaF]]("phi")
+    val psi     = meta[FormulaF, Pattern[FormulaF]]("psi")
+    val pattern = (phi: Pattern[FormulaF]) --> (psi: Pattern[FormulaF])
+
+    val x           = variable[Formula]("X")
+    val unification = Map(
+      gamma -> Seq.empty,
+      delta -> Seq.empty,
+      phi   -> List(x),
+      psi   -> List(x),
+    ): MapUnification[Seq[Formula]]
+
+    val patterns = Seq(pattern)
+    val result   = patterns.substitutePartial(unification)
+
+    assert(result.headOption.isDefined)
+    assert(result.headOption.get === (x --> x).asPattern)
   }
 }
