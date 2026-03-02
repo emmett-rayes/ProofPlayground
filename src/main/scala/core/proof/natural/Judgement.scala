@@ -1,15 +1,13 @@
 package proofPlayground
 package core.proof.natural
 
-import core.Fix
 import core.{Algebra, Functor}
-import core.meta.AsPattern
 import core.meta.Pattern.given
-import core.meta.PatternF
 import core.meta.Unify.given
 import core.meta.Substitute.given
 import core.meta.SubstitutePartial.given
 import core.meta.{
+  AsPattern,
   CaptureAvoidingSub,
   FreeVars,
   MapUnification,
@@ -132,10 +130,11 @@ object Judgement {
 
     extension (judgement: Judgement[Pattern[F]])
       override def substitutePartial(unification: Unification[T]): Judgement[Pattern[F]] =
-        val assertion   = judgement.assertion.substitutePartial(unification._1)
-        val assumptions = judgement.assumptions.toSeq.substitutePartial(unification._2)
-        val nonfree     = judgement.nonfree.toSeq.substitutePartial(unification._3)
-        Judgement(assertion, assumptions, nonfree)(judgement.sidecondition)
+        val assertion     = judgement.assertion.substitutePartial(unification._1)
+        val assumptions   = judgement.assumptions.toSeq.substitutePartial(unification._2)
+        val nonfree       = judgement.nonfree.toSeq.substitutePartial(unification._3)
+        val sidecondition = judgement.sidecondition.map(_.map(_.substitutePartial(unification._1)))
+        Judgement(assertion, assumptions, nonfree)(sidecondition)
   }
 
   /** [[Substitute]] instance for [[Judgement]]. */
