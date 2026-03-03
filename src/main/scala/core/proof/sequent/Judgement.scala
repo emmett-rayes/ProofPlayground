@@ -4,8 +4,8 @@ package core.proof.sequent
 import core.{Algebra, Functor}
 import core.meta.Pattern.given
 import core.meta.Unify.given
-import core.meta.Substitute.given
-import core.meta.SubstitutePartial.given
+import core.meta.Substitute.{*, given}
+import core.meta.SubstitutePartial.{*, given}
 import core.meta.{
   AsPattern,
   CaptureAvoidingSub,
@@ -28,18 +28,27 @@ import core.proof.SideCondition
   * @tparam F the type of formulas.
   * @param antecedents the collection of formulas that are assumed to be true.
   * @param succedents the collection of formulas that of which one is asserted to be true.
+  * @param sidecondition an optional side-condition, which is a pair of a variable and a collection of formulas
+  *                       in which that variable cannot appear free.
   */
-case class Judgement[F](antecedents: Seq[F], succedents: Seq[F], nonfree: Option[F] = None)
+case class Judgement[F](antecedents: Seq[F], succedents: Seq[F])(
+  val sidecondition: Option[Judgement.NonFreeSideCondition[F]]
+)
 
 object Judgement {
+  type NonFreeSideCondition[F] = (variable: F, nonfree: Seq[F])
+
+  def apply[F](antecedents: Seq[F], succedents: Seq[F]): Judgement[F] =
+    new Judgement(antecedents, succedents)(None)
 
   /** [[Functor]] instance for [[Judgement]]. */
   given Functor[Judgement] {
     extension [A](judgement: Judgement[A]) {
       override def map[B](f: A => B): Judgement[B] =
-        Judgement(
-          judgement.antecedents.map(f),
-          judgement.succedents.map(f),
+        Judgement(judgement.antecedents.map(f), judgement.succedents.map(f))(
+          judgement.sidecondition.map { sc =>
+            (f(sc.variable), sc.nonfree.map(f))
+          }
         )
     }
   }
@@ -56,11 +65,12 @@ object Judgement {
   /** [[SideCondition]] instance for [[Judgement]]. */
   given [F: FreeVars] => Judgement[F] is SideCondition[F] {
     extension (judgement: Judgement[F]) {
-      override def open: Boolean = true
+      override def open: Boolean = true // a judgement is always open until explicitly closed by an axiom
 
       override def violations: Seq[F] =
-        judgement.antecedents.filter(judgement.nonfree.contains(_)) ++
-          judgement.succedents.filter(judgement.nonfree.contains(_))
+        judgement.sidecondition.map { sc =>
+          sc.nonfree.filter(_.freevariables.contains(sc.variable))
+        }.getOrElse(Seq.empty)
     }
   }
 
@@ -97,13 +107,12 @@ object Judgement {
 
     extension (judgement: Judgement[Pattern[F]])
       override def substitutePartial(unification: Unification[T]): Judgement[Pattern[F]] =
-        val antecedents = judgement.antecedents.substitutePartial(unification)
-        val succedents  = judgement.succedents.substitutePartial(unification)
-        val nonfree     = judgement.nonfree.map { nf =>
-          val simpleUnification = unification.filter { (_, v) => v.size == 1 }.map { (k, v) => k -> v.head }
-          nf.substitutePartial(simpleUnification)
+        val antecedents   = judgement.antecedents.substitutePartial(unification)
+        val succedents    = judgement.succedents.substitutePartial(unification)
+        val sidecondition = judgement.sidecondition.map { sc =>
+          (sc.variable.substitutePartialSimple(unification), sc.nonfree.substitutePartial(unification))
         }
-        Judgement(antecedents, succedents, nonfree)
+        Judgement(antecedents, succedents)(sidecondition)
   }
 
   /** [[Substitute]] instance for [[Judgement]]. */
@@ -130,17 +139,23 @@ object Judgement {
     extension (judgement: Judgement[Pattern[F]])
       override def substitute(unification: Unification[T]): Option[Judgement[T]] =
         for
-          antecedents <- judgement.antecedents.substitute(unification)
-          succedents  <- judgement.succedents.substitute(unification)
-          nonfree     <- judgement.nonfree.toSeq.substitute(unification)
-        yield Judgement(antecedents, succedents, nonfree.headOption.map(Some(_)).getOrElse(None))
+          antecedents   <- judgement.antecedents.substitute(unification)
+          succedents    <- judgement.succedents.substitute(unification)
+          sidecondition <- judgement.sidecondition match
+            case None     => Some(None)
+            case Some(sc) =>
+              for
+                variable <- sc.variable.substituteSimple(unification)
+                nonfree  <- sc.nonfree.substitute(unification)
+              yield Some((variable, nonfree))
+        yield Judgement(antecedents, succedents)(sidecondition)
   }
 
   extension [F](judgement: Judgement[F]) {
 
     /** Add a side-condition to the judgement. */
-    def -(sidecondition: F): Judgement[F] =
-      Judgement(judgement.antecedents, judgement.succedents, Some(sidecondition))
+    def -(variable: F, nonfree: F*): Judgement[F] =
+      Judgement(judgement.antecedents, judgement.succedents)(Some((variable, nonfree)))
   }
 
   extension [F](antecedents: Seq[F]) {

@@ -53,7 +53,6 @@ object SubstitutePartial {
     extension (patterns: Seq[Pattern[F]])
       override def substitutePartial(unification: Unification[T]): Seq[Pattern[F]] =
         val patternUnification = unification.view.mapValues(_.map(_.asPattern)).toMap
-        val simpleUnification  = unification.filter { (_, v) => v.size == 1 }.map { (k, v) => k -> v.head }
         def substitute(patterns: Seq[Pattern[F]]): Seq[Pattern[F]] =
           patterns.flatMap { pattern =>
             pattern.unfix match {
@@ -64,10 +63,18 @@ object SubstitutePartial {
                 Seq.empty
               case PatternF.Formula(_) =>
                 // only non sequence meta-variables are relevant for concrete formulas
-                Seq(pattern.substitutePartial(simpleUnification))
+                Seq(pattern.substitutePartialSimple(unification))
             }
           }
         substitute(patterns)
+  }
+
+  /** Helper extension method to partially substitute a sequence of patterns with a unification that maps to sequences. */
+  extension [T: AsPattern[F], F[_]: Functor](using Algebra[F, MapUnifier[T]])(pattern: Pattern[F]) {
+    def substitutePartialSimple(unification: MapUnification[Seq[T]]): Pattern[F] =
+      val simpleUnification: MapUnification[T] =
+        unification.filter { (_, v) => v.size == 1 }.map { (k, v) => k -> v.head }
+      pattern.substitutePartial(simpleUnification)
   }
 }
 
@@ -95,7 +102,6 @@ object Substitute {
 
     extension (patterns: Seq[Pattern[F]])
       override def substitute(unification: Unification[T]): Option[Seq[T]] =
-        val simpleUnification  = unification.filter { (_, v) => v.size == 1 }.map { (k, v) => k -> v.head }
         patterns.traverse { pattern =>
           pattern.unfix match {
             case pattern @ PatternF.Meta(name) =>
@@ -104,8 +110,19 @@ object Substitute {
               // substitution pattern with sequence meta-variables are not supported
               None
             case PatternF.Formula(formula) =>
-              pattern.substitute(simpleUnification).map(Seq(_))
+              pattern.substituteSimple(unification).map(Seq(_))
           }
         }.map(_.flatten)
+  }
+
+  /** Helper extension method to substitute a sequence of patterns with a unification that maps to sequences. */
+  extension [T: {AsPattern[F], CaptureAvoidingSub}, F[_]: Functor](using
+    Algebra[F, Option[T]],
+    Algebra[F, MapUnifier[T]],
+  )(pattern: Pattern[F]) {
+    def substituteSimple(unification: MapUnification[Seq[T]]): Option[T] =
+      val simpleUnification: MapUnification[T] =
+        unification.filter { (_, v) => v.size == 1 }.map { (k, v) => k -> v.head }
+      pattern.substitute(simpleUnification)
   }
 }

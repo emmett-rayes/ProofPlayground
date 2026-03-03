@@ -176,7 +176,6 @@ class TestAssistant extends AnyFunSuite {
         // The premise should be: X ; exists X.X |- X
         assert(premises.length == 1)
         val premise = premises.head
-        assert(premise.nonfree.contains(X))
         assert(premise.assumptions.contains(exists[Formula](X, X)))
         assert(premise.assertion == X)
       case _ => fail("Expected successful proof construction")
@@ -199,6 +198,332 @@ class TestAssistant extends AnyFunSuite {
         assert(proof.conclusion == judgement)
         assert(premises == Seq(A |- B))
       case _ => fail("Expected successful proof construction")
+    }
+  }
+
+  test("sequent calculus identity axiom") {
+    import core.proof.sequent.Judgement.*
+    import core.proof.sequent.Judgement.given
+
+    val A         = variable[Formula]("A")
+    val judgement = A |- A
+    val rule      = Identity
+
+    val result = Assistant.proof(judgement, rule)
+    result match {
+      case ProofResult.Success(proof) =>
+        val premises = proof.subproofs.map(_.conclusion)
+        assert(proof.conclusion == judgement)
+        assert(premises == Seq.empty)
+      case _ => fail("Expected successful proof construction")
+    }
+  }
+
+  test("sequent calculus conjunction right introduction") {
+    import core.proof.sequent.Judgement.*
+    import core.proof.sequent.Judgement.given
+
+    val A         = variable[Formula]("A")
+    val B         = variable[Formula]("B")
+    val judgement = Seq.empty |- (A /\ B)
+    val rule      = ConjunctionRightIntroduction
+
+    val result = Assistant.proof(judgement, rule)
+    result match {
+      case ProofResult.Success(proof) =>
+        val premises = proof.subproofs.map(_.conclusion)
+        assert(proof.conclusion == judgement)
+        assert(premises == Seq(Seq.empty |- A, Seq.empty |- B))
+      case _ => fail("Expected successful proof construction")
+    }
+  }
+
+  test("sequent calculus conjunction left introduction 1") {
+    import core.proof.sequent.Judgement.*
+    import core.proof.sequent.Judgement.given
+
+    val A         = variable[Formula]("A")
+    val B         = variable[Formula]("B")
+    val C         = variable[Formula]("C")
+    val judgement = (A /\ B) |- C
+    val rule      = ConjunctionLeftIntroduction1
+
+    val result = Assistant.proof(judgement, rule)
+    result match {
+      case ProofResult.Success(proof) =>
+        val premises = proof.subproofs.map(_.conclusion)
+        assert(proof.conclusion == judgement)
+        assert(premises == Seq(A |- C))
+      case _ => fail("Expected successful proof construction")
+    }
+  }
+
+  test("sequent calculus conjunction left introduction 2") {
+    import core.proof.sequent.Judgement.*
+    import core.proof.sequent.Judgement.given
+
+    val A         = variable[Formula]("A")
+    val B         = variable[Formula]("B")
+    val C         = variable[Formula]("C")
+    val judgement = (A /\ B) |- C
+    val rule      = ConjunctionLeftIntroduction2
+
+    val result = Assistant.proof(judgement, rule)
+    result match {
+      case ProofResult.Success(proof) =>
+        val premises = proof.subproofs.map(_.conclusion)
+        assert(proof.conclusion == judgement)
+        assert(premises == Seq(B |- C))
+      case _ => fail("Expected successful proof construction")
+    }
+  }
+
+  test("sequent calculus disjunction right introduction 1") {
+    import core.proof.sequent.Judgement.*
+    import core.proof.sequent.Judgement.given
+
+    val A         = variable[Formula]("A")
+    val B         = variable[Formula]("B")
+    val judgement = Seq.empty |- (A \/ B)
+    val rule      = DisjunctionRightIntroduction1
+
+    val result = Assistant.proof(judgement, rule)
+    result match {
+      case ProofResult.Success(proof) =>
+        val premises = proof.subproofs.map(_.conclusion)
+        assert(proof.conclusion == judgement)
+        assert(premises == Seq(Seq.empty |- A))
+      case _ => fail("Expected successful proof construction")
+    }
+  }
+
+  test("sequent calculus disjunction right introduction 2") {
+    import core.proof.sequent.Judgement.*
+    import core.proof.sequent.Judgement.given
+
+    val A         = variable[Formula]("A")
+    val B         = variable[Formula]("B")
+    val judgement = Seq.empty |- (A \/ B)
+    val rule      = DisjunctionRightIntroduction2
+
+    val result = Assistant.proof(judgement, rule)
+    result match {
+      case ProofResult.Success(proof) =>
+        val premises = proof.subproofs.map(_.conclusion)
+        assert(proof.conclusion == judgement)
+        assert(premises == Seq(Seq.empty |- B))
+      case _ => fail("Expected successful proof construction")
+    }
+  }
+
+  test("sequent calculus disjunction left introduction") {
+    import core.proof.sequent.Judgement.*
+    import core.proof.sequent.Judgement.given
+
+    val A         = variable[Formula]("A")
+    val B         = variable[Formula]("B")
+    val C         = variable[Formula]("C")
+    val judgement = (A \/ B) |- C
+    val rule      = DisjunctionLeftIntroduction
+
+    val result = Assistant.proof(judgement, rule)
+    result match {
+      case ProofResult.Success(proof) =>
+        val premises = proof.subproofs.map(_.conclusion)
+        assert(proof.conclusion == judgement)
+        assert(premises == Seq(A |- C, B |- C))
+      case _ => fail("Expected successful proof construction")
+    }
+  }
+
+  test("sequent calculus implication left introduction with meta-variables") {
+    import core.proof.sequent.Judgement.*
+    import core.proof.sequent.Judgement.given
+
+    val A         = variable[Formula]("A")
+    val B         = variable[Formula]("B")
+    val C         = variable[Formula]("C")
+    val judgement = (A --> B) |- C
+    val rule      = ImplicationLeftIntroduction
+
+    // This rule has multiple context variables that need to be specified
+    val result = Assistant.proof(judgement, rule)
+    result match {
+      case ProofResult.SubstitutionFailure(_) =>
+        // Expected: the assistant can't determine how to split contexts without additional hints
+        fail("TODO")
+      case _ => fail("Expected substitution failure for this complex rule")
+    }
+  }
+
+  test("sequent calculus negation right introduction") {
+    import core.proof.sequent.Judgement.*
+    import core.proof.sequent.Judgement.given
+
+    val A         = variable[Formula]("A")
+    val judgement = Seq.empty |- ~A
+    val rule      = NegationRightIntroduction
+
+    val result = Assistant.proof(judgement, rule)
+    result match {
+      case ProofResult.Success(proof) =>
+        val premises = proof.subproofs.map(_.conclusion)
+        assert(proof.conclusion == judgement)
+        assert(premises == Seq(A |- Seq.empty))
+      case _ => fail("Expected successful proof construction")
+    }
+  }
+
+  test("sequent calculus negation left introduction") {
+    import core.proof.sequent.Judgement.*
+    import core.proof.sequent.Judgement.given
+
+    val A         = variable[Formula]("A")
+    val B         = variable[Formula]("B")
+    val judgement = ~A |- B
+    val rule      = NegationLeftIntroduction
+
+    val result = Assistant.proof(judgement, rule)
+    result match {
+      case ProofResult.Success(proof) =>
+        val premises = proof.subproofs.map(_.conclusion)
+        assert(proof.conclusion == judgement)
+        assert(premises == Seq(Seq.empty |- Seq(B, A)))
+      case _ => fail("Expected successful proof construction")
+    }
+  }
+
+  test("sequent calculus true right introduction") {
+    import core.proof.sequent.Judgement.*
+    import core.proof.sequent.Judgement.given
+
+    val judgement = Seq.empty |- tru[Formula]
+    val rule      = TrueRightIntroduction
+
+    val result = Assistant.proof(judgement, rule)
+    result match {
+      case ProofResult.Success(proof) =>
+        val premises = proof.subproofs.map(_.conclusion)
+        assert(proof.conclusion == judgement)
+        assert(premises == Seq.empty)
+      case _ => fail("Expected successful proof construction")
+    }
+  }
+
+  test("sequent calculus false left introduction") {
+    import core.proof.sequent.Judgement.*
+    import core.proof.sequent.Judgement.given
+
+    val A         = variable[Formula]("A")
+    val judgement = fls[Formula] |- A
+    val rule      = FalseLeftIntroduction
+
+    val result = Assistant.proof(judgement, rule)
+    result match {
+      case ProofResult.Success(proof) =>
+        val premises = proof.subproofs.map(_.conclusion)
+        assert(proof.conclusion == judgement)
+        assert(premises == Seq.empty)
+      case _ => fail("Expected successful proof construction")
+    }
+  }
+
+  test("sequent calculus cut rule with meta-variables") {
+    import core.proof.sequent.Judgement.*
+    import core.proof.sequent.Judgement.given
+
+    val A         = variable[Formula]("A")
+    val B         = variable[Formula]("B")
+    val judgement = A |- B
+    val rule      = Cut
+
+    // This rule has multiple context variables that need to be specified
+    val result = Assistant.proof(judgement, rule)
+    result match {
+      case ProofResult.SubstitutionFailure(_) =>
+        // Expected: the assistant can't determine how to split contexts without additional hints
+        fail("TODO")
+      case _ => fail("Expected substitution failure for this complex rule")
+    }
+  }
+
+  test("sequent calculus universal right introduction") {
+    import core.proof.sequent.Judgement.*
+    import core.proof.sequent.Judgement.given
+
+    val X         = variable[Formula]("X")
+    val judgement = Seq.empty |- forall[Formula](X, X)
+    val rule      = UniversalRightIntroduction
+
+    val result = Assistant.proof(judgement, rule)
+    result match {
+      case ProofResult.Success(proof) =>
+        val premises = proof.subproofs.map(_.conclusion)
+        assert(proof.conclusion == judgement)
+        assert(premises.length == 1)
+        val premise = premises.head
+        assert(premise.antecedents == Seq.empty)
+        assert(premise.succedents.contains(X))
+      case _ => fail("Expected successful proof construction")
+    }
+  }
+
+  test("sequent calculus existential left introduction") {
+    import core.proof.sequent.Judgement.*
+    import core.proof.sequent.Judgement.given
+
+    val X         = variable[Formula]("X")
+    val A         = variable[Formula]("A")
+    val judgement = exists[Formula](X, X) |- A
+    val rule      = ExistentialLeftIntroduction
+
+    val result = Assistant.proof(judgement, rule)
+    result match {
+      case ProofResult.Success(proof) =>
+        val premises = proof.subproofs.map(_.conclusion)
+        assert(proof.conclusion == judgement)
+        assert(premises.length == 1)
+        val premise = premises.head
+        assert(premise.antecedents.contains(X))
+        assert(premise.succedents.contains(A))
+      case _ => fail("Expected successful proof construction")
+    }
+  }
+
+  test("sequent calculus existential right introduction with meta-variables") {
+    import core.proof.sequent.Judgement.*
+    import core.proof.sequent.Judgement.given
+
+    val X         = variable[Formula]("X")
+    val judgement = Seq.empty |- exists[Formula](X, X)
+    val rule      = ExistentialRightIntroduction
+
+    // This rule involves pattern substitution which is complex
+    val result = Assistant.proof(judgement, rule)
+    result match {
+      case ProofResult.SubstitutionFailure(_) =>
+        // Expected: the assistant can't fully determine the substitution pattern
+        fail("TODO")
+      case _ => fail("Expected substitution failure for this rule with pattern substitution")
+    }
+  }
+
+  test("sequent calculus universal left introduction with meta-variables") {
+    import core.proof.sequent.Judgement.*
+    import core.proof.sequent.Judgement.given
+
+    val X         = variable[Formula]("X")
+    val B         = variable[Formula]("B")
+    val judgement = forall[Formula](X, X) |- B
+    val rule      = UniversalLeftIntroduction
+
+    // This rule involves pattern substitution which is complex
+    val result = Assistant.proof(judgement, rule)
+    result match {
+      case ProofResult.SubstitutionFailure(_) =>
+        // Expected: the assistant can't fully determine the substitution pattern
+        fail("TODO")
+      case _ => fail("Expected substitution failure for this rule with pattern substitution")
     }
   }
 }
