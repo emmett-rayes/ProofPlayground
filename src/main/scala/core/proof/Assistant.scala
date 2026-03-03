@@ -38,7 +38,7 @@ object Assistant {
     val proofOrFailure        =
       for
         conclusion <- rule.conclusion.substitute(conclusionUnification)
-        premises   <- rule.premises.toSeq.traverse { premise => premise.substitute(conclusionUnification) }
+        premises   <- rule.premises.traverse { premise => premise.substitute(conclusionUnification) }
       yield
         if conclusion == judgement then
           // it is important to return judgement here, not the substituted conclusion, because the judgement may contain
