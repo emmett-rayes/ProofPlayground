@@ -83,14 +83,25 @@ class ProofTreeModel[J[_] <: AnyRef: {Functor,
   private var rulesInFocus = false
   private var zipper       = Proof(judgement, List.empty).zipper
 
+  private var cachedRuleActive: Map[InferenceRule[J, FormulaF], Boolean] = Map.empty
+
+  private def invalidateRuleCache(): Unit =
+    cachedRuleActive = Map.empty
+
   override def focusOnRules: Boolean = rulesInFocus
 
   override def rules: Vector[ProofTreeModel.ProofRule] = inferenceRules.map { rule =>
-    val active = Assistant.proof(zipper.get.conclusion, rule) match {
-      case ProofResult.UnificationFailure()   => false
-      case ProofResult.Success(_)             => true
-      case ProofResult.SubstitutionFailure(_) => true // substitution failures can be fixed by user input
-    }
+    val active = cachedRuleActive.getOrElse(
+      rule, {
+        val computed = Assistant.proof(zipper.get.conclusion, rule) match {
+          case ProofResult.UnificationFailure()   => false
+          case ProofResult.Success(_)             => true
+          case ProofResult.SubstitutionFailure(_) => true // substitution failures can be fixed by user input
+        }
+        cachedRuleActive = cachedRuleActive.updated(rule, computed)
+        computed
+      }
+    )
     ProofTreeModel.ProofRule(active, rule.label)
   }
 
@@ -113,15 +124,19 @@ class ProofTreeModel[J[_] <: AnyRef: {Functor,
 
   override def up(): Unit =
     zipper = zipper.down.getOrElse(zipper) // proof trees are upside down
+    invalidateRuleCache()
 
   override def down(): Unit =
     zipper = zipper.up.getOrElse(zipper) // proof trees are upside down
+    invalidateRuleCache()
 
   override def left(): Unit =
     zipper = zipper.left.getOrElse(zipper)
+    invalidateRuleCache()
 
   override def right(): Unit =
     zipper = zipper.right.getOrElse(zipper)
+    invalidateRuleCache()
 
   override def selectNode(): Unit =
     rulesInFocus = true
@@ -172,6 +187,7 @@ class ProofTreeModel[J[_] <: AnyRef: {Functor,
       zipper = zipper.replace(replacement)
       proofStepLabels.put(zipper.get.conclusion, rule.label)
       zipper = zipper.down.getOrElse(zipper)
+      invalidateRuleCache()
     }
 
     Assistant.proof(zipper.get.conclusion, rule, unification) match {
