@@ -58,11 +58,7 @@ object SubstitutePartial {
             pattern.unfix match {
               case pattern @ PatternF.Meta(_) =>
                 patternUnification.getOrElse(pattern, Seq(pattern)): Seq[Pattern[F]]
-              case PatternF.Substitution(_, _, _) =>
-                // substitution pattern with sequence meta-variables are not supported
-                Seq.empty
-              case PatternF.Formula(_) =>
-                // only non sequence meta-variables are relevant for concrete formulas
+              case _ =>
                 Seq(pattern.substitutePartialSimple(unification))
             }
           }
@@ -106,10 +102,7 @@ object Substitute {
           pattern.unfix match {
             case pattern @ PatternF.Meta(name) =>
               unification.get(pattern)
-            case PatternF.Substitution(variable, replacement, formula) =>
-              // substitution pattern with sequence meta-variables are not supported
-              None
-            case PatternF.Formula(formula) =>
+            case _ =>
               pattern.substituteSimple(unification).map(Seq(_))
           }
         }.map(_.flatten)
