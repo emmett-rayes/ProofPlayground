@@ -27,16 +27,15 @@ import core.proof.SideCondition
   * A judgement in natural deduction has a single formula in the conclusion.
   *
   * @tparam F the type of formulas.
-  * @param assertion   the formula that is asserted.
-  * @param assumptions the collection of formulas assumed to be true.
-  * @param nonfree     a collection of variables that are not allowed to appear in the conclusion.
-  *                     this is used for the side conditions of existential and universal quantifiers.
+  * @param assertion     the formula that is asserted.
+  * @param assumptions   the collection of formulas assumed to be true.
+  * @param sidecondition a variable that is not allowed to appear free in the open leaves
+  *                       of the derivation of this judgement, or in one of the assumptions,
+  *                       depending on the rule that introduced the side condition.
   */
-case class Judgement[F] private (
-  assertion: F,
-  assumptions: Seq[F],
-  nonfree: Seq[F],
-)(val sidecondition: Option[Judgement.NonFreeSideCondition[F]])
+case class Judgement[F](assertion: F, assumptions: Seq[F], nonfree: Seq[F])(
+  val sidecondition: Option[Judgement.NonFreeSideCondition[F]]
+)
 
 object Judgement {
   def apply[F](assertion: F, assumptions: Seq[F], nonfree: Seq[F]): Judgement[F] =
@@ -161,12 +160,13 @@ object Judgement {
     extension (judgement: Judgement[Pattern[F]])
       override def substitute(unification: Unification[T]): Option[Judgement[T]] =
         for
-          assertion   <- judgement.assertion.substitute(unification._1)
-          assumptions <- judgement.assumptions.toSeq.substitute(unification._2)
-          nonfree     <- judgement.nonfree.toSeq.substitute(unification._3)
-        yield
-          val sidecondition = judgement.sidecondition.flatMap(_.traverse(_.substitute(unification._1)))
-          Judgement(assertion, assumptions, nonfree)(sidecondition)
+          assertion     <- judgement.assertion.substitute(unification._1)
+          assumptions   <- judgement.assumptions.toSeq.substitute(unification._2)
+          nonfree       <- judgement.nonfree.toSeq.substitute(unification._3)
+          sidecondition <- judgement.sidecondition match
+            case None     => Some(None)
+            case Some(sc) => sc.traverse(_.substitute(unification._1)).map(Some(_))
+        yield Judgement(assertion, assumptions, nonfree)(sidecondition)
   }
 
   /** Used as an intermediate type while constructing [[Judgement]] using DSL methods. */
