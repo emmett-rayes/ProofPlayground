@@ -10,6 +10,14 @@
       "args": [],
       "jvmOptions": [],
       "env": {}
+    },
+    {
+      "type": "scala",
+      "request": "attach",
+      "name": "debug",
+      "hostName": "localhost",
+      "port": 5005,
+      "preLaunchTask": "sbt run and debug"
     }
   ]
 }
