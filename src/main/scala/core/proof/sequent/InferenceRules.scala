@@ -298,7 +298,7 @@ object InferenceRules {
 
     /** Universal left introduction (∀L).
       *
-      * If Γ ⊢ A[B/X],Δ, then Γ ⊢ ∀X.A,Δ.
+      * If Γ,A[B/X] ⊢ Δ, then Γ,∀X.A ⊢ Δ.
       */
     val UniversalLeftIntroduction: InferenceRule[Judgement, FormulaF] = {
       val gamma = Pattern[FormulaF]("Gamma")
@@ -310,7 +310,7 @@ object InferenceRules {
       Inference(
         "∀L",
         Seq(
-          gamma |- phi(psi / nu) :: delta,
+          gamma :: phi(psi / nu) |- delta,
         ),
         gamma :: forall(nu, phi) |- delta,
       )
