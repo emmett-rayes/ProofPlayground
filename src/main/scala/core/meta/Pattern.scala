@@ -46,7 +46,7 @@ object Pattern {
     * The fact that this instance if for [[Identity]] is technical. It is effectively an instance for [[Pattern]].
     */
   given [T, F[_]: Functor] => (Algebra[F, MapUnifier[T]]) => Identity is Unify[T, F] {
-    override type Unification = MapUnification
+    override type Uni = MapUnification
 
     /** Attempt to unify a pattern with a concrete formula.
       *
@@ -81,7 +81,7 @@ object Pattern {
   given [T: AsPattern[F], F[_]: Functor]
     => (Algebra[F, MapUnifier[T]])
       => Identity is SubstitutePartial[T, F] {
-    override type Unification = MapUnification
+    override type Uni = MapUnification
 
     private val PatternUnify = Pattern.given_is_Identity_Unify
 
@@ -90,7 +90,7 @@ object Pattern {
         PatternUnify.unifier(pattern)
 
     extension (pattern: Pattern[F])
-      override def substitutePartial(unification: Unification[T]): Pattern[F] =
+      override def substitutePartial(unification: Uni[T]): Pattern[F] =
         def substitute(pattern: Pattern[F], unification: MapUnification[Pattern[F]]): Pattern[F] =
           pattern.unfix match {
             case pattern @ PatternF.Meta(_) =>
@@ -115,7 +115,7 @@ object Pattern {
     => (Algebra[F, Option[T]])
     => (Algebra[F, MapUnifier[T]])
       => Identity is Substitute[T, F] {
-    override type Unification = MapUnification
+    override type Uni = MapUnification
 
     private val PatternSubstitutePartial = Pattern.given_is_Identity_SubstitutePartial
 
@@ -124,11 +124,11 @@ object Pattern {
         PatternSubstitutePartial.unifier(pattern)
 
     extension (pattern: Pattern[F])
-      override def substitutePartial(unification: Unification[T]): Pattern[F] =
+      override def substitutePartial(unification: Uni[T]): Pattern[F] =
         PatternSubstitutePartial.substitutePartial(pattern)(unification)
 
     extension (pattern: Pattern[F])
-      override def substitute(unification: Unification[T]): Option[T] =
+      override def substitute(unification: Uni[T]): Option[T] =
         val algebra = PatternF.algebra[Option[T], F](summon) {
           case pattern @ PatternF.Meta(_) =>
             unification.get(pattern)

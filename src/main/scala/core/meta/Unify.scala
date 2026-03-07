@@ -50,16 +50,14 @@ object UnificationResult {
   }
 }
 
-/** Type class for unification representations that can be combined with map-based bindings.
-  *
-  * Implementations should preserve all non-conflicting bindings and encode conflicts as
-  * [[UnificationResult.failure]] with the best-effort merged payload.
-  */
-trait Merge {
+/** Type class for unification representations. */
+trait Unification {
   type Self[_]
-  extension [T](self: Self[T])
+
+  extension [T](self: Self[T]) {
     /** Merge this unification value with additional map-based bindings. */
     def merge(aux: MapUnification[T]): UnificationResult[Self[T]]
+  }
 }
 
 /** A commonly used unifier type from scrutinees to unifications over scrutinees.
@@ -74,11 +72,12 @@ type MapUnification[T] = Map[MetaVariable, T]
 
 object MapUnification {
 
-  /** [[Merge]] instance for [[MapUnification]]. */
-  given MapUnification is Merge {
-    extension [T](unification: MapUnification[T])
+  /** [[Unification]] instance for [[MapUnification]]. */
+  given MapUnification is Unification {
+    extension [T](unification: MapUnification[T]) {
       override def merge(aux: MapUnification[T]): UnificationResult[MapUnification[T]] =
         MapUnification.merge(unification, aux)
+    }
   }
 
   /** Merge two unifications if they agree on shared variables, otherwise fail.
@@ -110,11 +109,12 @@ object SeqUnification {
     def merge(aux: SeqUnification[T]): UnificationResult[SeqUnification[T]] =
       MapUnification.merge(unification, aux)
 
-  /** [[Merge]] instance for [[SeqUnification]]. */
-  given SeqUnification is Merge {
-    extension [T](unification: SeqUnification[T])
+  /** [[Unification]] instance for [[SeqUnification]]. */
+  given SeqUnification is Unification {
+    extension [T](unification: SeqUnification[T]) {
       override def merge(aux: MapUnification[T]): UnificationResult[SeqUnification[T]] =
         SeqUnification.merge(unification, aux)
+    }
   }
 
   /** Merge two unifications if they agree on shared variables, otherwise fail.
@@ -139,8 +139,8 @@ object SeqUnification {
   */
 trait Unify[T, F[_]] {
   type Self[_]
-  type Unification[_]: Merge
-  type Unifier = Self[T] => UnificationResult[Unification[T]]
+  type Uni[_]: Unification
+  type Unifier = Self[T] => UnificationResult[Uni[T]]
 
   extension (self: Self[Pattern[F]])
     def unifier: Unifier
@@ -152,7 +152,7 @@ object Unify {
   /** [[Unify]] instance for [[Seq]]. */
   given [T, F[_]: Functor] => (Algebra[F, MapUnifier[T]]) => Seq is Unify[T, F] {
 
-    override type Unification = SeqUnification
+    override type Uni = SeqUnification
 
     /** Attempt to unify a sequence of formula patterns with a sequence of concrete formulas.
       *

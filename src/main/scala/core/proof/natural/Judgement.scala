@@ -14,13 +14,13 @@ import core.meta.{
   FreeVars,
   MapUnification,
   MapUnifier,
-  Merge,
   MetaVariable,
   MetaVars,
   Pattern,
   SeqUnification,
   Substitute,
   SubstitutePartial,
+  Unification,
   UnificationResult,
   Unify,
 }
@@ -45,14 +45,15 @@ case class Judgement[F](assertion: F, assumptions: Seq[F], nonfree: Seq[F])(
 type JudgementUnification[X] = (MapUnification[X], SeqUnification[X], SeqUnification[X])
 
 object JudgementUnification {
-  given JudgementUnification is Merge {
-    extension [T](unification: JudgementUnification[T])
+  given JudgementUnification is Unification {
+    extension [T](unification: JudgementUnification[T]) {
       override def merge(aux: MapUnification[T]): UnificationResult[JudgementUnification[T]] =
         for
           assertionUnification   <- unification._1.merge(aux)
           assumptionsUnification <- unification._2.merge(assertionUnification)
           nonfreeUnification     <- unification._3.merge(assertionUnification)
         yield (assertionUnification, assumptionsUnification, nonfreeUnification)
+    }
   }
 }
 
@@ -112,23 +113,24 @@ object Judgement {
 
   /** [[Unify]] instance for [[Judgement]]. */
   given [T, F[_]: Functor] => (Algebra[F, MapUnifier[T]]) => Judgement is Unify[T, F] {
-    override type Unification = JudgementUnification
+    override type Uni = JudgementUnification
 
     extension (judgement: Judgement[Pattern[F]])
-      override def unifier: Unifier = { scrutinee =>
-        for {
-          assertionUnification        <- judgement.assertion.unifier(scrutinee.assertion)
-          assumptionsUnification      <- judgement.assumptions.unifier(scrutinee.assumptions)
-          nonfreeUnification          <- judgement.nonfree.unifier(scrutinee.nonfree)
-          mergedAssumptionUnification <- assumptionsUnification.merge(assertionUnification)
-          mergedNonfreeUnification    <- nonfreeUnification.merge(assertionUnification)
-        } yield (assertionUnification, mergedAssumptionUnification, mergedNonfreeUnification)
+      override def unifier: Unifier = {
+        scrutinee =>
+          for {
+            assertionUnification        <- judgement.assertion.unifier(scrutinee.assertion)
+            assumptionsUnification      <- judgement.assumptions.unifier(scrutinee.assumptions)
+            nonfreeUnification          <- judgement.nonfree.unifier(scrutinee.nonfree)
+            mergedAssumptionUnification <- assumptionsUnification.merge(assertionUnification)
+            mergedNonfreeUnification    <- nonfreeUnification.merge(assertionUnification)
+          } yield (assertionUnification, mergedAssumptionUnification, mergedNonfreeUnification)
       }
   }
 
   /** [[SubstitutePartial]] instance for [[Judgement]]. */
   given [T: AsPattern[F], F[_]: Functor] => (Algebra[F, MapUnifier[T]]) => Judgement is SubstitutePartial[T, F] {
-    override type Unification = JudgementUnification
+    override type Uni = JudgementUnification
 
     private val JudgementUnify = Judgement.given_is_Judgement_Unify
 
@@ -137,7 +139,7 @@ object Judgement {
         JudgementUnify.unifier(judgement)
 
     extension (judgement: Judgement[Pattern[F]])
-      override def substitutePartial(unification: Unification[T]): Judgement[Pattern[F]] =
+      override def substitutePartial(unification: Uni[T]): Judgement[Pattern[F]] =
         val assertion     = judgement.assertion.substitutePartial(unification._1)
         val assumptions   = judgement.assumptions.toSeq.substitutePartial(unification._2)
         val nonfree       = judgement.nonfree.toSeq.substitutePartial(unification._3)
@@ -151,7 +153,7 @@ object Judgement {
     => (Algebra[F, MapUnifier[T]])
       => Judgement is Substitute[T, F] {
 
-    override type Unification = JudgementUnification
+    override type Uni = JudgementUnification
 
     private val JudgementSubstitutePartial = Judgement.given_is_Judgement_SubstitutePartial
 
@@ -160,11 +162,11 @@ object Judgement {
         JudgementSubstitutePartial.unifier(judgement)
 
     extension (judgement: Judgement[Pattern[F]])
-      override def substitutePartial(unification: Unification[T]): Judgement[Pattern[F]] =
+      override def substitutePartial(unification: Uni[T]): Judgement[Pattern[F]] =
         JudgementSubstitutePartial.substitutePartial(judgement)(unification)
 
     extension (judgement: Judgement[Pattern[F]])
-      override def substitute(unification: Unification[T]): Option[Judgement[T]] =
+      override def substitute(unification: Uni[T]): Option[Judgement[T]] =
         for
           assertion     <- judgement.assertion.substitute(unification._1)
           assumptions   <- judgement.assumptions.toSeq.substitute(unification._2)

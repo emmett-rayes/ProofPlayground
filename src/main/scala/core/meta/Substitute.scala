@@ -19,7 +19,7 @@ trait SubstitutePartial[T, F[_]] extends Unify[T, F] {
       * @param unification The unification mapping meta-variables to concrete formulas.
       * @return The pattern with meta-variables substituted where possible.
       */
-    def substitutePartial(unification: Unification[T]): Self[Pattern[F]]
+    def substitutePartial(unification: Uni[T]): Self[Pattern[F]]
 }
 
 trait Substitute[T, F[_]] extends SubstitutePartial[T, F] {
@@ -29,7 +29,7 @@ trait Substitute[T, F[_]] extends SubstitutePartial[T, F] {
       * @param unification The unification mapping meta-variables to concrete formulas.
       * @return Some(substituted) if the substitution is successful; None otherwise.
       */
-    def substitute(unification: Unification[T]): Option[Self[T]]
+    def substitute(unification: Uni[T]): Option[Self[T]]
 }
 
 object SubstitutePartial {
@@ -38,7 +38,7 @@ object SubstitutePartial {
   given [T: AsPattern[F], F[_]: Functor]
     => (Algebra[F, MapUnifier[T]])
       => Seq is SubstitutePartial[T, F] {
-    override type Unification = SeqUnification
+    override type Uni = SeqUnification
 
     private val SeqUnify = Unify.given_is_Seq_Unify
 
@@ -47,7 +47,7 @@ object SubstitutePartial {
         SeqUnify.unifier(patterns)
 
     extension (patterns: Seq[Pattern[F]])
-      override def substitutePartial(unification: Unification[T]): Seq[Pattern[F]] =
+      override def substitutePartial(unification: Uni[T]): Seq[Pattern[F]] =
         val patternUnification = unification.view.mapValues(_.map(_.asPattern)).toMap
         def substitute(patterns: Seq[Pattern[F]]): Seq[Pattern[F]] =
           patterns.flatMap { pattern =>
@@ -77,7 +77,7 @@ object Substitute {
     => (Algebra[F, Option[T]])
     => (Algebra[F, MapUnifier[T]])
       => Seq is Substitute[T, F] {
-    override type Unification = SeqUnification
+    override type Uni = SeqUnification
 
     private val SeqSubstitutePartial = SubstitutePartial.given_is_Seq_SubstitutePartial
 
@@ -86,11 +86,11 @@ object Substitute {
         SeqSubstitutePartial.unifier(patterns)
 
     extension (patterns: Seq[Pattern[F]])
-      override def substitutePartial(unification: Unification[T]): Seq[Pattern[F]] =
+      override def substitutePartial(unification: Uni[T]): Seq[Pattern[F]] =
         SeqSubstitutePartial.substitutePartial(patterns)(unification)
 
     extension (patterns: Seq[Pattern[F]])
-      override def substitute(unification: Unification[T]): Option[Seq[T]] =
+      override def substitute(unification: Uni[T]): Option[Seq[T]] =
         patterns.traverse { pattern =>
           pattern.unfix match {
             case pattern @ PatternF.Meta(name) =>

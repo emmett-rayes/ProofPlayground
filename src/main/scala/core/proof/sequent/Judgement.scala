@@ -14,7 +14,6 @@ import core.meta.{
   FreeVars,
   MapUnification,
   MapUnifier,
-  Merge,
   MetaVariable,
   MetaVars,
   Pattern,
@@ -84,21 +83,22 @@ object Judgement {
 
   /** [[Unify]] instance for [[Judgement]]. */
   given [T, F[_]: Functor] => (Algebra[F, MapUnifier[T]]) => Judgement is Unify[T, F] {
-    override type Unification = JudgementUnification
+    override type Uni = JudgementUnification
 
     extension (judgement: Judgement[Pattern[F]])
-      override def unifier: Unifier = { scrutinee =>
-        for {
-          antecendentsUnification <- judgement.antecedents.unifier(scrutinee.antecedents)
-          succedentsUnification   <- judgement.succedents.unifier(scrutinee.succedents)
-          mergedUnification       <- antecendentsUnification.merge(succedentsUnification)
-        } yield mergedUnification
+      override def unifier: Unifier = {
+        scrutinee =>
+          for {
+            antecendentsUnification <- judgement.antecedents.unifier(scrutinee.antecedents)
+            succedentsUnification   <- judgement.succedents.unifier(scrutinee.succedents)
+            mergedUnification       <- antecendentsUnification.merge(succedentsUnification)
+          } yield mergedUnification
       }
   }
 
   /** [[SubstitutePartial]] instance for [[Judgement]]. */
   given [T: AsPattern[F], F[_]: Functor] => (Algebra[F, MapUnifier[T]]) => Judgement is SubstitutePartial[T, F] {
-    override type Unification = JudgementUnification
+    override type Uni = JudgementUnification
 
     private val JudgementUnify = Judgement.given_is_Judgement_Unify
 
@@ -107,7 +107,7 @@ object Judgement {
         JudgementUnify.unifier(judgement)
 
     extension (judgement: Judgement[Pattern[F]])
-      override def substitutePartial(unification: Unification[T]): Judgement[Pattern[F]] =
+      override def substitutePartial(unification: Uni[T]): Judgement[Pattern[F]] =
         val antecedents   = judgement.antecedents.substitutePartial(unification)
         val succedents    = judgement.succedents.substitutePartial(unification)
         val sidecondition = judgement.sidecondition.map { sc =>
@@ -122,7 +122,7 @@ object Judgement {
     => (Algebra[F, MapUnifier[T]])
       => Judgement is Substitute[T, F] {
 
-    override type Unification = JudgementUnification
+    override type Uni = JudgementUnification
 
     private val JudgementSubstitutePartial = Judgement.given_is_Judgement_SubstitutePartial
 
@@ -131,11 +131,11 @@ object Judgement {
         JudgementSubstitutePartial.unifier(judgement)
 
     extension (judgement: Judgement[Pattern[F]])
-      override def substitutePartial(unification: Unification[T]): Judgement[Pattern[F]] =
+      override def substitutePartial(unification: Uni[T]): Judgement[Pattern[F]] =
         JudgementSubstitutePartial.substitutePartial(judgement)(unification)
 
     extension (judgement: Judgement[Pattern[F]])
-      override def substitute(unification: Unification[T]): Option[Judgement[T]] =
+      override def substitute(unification: Uni[T]): Option[Judgement[T]] =
         for
           antecedents   <- judgement.antecedents.substitute(unification)
           succedents    <- judgement.succedents.substitute(unification)
