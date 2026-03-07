@@ -244,7 +244,7 @@ class TestUnification extends AnyFunSuite {
     assert(unification.get(gamma) === formulas)
   }
 
-  test("sequence unification with two meta-variables") {
+  test("sequence unification with two consequent meta-variables") {
     val gamma: PatternF.Meta[FormulaF, Pattern[FormulaF]] = meta("Gamma")
     val delta: PatternF.Meta[FormulaF, Pattern[FormulaF]] = meta("Delta")
     val patterns: Seq[Pattern[FormulaF]]                  = Seq(gamma, delta)
@@ -254,9 +254,26 @@ class TestUnification extends AnyFunSuite {
     val formulas: Seq[Formula] = Seq(varA \/ varB, tru, fls, ~varA)
 
     val unification = patterns.unifier(formulas)
-    assert(unification.isSuccess)
-    assert(unification.get(gamma) === formulas)
-    assert(unification.get(delta) === Seq.empty)
+    assert(unification.isFailure)
+    assert(!unification.get.contains(gamma))
+    assert(!unification.get.contains(delta))
+  }
+
+  test("sequence unification with two consequent meta-variables and a formula") {
+    val gamma: PatternF.Meta[FormulaF, Pattern[FormulaF]] = meta("Gamma")
+    val delta: PatternF.Meta[FormulaF, Pattern[FormulaF]] = meta("Delta")
+    val disjunction                      = (meta("phi"): Pattern[FormulaF]) \/ (meta("psi"): Pattern[FormulaF])
+    val patterns: Seq[Pattern[FormulaF]] = Seq(gamma, delta, disjunction)
+
+    val varA                   = variable("A"): Formula
+    val varB                   = variable("B"): Formula
+    val formulas: Seq[Formula] = Seq(tru, fls, ~varA, varA \/ varB)
+
+    val unification = patterns.unifier(formulas)
+    assert(unification.isFailure)
+    assert(!unification.get.contains(gamma))
+    assert(!unification.get.contains(delta))
+    assert(unification.get.nonEmpty)
   }
 
   test("sequence unification with multiple meta-variables starting with meta-variable") {

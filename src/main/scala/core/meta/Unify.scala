@@ -177,7 +177,8 @@ object Unify {
                 }._1
 
                 val idxConcreteAfter =
-                  patterns.zipWithIndex.reverse.foldLeft((Map.empty[Int, Int], patterns.size - 1)) { (ctx, pWithIdx) =>
+                  patterns.zipWithIndex.reverse.foldLeft((Map.empty[Int, Int], patterns.size - 1)) {
+                    (ctx, pWithIdx) =>
                     val (map, lastConcreteIdx) = ctx
                     val (pattern, idx)         = pWithIdx
                     pattern.unfix match {
@@ -187,33 +188,41 @@ object Unify {
                     }
                   }._1
 
-                val idxStutteringMeta = patterns.map(_.unfix).zip(patterns.map(_.unfix).drop(1)).zipWithIndex.collect {
+                val idxStutteringMeta =
+                  patterns.map(_.unfix).zip(patterns.map(_.unfix).drop(1)).zipWithIndex.collect {
                   case ((PatternF.Meta(_), PatternF.Meta(_)), idx) => idx + 1
                 }
 
                 val unificationSeq    = unification.map(p => p._1 -> Seq(p._2)).withDefaultValue(Seq.empty)
-                val unificationResult = patterns.zipWithIndex.foldLeft(unificationSeq) { (unification, pWithIdx) =>
+                val unificationResult =
+                  patterns.zipWithIndex.foldLeft(UnificationResult.success(unificationSeq)) {
+                    (unification, pWithIdx) =>
                   val (pattern, idx) = pWithIdx
                   pattern.unfix match {
-                    case p @ PatternF.Meta(_) if !idxStutteringMeta.contains(idx) =>
+                        case p @ PatternF.Meta(_) =>
+                          if idxStutteringMeta.contains(idx) then
+                            // cast safety: see `idxStutteringMeta` construction
+                            UnificationResult.failure(
+                              unification.get.removed(patterns(idx - 1).unfix.asInstanceOf[p.type])
+                            )
+                          else
                       val before = idxConcreteBefore.get(idx).flatMap(idxMap.get).getOrElse(-1)
                       val after  = idxConcreteAfter.get(idx).flatMap(idxMap.get).getOrElse(scrutinees.size)
-                      unification + (p -> scrutinees.slice(before + 1, after))
+                            unification.map(_ + (p -> scrutinees.slice(before + 1, after)))
                     case _ => unification
                   }
                 }
                 (unificationResult, idxMap)
               }
 
-            val result =
-              for
-                (resultUnification, idxMap) <- resultUnificationWithIdxMap
-                if scrutinees.zipWithIndex
+            resultUnificationWithIdxMap.map {
+              case (resultUnification, idxMap) =>
+                // check that all scrutinees are matched by some meta-variable in the unification
+                val complete = scrutinees.zipWithIndex
                   .filterNot { case (_, idx) => idxMap.values.exists(_ == idx) }
-                  .forall { case (scrutinee, _) => resultUnification.values.exists(_.contains(scrutinee)) }
-              yield resultUnification
-
-            result.map(UnificationResult.success).getOrElse(UnificationResult.failure(Map.empty))
+                  .forall { case (scrutinee, _) => resultUnification.get.values.exists(_.contains(scrutinee)) }
+                if complete then resultUnification else UnificationResult.failure(resultUnification.get)
+            }.getOrElse(UnificationResult.failure(Map.empty))
           }
       }
   }
