@@ -13,6 +13,7 @@ import core.{Algebra, Functor}
 opaque type UnificationResult[T] = Either[T, T]
 
 object UnificationResult {
+
   /** Construct a successful unification result. */
   def success[T](result: T): UnificationResult[T] = Right(result)
 
@@ -20,6 +21,7 @@ object UnificationResult {
   def failure[T](result: T): UnificationResult[T] = Left(result)
 
   extension [T](result: UnificationResult[T]) {
+
     /** Return the payload regardless of success or failure. */
     def get: T = result.merge
 
@@ -154,13 +156,13 @@ object Unify {
                       // we can alternatively track the last used index in the context
                       last = idxMap.maxByOption(_._2).map(_._2).getOrElse(0)
                       (unification, idxMatch) <-
-                        scrutinees.drop(last).map(pattern.unifier(_)).zipWithIndex.find(_._1.isSuccess)
+                        scrutinees.drop(last).map(pattern.unifier(_)).zipWithIndex.findLast(_._1.isSuccess)
                       merged <- MapUnification.merge(unificationAcc, unification.get).toOption
                     yield (merged, idxMap + (idx -> idxMatch))
                 }
               }
 
-            val unificationResult =
+            val resultUnificationWithIdxMap =
               for
                 (unification, idxMap) <- unificationConcrete
               yield {
@@ -189,8 +191,8 @@ object Unify {
                   case ((PatternF.Meta(_), PatternF.Meta(_)), idx) => idx + 1
                 }
 
-                val unificationSeq = unification.map(p => p._1 -> Seq(p._2)).withDefaultValue(Seq.empty)
-                patterns.zipWithIndex.foldLeft(unificationSeq) { (unification, pWithIdx) =>
+                val unificationSeq    = unification.map(p => p._1 -> Seq(p._2)).withDefaultValue(Seq.empty)
+                val unificationResult = patterns.zipWithIndex.foldLeft(unificationSeq) { (unification, pWithIdx) =>
                   val (pattern, idx) = pWithIdx
                   pattern.unfix match {
                     case p @ PatternF.Meta(_) if !idxStutteringMeta.contains(idx) =>
@@ -200,8 +202,18 @@ object Unify {
                     case _ => unification
                   }
                 }
+                (unificationResult, idxMap)
               }
-            unificationResult.map(UnificationResult.success).getOrElse(UnificationResult.failure(Map.empty))
+
+            val result =
+              for
+                (resultUnification, idxMap) <- resultUnificationWithIdxMap
+                if scrutinees.zipWithIndex
+                  .filterNot { case (_, idx) => idxMap.values.exists(_ == idx) }
+                  .forall { case (scrutinee, _) => resultUnification.values.exists(_.contains(scrutinee)) }
+              yield resultUnification
+
+            result.map(UnificationResult.success).getOrElse(UnificationResult.failure(Map.empty))
           }
       }
   }
