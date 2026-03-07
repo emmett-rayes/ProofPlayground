@@ -5,7 +5,7 @@ import scala.language.implicitConversions
 
 import core.meta.Pattern.given
 import core.meta.PatternF.{concrete, substitution}
-import core.meta.Unify
+import core.meta.SeqUnification.given
 import core.proof.natural.Judgement
 import core.{Algebra, Functor, traverse}
 
@@ -38,13 +38,9 @@ object SubstitutePartial {
   given [T: AsPattern[F], F[_]: Functor]
     => (Algebra[F, MapUnifier[T]])
       => Seq is SubstitutePartial[T, F] {
+    override type Unification = SeqUnification
 
-    override type Unification = SeqUnify.Unification
     private val SeqUnify = Unify.given_is_Seq_Unify
-
-    extension (unification: Unification[T])
-      override def merge(aux: MapUnification[T]): UnificationResult[Unification[T]] =
-        SeqUnify.merge(unification)(aux)
 
     extension (patterns: Seq[Pattern[F]])
       override def unifier: Unifier =
@@ -81,12 +77,9 @@ object Substitute {
     => (Algebra[F, Option[T]])
     => (Algebra[F, MapUnifier[T]])
       => Seq is Substitute[T, F] {
-    override type Unification = SeqSubstitutePartial.Unification
-    private val SeqSubstitutePartial = SubstitutePartial.given_is_Seq_SubstitutePartial
+    override type Unification = SeqUnification
 
-    extension (unification: Unification[T])
-      override def merge(aux: MapUnification[T]): UnificationResult[Unification[T]] =
-        SeqSubstitutePartial.merge(unification)(aux)
+    private val SeqSubstitutePartial = SubstitutePartial.given_is_Seq_SubstitutePartial
 
     extension (patterns: Seq[Pattern[F]])
       override def unifier: Unifier =

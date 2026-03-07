@@ -1,6 +1,8 @@
 package proofPlayground
 package core.meta
 
+import scala.annotation.targetName
+
 import core.meta.Pattern.given
 import core.{Algebra, Functor}
 
@@ -48,6 +50,18 @@ object UnificationResult {
   }
 }
 
+/** Type class for unification representations that can be combined with map-based bindings.
+  *
+  * Implementations should preserve all non-conflicting bindings and encode conflicts as
+  * [[UnificationResult.failure]] with the best-effort merged payload.
+  */
+trait Merge {
+  type Self[_]
+  extension [T](self: Self[T])
+    /** Merge this unification value with additional map-based bindings. */
+    def merge(aux: MapUnification[T]): UnificationResult[Self[T]]
+}
+
 /** A commonly used unifier type from scrutinees to unifications over scrutinees.
   *
   * The unifier returns [[UnificationResult.success]] for a consistent match and
@@ -58,8 +72,14 @@ type MapUnifier[T] = T => UnificationResult[MapUnification[T]]
 /** A unification mapping meta-variables from a pattern to concrete values. */
 type MapUnification[T] = Map[MetaVariable, T]
 
-object MapUnification:
-  import scala.annotation.targetName
+object MapUnification {
+
+  /** [[Merge]] instance for [[MapUnification]]. */
+  given MapUnification is Merge {
+    extension [T](unification: MapUnification[T])
+      override def merge(aux: MapUnification[T]): UnificationResult[MapUnification[T]] =
+        MapUnification.merge(unification, aux)
+  }
 
   /** Merge two unifications if they agree on shared variables, otherwise fail.
     *
@@ -79,6 +99,23 @@ object MapUnification:
       val sndFiltered = snd.filterNot { case (k, _) => conflicts.contains(k) }
       UnificationResult.failure(fstFiltered ++ sndFiltered)
   }
+}
+
+type SeqUnification[X] = MapUnification[Seq[X]]
+
+object SeqUnification {
+
+  extension [T](unification: SeqUnification[T])
+    @targetName("mergeSeq")
+    def merge(aux: SeqUnification[T]): UnificationResult[SeqUnification[T]] =
+      MapUnification.merge(unification, aux)
+
+  /** [[Merge]] instance for [[SeqUnification]]. */
+  given SeqUnification is Merge {
+    extension [T](unification: SeqUnification[T])
+      override def merge(aux: MapUnification[T]): UnificationResult[SeqUnification[T]] =
+        SeqUnification.merge(unification, aux)
+  }
 
   /** Merge two unifications if they agree on shared variables, otherwise fail.
     *
@@ -90,10 +127,10 @@ object MapUnification:
     * @return [[UnificationResult.success]](merged) when consistent;
     *         [[UnificationResult.failure]](mergedWithoutConflicts) when conflicts are found
     */
-  @targetName("mergeSeq")
-  def merge[T](fst: MapUnification[Seq[T]], snd: MapUnification[T]): UnificationResult[MapUnification[Seq[T]]] = {
-    merge[Seq[T]](fst, snd.map { (k, v) => k -> Seq(v) })
+  def merge[T](fst: SeqUnification[T], snd: MapUnification[T]): UnificationResult[SeqUnification[T]] = {
+    MapUnification.merge(fst, snd.map { (k, v) => k -> Seq(v) })
   }
+}
 
 /** Type alias for a unifier function that attempts to produce a unification.
   *
@@ -102,25 +139,20 @@ object MapUnification:
   */
 trait Unify[T, F[_]] {
   type Self[_]
-  type Unification[_]
+  type Unification[_]: Merge
   type Unifier = Self[T] => UnificationResult[Unification[T]]
-
-  extension (unification: Unification[T])
-    def merge(aux: MapUnification[T]): UnificationResult[Unification[T]]
 
   extension (self: Self[Pattern[F]])
     def unifier: Unifier
 }
 
 object Unify {
+  import SeqUnification.given
 
   /** [[Unify]] instance for [[Seq]]. */
   given [T, F[_]: Functor] => (Algebra[F, MapUnifier[T]]) => Seq is Unify[T, F] {
-    override type Unification = [X] =>> MapUnification[Seq[X]]
 
-    extension (unification: Unification[T])
-      override def merge(aux: MapUnification[T]): UnificationResult[Unification[T]] =
-        MapUnification.merge(unification, aux)
+    override type Unification = SeqUnification
 
     /** Attempt to unify a sequence of formula patterns with a sequence of concrete formulas.
       *
@@ -179,26 +211,26 @@ object Unify {
                 val idxConcreteAfter =
                   patterns.zipWithIndex.reverse.foldLeft((Map.empty[Int, Int], patterns.size - 1)) {
                     (ctx, pWithIdx) =>
-                    val (map, lastConcreteIdx) = ctx
-                    val (pattern, idx)         = pWithIdx
-                    pattern.unfix match {
-                      case PatternF.Meta(_) | PatternF.Substitution(_, _, _) =>
-                        (map + (idx -> lastConcreteIdx), lastConcreteIdx)
-                      case PatternF.Formula(_) => (map + (idx -> idx), idx)
-                    }
+                      val (map, lastConcreteIdx) = ctx
+                      val (pattern, idx)         = pWithIdx
+                      pattern.unfix match {
+                        case PatternF.Meta(_) | PatternF.Substitution(_, _, _) =>
+                          (map + (idx -> lastConcreteIdx), lastConcreteIdx)
+                        case PatternF.Formula(_) => (map + (idx -> idx), idx)
+                      }
                   }._1
 
                 val idxStutteringMeta =
                   patterns.map(_.unfix).zip(patterns.map(_.unfix).drop(1)).zipWithIndex.collect {
-                  case ((PatternF.Meta(_), PatternF.Meta(_)), idx) => idx + 1
-                }
+                    case ((PatternF.Meta(_), PatternF.Meta(_)), idx) => idx + 1
+                  }
 
                 val unificationSeq    = unification.map(p => p._1 -> Seq(p._2)).withDefaultValue(Seq.empty)
                 val unificationResult =
                   patterns.zipWithIndex.foldLeft(UnificationResult.success(unificationSeq)) {
                     (unification, pWithIdx) =>
-                  val (pattern, idx) = pWithIdx
-                  pattern.unfix match {
+                      val (pattern, idx) = pWithIdx
+                      pattern.unfix match {
                         case p @ PatternF.Meta(_) =>
                           if idxStutteringMeta.contains(idx) then
                             // cast safety: see `idxStutteringMeta` construction
@@ -206,12 +238,12 @@ object Unify {
                               unification.get.removed(patterns(idx - 1).unfix.asInstanceOf[p.type])
                             )
                           else
-                      val before = idxConcreteBefore.get(idx).flatMap(idxMap.get).getOrElse(-1)
-                      val after  = idxConcreteAfter.get(idx).flatMap(idxMap.get).getOrElse(scrutinees.size)
+                            val before = idxConcreteBefore.get(idx).flatMap(idxMap.get).getOrElse(-1)
+                            val after  = idxConcreteAfter.get(idx).flatMap(idxMap.get).getOrElse(scrutinees.size)
                             unification.map(_ + (p -> scrutinees.slice(before + 1, after)))
-                    case _ => unification
+                        case _ => unification
+                      }
                   }
-                }
                 (unificationResult, idxMap)
               }
 
