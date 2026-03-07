@@ -47,7 +47,7 @@ object Pattern {
     override type Unification = MapUnification
 
     extension (unification: Unification[T])
-      override def merge(aux: MapUnification[T]): Option[Unification[T]] =
+      override def merge(aux: MapUnification[T]): UnificationResult[Unification[T]] =
         MapUnification.merge(unification, aux)
 
     /** Attempt to unify a pattern with a concrete formula.
@@ -61,13 +61,18 @@ object Pattern {
       * - For unary connectives (e.g. ¬), the argument must unify.
       * - For binary connectives (e.g. ∧, ∨, →), both sides must unify and their substitutions must be consistent.
       *
-      * @return Some(unification) if a consistent unification exists; None otherwise
+      * @return [[UnificationResult.success]](unification) if a consistent unification exists;
+      *         [[UnificationResult.failure]](partialUnification) otherwise
       */
     extension (pattern: Pattern[F])
       override def unifier: Unifier =
         val algebra = PatternF.algebra(summon) {
-          case PatternF.Meta(name) => scrutinee => Some(Map(meta(name) -> scrutinee))
-          case PatternF.Substitution(_, _, _) => _ => Some(Map.empty)
+          case PatternF.Meta(name) => 
+            scrutinee => 
+              UnificationResult.success(Map(meta(name) -> scrutinee))
+          case PatternF.Substitution(_, _, _) =>
+            _ =>
+              UnificationResult.success(Map.empty)
         }
         catamorphism(pattern)(algebra)
   }
@@ -81,7 +86,7 @@ object Pattern {
     private val PatternUnify = Pattern.given_is_X_Unify
 
     extension (unification: Unification[T])
-      override def merge(aux: MapUnification[T]): Option[Unification[T]] =
+      override def merge(aux: MapUnification[T]): UnificationResult[Unification[T]] =
         PatternUnify.merge(unification)(aux)
 
     extension (pattern: Pattern[F])
@@ -117,7 +122,7 @@ object Pattern {
     private val PatternSubstitutePartial = Pattern.given_is_X_SubstitutePartial
 
     extension (unification: Unification[T])
-      override def merge(aux: MapUnification[T]): Option[Unification[T]] =
+      override def merge(aux: MapUnification[T]): UnificationResult[Unification[T]] =
         PatternSubstitutePartial.merge(unification)(aux)
 
     extension (pattern: Pattern[F])

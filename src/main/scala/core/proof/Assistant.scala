@@ -27,14 +27,13 @@ object Assistant {
     auxUnification: MapUnification[Fix[F]] = Map.empty[MetaVariable, Fix[F]],
   ): ProofResult[J, F] = {
 
-    val conclusionUnificationOpt =
+    val conclusionUnificationResult =
       for
         unification      <- rule.conclusion.unifier(judgement)
         totalUnification <- unification.merge(auxUnification)
       yield totalUnification
-    if conclusionUnificationOpt.isEmpty then return ProofResult.UnificationFailure()
-
-    val conclusionUnification = conclusionUnificationOpt.get
+    
+    val conclusionUnification = conclusionUnificationResult.get
     val proofOrFailure        =
       for
         conclusion <- rule.conclusion.substitute(conclusionUnification)

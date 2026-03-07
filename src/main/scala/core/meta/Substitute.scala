@@ -43,7 +43,7 @@ object SubstitutePartial {
     private val SeqUnify = Unify.given_is_Seq_Unify
 
     extension (unification: Unification[T])
-      override def merge(aux: MapUnification[T]): Option[Unification[T]] =
+      override def merge(aux: MapUnification[T]): UnificationResult[Unification[T]] =
         SeqUnify.merge(unification)(aux)
 
     extension (patterns: Seq[Pattern[F]])
@@ -85,7 +85,7 @@ object Substitute {
     private val SeqSubstitutePartial = SubstitutePartial.given_is_Seq_SubstitutePartial
 
     extension (unification: Unification[T])
-      override def merge(aux: MapUnification[T]): Option[Unification[T]] =
+      override def merge(aux: MapUnification[T]): UnificationResult[Unification[T]] =
         SeqSubstitutePartial.merge(unification)(aux)
 
     extension (patterns: Seq[Pattern[F]])

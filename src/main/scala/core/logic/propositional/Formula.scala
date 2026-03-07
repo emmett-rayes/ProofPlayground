@@ -7,7 +7,16 @@ import scala.language.implicitConversions
 import core.logic.propositional.FormulaF.*
 import core.logic.symbol
 import core.meta.PatternF.*
-import core.meta.{AsPattern, CaptureAvoidingSub, FreeVars, MapUnification, MapUnifier, MetaVariable, Pattern}
+import core.meta.{
+  AsPattern,
+  CaptureAvoidingSub,
+  FreeVars,
+  MapUnification,
+  MapUnifier,
+  MetaVariable,
+  Pattern,
+  UnificationResult,
+}
 import core.{Algebra, Fix, Functor, catamorphism, fix}
 
 /** Representation of a propositional formula.
@@ -210,11 +219,13 @@ object FormulaF {
           {
             (scrutinee.unfix, formula) match {
               case (FormulaF.Variable(variable), FormulaF.Variable(pattern)) =>
-                if pattern == variable then Some(Map.empty[MetaVariable, Formula]) else None
+                if pattern == variable
+                then UnificationResult.success(Map.empty)
+                else UnificationResult.failure(Map.empty)
               case (FormulaF.True(_), FormulaF.True(_)) =>
-                Some(Map.empty)
+                UnificationResult.success(Map.empty)
               case (FormulaF.False(_), FormulaF.False(_)) =>
-                Some(Map.empty)
+                UnificationResult.success(Map.empty)
               case (FormulaF.Negation(negation), FormulaF.Negation(pattern)) =>
                 pattern.arg(negation.arg)
               case (FormulaF.Conjunction(conjunction), FormulaF.Conjunction(pattern)) =>
@@ -247,7 +258,7 @@ object FormulaF {
                   body     <- pattern.body(existential.body)
                   merged   <- MapUnification.merge(variable, body)
                 yield merged
-              case _ => None
+              case _ => UnificationResult.failure(Map.empty)
             }
           }
       }

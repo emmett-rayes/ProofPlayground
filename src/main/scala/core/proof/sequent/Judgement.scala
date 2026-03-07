@@ -17,6 +17,7 @@ import core.meta.{
   Pattern,
   Substitute,
   SubstitutePartial,
+  UnificationResult,
   Unify,
 }
 import core.proof.SideCondition
@@ -79,7 +80,7 @@ object Judgement {
     override type Unification = [X] =>> MapUnification[Seq[X]]
 
     extension (unification: Unification[T])
-      override def merge(aux: MapUnification[T]): Option[Unification[T]] =
+      override def merge(aux: MapUnification[T]): UnificationResult[Unification[T]] =
         MapUnification.merge(unification, aux)
 
     extension (judgement: Judgement[Pattern[F]])
@@ -98,7 +99,7 @@ object Judgement {
     private val JudgementUnify = Judgement.given_is_Judgement_Unify
 
     extension (unification: Unification[T])
-      override def merge(aux: MapUnification[T]): Option[Unification[T]] =
+      override def merge(aux: MapUnification[T]): UnificationResult[Unification[T]] =
         JudgementUnify.merge(unification)(aux)
 
     extension (judgement: Judgement[Pattern[F]])
@@ -125,7 +126,7 @@ object Judgement {
     private val JudgementSubstitutePartial = Judgement.given_is_Judgement_SubstitutePartial
 
     extension (unification: Unification[T])
-      override def merge(aux: MapUnification[T]): Option[Unification[T]] =
+      override def merge(aux: MapUnification[T]): UnificationResult[Unification[T]] =
         JudgementSubstitutePartial.merge(unification)(aux)
 
     extension (judgement: Judgement[Pattern[F]])

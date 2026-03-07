@@ -26,7 +26,7 @@ class TestUnification extends AnyFunSuite {
     val pattern = formula.asPattern
     val result  = pattern.unifier(formula)
 
-    assert(result.isDefined)
+    assert(result.isSuccess)
   }
 
   test("meta-variables unify any propositional formula") {
@@ -36,7 +36,7 @@ class TestUnification extends AnyFunSuite {
     val formula = formulaGenerator.arbitrary.sample.get
     val result  = pattern.unifier(formula)
 
-    assert(result.isDefined)
+    assert(result.isSuccess)
     assert(result.get === Map(metavariable -> formula))
   }
 
@@ -46,7 +46,7 @@ class TestUnification extends AnyFunSuite {
     val pattern        = variable(variableSymbol): Pattern[FormulaF]
     val result         = pattern.unifier(formula)
 
-    assert(result.isDefined)
+    assert(result.isSuccess)
   }
 
   test("variable pattern does not unify different variable formulas") {
@@ -54,7 +54,7 @@ class TestUnification extends AnyFunSuite {
     val formula = variable("B"): Formula
     val result  = pattern.unifier(formula)
 
-    assert(result.isEmpty)
+    assert(result.isFailure)
   }
 
   test("true pattern unifies true formula") {
@@ -62,7 +62,7 @@ class TestUnification extends AnyFunSuite {
     val formula = tru: Formula
     val result  = pattern.unifier(formula)
 
-    assert(result.isDefined)
+    assert(result.isSuccess)
   }
 
   test("true pattern does not unifies anything that is not true formula") {
@@ -70,7 +70,7 @@ class TestUnification extends AnyFunSuite {
     val formula = formulaGenerator.arbitrary.retryUntil(f => f != tru[Formula]).sample.get
     val result  = pattern.unifier(formula)
 
-    assert(result.isEmpty)
+    assert(result.isFailure)
   }
 
   test("false pattern unifies false formula") {
@@ -78,7 +78,7 @@ class TestUnification extends AnyFunSuite {
     val formula = fls: Formula
     val result  = pattern.unifier(formula)
 
-    assert(result.isDefined)
+    assert(result.isSuccess)
   }
 
   test("false pattern does not unifies anything that is not false formula") {
@@ -86,7 +86,7 @@ class TestUnification extends AnyFunSuite {
     val formula = formulaGenerator.arbitrary.retryUntil(f => f != fls[Formula]).sample.get
     val result  = pattern.unifier(formula)
 
-    assert(result.isEmpty)
+    assert(result.isFailure)
   }
 
   test("negation patterns unify negation formulas") {
@@ -96,7 +96,7 @@ class TestUnification extends AnyFunSuite {
     val formula    = ~subFormula
     val result     = pattern.unifier(formula)
 
-    assert(result.isDefined)
+    assert(result.isSuccess)
     assert(result.get === Map(subPattern.unfix -> subFormula))
   }
 
@@ -111,7 +111,7 @@ class TestUnification extends AnyFunSuite {
     ).sample.get
     val result = pattern.unifier(formula)
 
-    assert(result.isEmpty)
+    assert(result.isFailure)
   }
 
   test("conjunction patterns unify conjunction formulas") {
@@ -123,7 +123,7 @@ class TestUnification extends AnyFunSuite {
     val formula      = leftFormula /\ rightFormula
     val result       = pattern.unifier(formula)
 
-    assert(result.isDefined)
+    assert(result.isSuccess)
     assert(result.get === Map(leftPattern.unfix -> leftFormula, rightPattern.unfix -> rightFormula))
   }
 
@@ -139,7 +139,7 @@ class TestUnification extends AnyFunSuite {
     ).sample.get
     val result = pattern.unifier(formula)
 
-    assert(result.isEmpty)
+    assert(result.isFailure)
   }
 
   test("conjunction unification fails when conflicting metavariables occur") {
@@ -150,7 +150,7 @@ class TestUnification extends AnyFunSuite {
     val formula      = leftFormula /\ rightFormula
     val result       = pattern.unifier(formula)
 
-    assert(result.isEmpty)
+    assert(result.isFailure)
   }
 
   test("disjunction patterns unify disjunction formulas") {
@@ -162,7 +162,7 @@ class TestUnification extends AnyFunSuite {
     val formula      = leftFormula \/ rightFormula
     val result       = pattern.unifier(formula)
 
-    assert(result.isDefined)
+    assert(result.isSuccess)
     assert(result.get === Map(leftPattern.unfix -> leftFormula, rightPattern.unfix -> rightFormula))
   }
 
@@ -178,7 +178,7 @@ class TestUnification extends AnyFunSuite {
     ).sample.get
     val result = pattern.unifier(formula)
 
-    assert(result.isEmpty)
+    assert(result.isFailure)
   }
 
   test("disjunction unification fails when conflicting metavariables occur") {
@@ -189,7 +189,7 @@ class TestUnification extends AnyFunSuite {
     val formula      = leftFormula \/ rightFormula
     val result       = pattern.unifier(formula)
 
-    assert(result.isEmpty)
+    assert(result.isFailure)
   }
 
   test("implication patterns unify implication formulas") {
@@ -201,7 +201,7 @@ class TestUnification extends AnyFunSuite {
     val formula      = leftFormula --> rightFormula
     val result       = pattern.unifier(formula)
 
-    assert(result.isDefined)
+    assert(result.isSuccess)
     assert(result.get === Map(leftPattern.unfix -> leftFormula, rightPattern.unfix -> rightFormula))
   }
 
@@ -217,7 +217,7 @@ class TestUnification extends AnyFunSuite {
     ).sample.get
     val result = pattern.unifier(formula)
 
-    assert(result.isEmpty)
+    assert(result.isFailure)
   }
 
   test("implication unification fails when conflicting metavariables occur") {
@@ -228,7 +228,7 @@ class TestUnification extends AnyFunSuite {
     val formula      = leftFormula --> rightFormula
     val result       = pattern.unifier(formula)
 
-    assert(result.isEmpty)
+    assert(result.isFailure)
   }
 
   test("sequence unification with a single meta-variable") {
@@ -240,7 +240,7 @@ class TestUnification extends AnyFunSuite {
     val formulas = Seq[Formula](varA \/ varB, tru, fls, ~varA)
 
     val unification = patterns.unifier(formulas)
-    assert(unification.isDefined)
+    assert(unification.isSuccess)
     assert(unification.get(gamma) === formulas)
   }
 
@@ -254,7 +254,7 @@ class TestUnification extends AnyFunSuite {
     val formulas: Seq[Formula] = Seq(varA \/ varB, tru, fls, ~varA)
 
     val unification = patterns.unifier(formulas)
-    assert(unification.isDefined)
+    assert(unification.isSuccess)
     assert(unification.get(gamma) === formulas)
     assert(unification.get(delta) === Seq.empty)
   }
@@ -271,7 +271,7 @@ class TestUnification extends AnyFunSuite {
     val formulas: Seq[Formula] = Seq(varA \/ varB, tru, fls, ~varA)
 
     val unification = patterns.unifier(formulas)
-    assert(unification.isDefined)
+    assert(unification.isSuccess)
     assert(unification.get(delta) === Seq.empty)
     assert(unification.get(gamma) === Seq[Formula](tru, fls))
   }
@@ -288,7 +288,7 @@ class TestUnification extends AnyFunSuite {
     val formulas: Seq[Formula] = Seq(varA \/ varB, ~varA, tru, fls)
 
     val unification = patterns.unifier(formulas)
-    assert(unification.isDefined)
+    assert(unification.isSuccess)
     assert(unification.get(delta) === Seq.empty)
     assert(unification.get(gamma) === Seq[Formula](tru, fls))
   }
@@ -303,7 +303,7 @@ class TestUnification extends AnyFunSuite {
     val formulas: Seq[Formula] = Seq(tru, fls, ~varA, varA \/ varB)
 
     val unification = patterns.unifier(formulas)
-    assert(unification.isDefined)
+    assert(unification.isSuccess)
     assert(unification.get(gamma) === Seq[Formula](tru, fls, ~varA))
   }
 
@@ -317,7 +317,7 @@ class TestUnification extends AnyFunSuite {
     val formulas: Seq[Formula] = Seq(varA \/ varB, tru, fls, ~varA)
 
     val unification = patterns.unifier(formulas)
-    assert(unification.isDefined)
+    assert(unification.isSuccess)
     assert(unification.get(gamma) === Seq[Formula](tru, fls, ~varA))
   }
 }
