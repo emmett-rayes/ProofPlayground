@@ -48,7 +48,7 @@ object InferenceRules {
           gamma |- delta :: phi,
           pi :: phi |- omega,
         ),
-        pi ++ gamma |- omega ++ delta,
+        pi :: gamma |- omega :: delta,
       )
     }
 
@@ -205,7 +205,7 @@ object InferenceRules {
           gamma |- phi :: delta,
           pi :: psi |- omega,
         ),
-        (pi ++ gamma) :: (phi --> psi) |- (omega ++ delta),
+        (pi :: gamma) :: (phi --> psi) |- (omega :: delta),
       )
     }
 
