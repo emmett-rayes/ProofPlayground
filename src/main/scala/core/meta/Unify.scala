@@ -5,6 +5,7 @@ import scala.annotation.targetName
 
 import core.meta.Pattern.given
 import core.{Algebra, Functor}
+import proofPlayground.core.meta.PatternF.Meta
 
 /** Result of a unification attempt.
   *
@@ -51,10 +52,15 @@ object UnificationResult {
 trait Unification {
   type Self[_]
 
+  /** Empty unification with no meta-variable bindings. */
+  def empty[T]: Self[T]
+
   extension [T](self: Self[T]) {
 
-    /** Merge this unification value with additional map-based bindings. */
-    def merge(aux: MapUnification[T]): UnificationResult[Self[T]]
+    /** Update this unification with additional meta-variable bindings. */
+    def update(aux: MapUnification[T]): UnificationResult[Self[T]]
+    /** Merge this unification with additional unification of the same type. */
+    def merge(other: Self[T]): UnificationResult[Self[T]]
   }
 }
 
@@ -72,9 +78,14 @@ object MapUnification {
 
   /** [[Unification]] instance for [[MapUnification]]. */
   given MapUnification is Unification {
+    override def empty[T]: MapUnification[T] = Map.empty
+
     extension [T](unification: MapUnification[T]) {
-      override def merge(aux: MapUnification[T]): UnificationResult[MapUnification[T]] =
+      override def update(aux: MapUnification[T]): UnificationResult[MapUnification[T]] =
         MapUnification.merge(unification, aux)
+
+      override def merge(other: MapUnification[T]): UnificationResult[MapUnification[T]] =
+        MapUnification.merge(unification, other)
     }
   }
 
@@ -102,16 +113,16 @@ type SeqUnification[X] = MapUnification[Seq[X]]
 
 object SeqUnification {
 
-  extension [T](unification: SeqUnification[T])
-    @targetName("mergeSeq")
-    def merge(aux: SeqUnification[T]): UnificationResult[SeqUnification[T]] =
-      MapUnification.merge(unification, aux)
-
   /** [[Unification]] instance for [[SeqUnification]]. */
   given SeqUnification is Unification {
+    override def empty[T]: SeqUnification[T] = Map.empty
+
     extension [T](unification: SeqUnification[T]) {
-      override def merge(aux: MapUnification[T]): UnificationResult[SeqUnification[T]] =
+      override def update(aux: MapUnification[T]): UnificationResult[SeqUnification[T]] =
         SeqUnification.merge(unification, aux)
+
+      override def merge(other: SeqUnification[T]): UnificationResult[SeqUnification[T]] =
+        MapUnification.merge(unification, other)
     }
   }
 

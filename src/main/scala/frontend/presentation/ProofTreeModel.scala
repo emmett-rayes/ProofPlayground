@@ -168,7 +168,7 @@ class ProofTreeModel[
   private def handleMissingMetaVariables(
     rule: InferenceRule[J, FormulaF],
     metavariables: Seq[MetaVariable],
-    unification: MapUnification[Formula] = Map.empty
+    unification: J.Uni[Formula] = J.Uni.empty
   )(
     callback: J.Uni[Formula] => Unit
   ): Unit = {
@@ -188,7 +188,7 @@ class ProofTreeModel[
 
   private def applyRule(
     rule: InferenceRule[J, FormulaF],
-    unification: MapUnification[Formula] = Map.empty,
+    unification: J.Uni[Formula] = J.Uni.empty,
   )(substitutionFailure: InferenceRule[J, FormulaF] => Unit): Unit = {
     def replace(replacement: Proof[J[Formula]]): Unit = {
       rulesInFocus = false
@@ -198,7 +198,7 @@ class ProofTreeModel[
       invalidateRuleCache()
     }
 
-    Assistant.proof(zipper.get.conclusion, rule, unification) match {
+    Assistant.proof(zipper.get.conclusion, rule, Some(unification)) match {
       case ProofResult.UnificationFailure(_)                => ()
       case ProofResult.Success(proof)                       => replace(proof)
       case ProofResult.SubstitutionFailure(substitutedRule) => substitutionFailure(substitutedRule)

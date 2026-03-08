@@ -26,13 +26,12 @@ object Assistant {
   )(
     judgement: J[Fix[F]],
     rule: InferenceRule[J, F],
-    auxUnification: MapUnification[Fix[F]] = Map.empty[MetaVariable, Fix[F]],
+    auxUnification: Option[J.Uni[Fix[F]]] = None,
   ): ProofResult[J, F] = {
-
     val unificationResult =
       for
         conclusionUnification <- rule.conclusion.unifier(judgement)
-        totalUnification      <- conclusionUnification.merge(auxUnification)
+        totalUnification <- conclusionUnification.merge(auxUnification.getOrElse(J.Uni.empty))
       yield totalUnification
 
     val unification = unificationResult.get

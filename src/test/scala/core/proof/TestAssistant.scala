@@ -11,6 +11,7 @@ import core.logic.propositional.{Formula, FormulaF}
 import core.meta.Pattern
 import core.meta.Pattern.given
 import core.meta.PatternF.{concrete, meta}
+import core.meta.Unification
 import core.meta.Unify.given
 import core.proof.Assistant
 import core.proof.Assistant.ProofResult
@@ -113,6 +114,7 @@ class TestAssistant extends AnyFunSuite {
   test("disjunction elimination for two propositional variables with meta-variables in premises only") {
     import core.proof.natural.Judgement.*
     import core.proof.natural.Judgement.given
+    import core.proof.natural.JudgementUnification
 
     val A         = variable[Formula]("A")
     val B         = variable[Formula]("B")
@@ -120,7 +122,10 @@ class TestAssistant extends AnyFunSuite {
     val judgement = Seq.empty |- C
     val rule      = DisjunctionElimination
 
-    val result = Assistant.proof(judgement, rule, Map(meta("phi") -> A, meta("psi") -> B))
+    val unification: JudgementUnification[Formula] =
+      (Map(meta("phi") -> A, meta("psi") -> B), Map(meta("phi") -> A, meta("psi") -> B))
+
+    val result = Assistant.proof(judgement, rule, Some(unification))
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)

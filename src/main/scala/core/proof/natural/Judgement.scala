@@ -46,12 +46,21 @@ type JudgementUnification[X] = (MapUnification[X], SeqUnification[X], SeqUnifica
 
 object JudgementUnification {
   given JudgementUnification is Unification {
+    override def empty[T]: JudgementUnification[T] = (Map.empty, Map.empty, Map.empty)
+
     extension [T](unification: JudgementUnification[T]) {
-      override def merge(aux: MapUnification[T]): UnificationResult[JudgementUnification[T]] =
+      override def update(aux: MapUnification[T]): UnificationResult[JudgementUnification[T]] =
         for
           assertionUnification   <- unification._1.merge(aux)
-          assumptionsUnification <- unification._2.merge(assertionUnification)
-          nonfreeUnification     <- unification._3.merge(assertionUnification)
+          assumptionsUnification <- unification._2.update(assertionUnification)
+          nonfreeUnification     <- unification._3.update(assertionUnification)
+        yield (assertionUnification, assumptionsUnification, nonfreeUnification)
+
+      override def merge(other: JudgementUnification[T]): UnificationResult[JudgementUnification[T]] =
+        for
+          assertionUnification   <- unification._1.merge(other._1)
+          assumptionsUnification <- unification._2.merge(other._2)
+          nonfreeUnification     <- unification._3.merge(other._3)
         yield (assertionUnification, assumptionsUnification, nonfreeUnification)
     }
   }
@@ -122,8 +131,8 @@ object Judgement {
             assertionUnification        <- judgement.assertion.unifier(scrutinee.assertion)
             assumptionsUnification      <- judgement.assumptions.unifier(scrutinee.assumptions)
             nonfreeUnification          <- judgement.nonfree.unifier(scrutinee.nonfree)
-            mergedAssumptionUnification <- assumptionsUnification.merge(assertionUnification)
-            mergedNonfreeUnification    <- nonfreeUnification.merge(assertionUnification)
+            mergedAssumptionUnification <- assumptionsUnification.update(assertionUnification)
+            mergedNonfreeUnification    <- nonfreeUnification.update(assertionUnification)
           } yield (assertionUnification, mergedAssumptionUnification, mergedNonfreeUnification)
       }
   }
