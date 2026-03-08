@@ -33,9 +33,6 @@ object UnificationResult {
     /** True when the result represents failed unification. */
     def isFailure: Boolean = result.isLeft
 
-    /** Convert to [[Option]], dropping failure payload information. */
-    def toOption: Option[T] = result.toOption
-
     def flatMap[U](f: T => UnificationResult[U]): UnificationResult[U] =
       result match {
         case Right(t) => f(t)
@@ -55,6 +52,7 @@ trait Unification {
   type Self[_]
 
   extension [T](self: Self[T]) {
+
     /** Merge this unification value with additional map-based bindings. */
     def merge(aux: MapUnification[T]): UnificationResult[Self[T]]
   }
@@ -177,7 +175,7 @@ object Unify {
           {
             val emptyContext: (MapUnification[T], Map[Int, Int]) = (Map.empty, Map.empty)
             val unificationConcrete                              =
-              patterns.zipWithIndex.foldLeft(Option(emptyContext)) { (ctx, pWithIdx) =>
+              patterns.zipWithIndex.foldLeft(UnificationResult.success(emptyContext)) { (ctx, pWithIdx) =>
                 val (pattern, idx) = pWithIdx
                 pattern.unfix match {
                   case PatternF.Meta(_)               => ctx
@@ -185,20 +183,30 @@ object Unify {
                   case PatternF.Formula(_)            =>
                     for
                       (unificationAcc, idxMap) <- ctx
-                      // we can alternatively track the last used index in the context
+                      // we could alternatively track the last used index in the context
                       last = idxMap.maxByOption(_._2).map(_._2).getOrElse(0)
-                      (unification, idxMatch) <-
-                        scrutinees.drop(last).map(pattern.unifier(_)).zipWithIndex.findLast(_._1.isSuccess)
-                      merged <- MapUnification.merge(unificationAcc, unification.get).toOption
-                    yield (merged, idxMap + (idx -> idxMatch))
+
+                      (unification, idxMatch) = {
+                        val scs =
+                          scrutinees.drop(last).map(pattern.unifier(_)).zipWithIndex.map(p => (p._1, Some(p._2)))
+                        lazy val alternative = {
+                          val emptyUnification: MapUnification[T] = Map.empty
+                          scs.maxByOption(_._1.get.size).getOrElse((UnificationResult.failure(emptyUnification), None))
+                        }
+                        scs.findLast(_._1.isSuccess).getOrElse(alternative)
+                      }
+                      merged <- unification.flatMap { u => MapUnification.merge(unificationAcc, u) }
+                    yield {
+                      (merged, idxMatch.map(idxM => (idxMap + (idx -> idxM))).getOrElse(idxMap))
+                    }
                 }
               }
 
             val resultUnificationWithIdxMap =
               for
                 (unification, idxMap) <- unificationConcrete
-              yield {
-                val idxConcreteBefore = patterns.zipWithIndex.foldLeft((Map.empty[Int, Int], 0)) { (ctx, pWithIdx) =>
+
+                idxConcreteBefore = patterns.zipWithIndex.foldLeft((Map.empty[Int, Int], 0)) { (ctx, pWithIdx) =>
                   val (map, lastConcreteIdx) = ctx
                   val (pattern, idx)         = pWithIdx
                   pattern.unfix match {
@@ -208,7 +216,7 @@ object Unify {
                   }
                 }._1
 
-                val idxConcreteAfter =
+                idxConcreteAfter =
                   patterns.zipWithIndex.reverse.foldLeft((Map.empty[Int, Int], patterns.size - 1)) {
                     (ctx, pWithIdx) =>
                       val (map, lastConcreteIdx) = ctx
@@ -220,13 +228,13 @@ object Unify {
                       }
                   }._1
 
-                val idxStutteringMeta =
+                idxStutteringMeta =
                   patterns.map(_.unfix).zip(patterns.map(_.unfix).drop(1)).zipWithIndex.collect {
                     case ((PatternF.Meta(_), PatternF.Meta(_)), idx) => idx + 1
                   }
 
-                val unificationSeq    = unification.map(p => p._1 -> Seq(p._2)).withDefaultValue(Seq.empty)
-                val unificationResult =
+                unificationSeq = unification.map(p => p._1 -> Seq(p._2)).withDefaultValue(Seq.empty)
+                unificationResult <-
                   patterns.zipWithIndex.foldLeft(UnificationResult.success(unificationSeq)) {
                     (unification, pWithIdx) =>
                       val (pattern, idx) = pWithIdx
@@ -244,17 +252,14 @@ object Unify {
                         case _ => unification
                       }
                   }
-                (unificationResult, idxMap)
-              }
+              yield (unificationResult, idxMap)
 
-            resultUnificationWithIdxMap.map {
-              case (resultUnification, idxMap) =>
-                // check that all scrutinees are matched by some meta-variable in the unification
-                val complete = scrutinees.zipWithIndex
-                  .filterNot { case (_, idx) => idxMap.values.exists(_ == idx) }
-                  .forall { case (scrutinee, _) => resultUnification.get.values.exists(_.contains(scrutinee)) }
-                if complete then resultUnification else UnificationResult.failure(resultUnification.get)
-            }.getOrElse(UnificationResult.failure(Map.empty))
+            val (unification, idxMap) = resultUnificationWithIdxMap.get
+            // check that all scrutinees are matched by some meta-variable in the unification
+            val complete = scrutinees.zipWithIndex
+              .filterNot { case (_, idx) => idxMap.values.exists(_ == idx) }
+              .forall { case (scrutinee, _) => unification.values.exists(_.contains(scrutinee)) }
+            if complete then resultUnificationWithIdxMap.map(_._1) else UnificationResult.failure(unification)
           }
       }
   }
