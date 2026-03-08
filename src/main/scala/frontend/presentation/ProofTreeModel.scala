@@ -94,7 +94,7 @@ class ProofTreeModel[J[_] <: AnyRef: {Functor,
     val active = cachedRuleActive.getOrElse(
       rule, {
         val computed = Assistant.proof(zipper.get.conclusion, rule) match {
-          case ProofResult.UnificationFailure()   => false
+          case ProofResult.UnificationFailure(_)  => false
           case ProofResult.Success(_)             => true
           case ProofResult.SubstitutionFailure(_) => true // substitution failures can be fixed by user input
         }
@@ -191,7 +191,7 @@ class ProofTreeModel[J[_] <: AnyRef: {Functor,
     }
 
     Assistant.proof(zipper.get.conclusion, rule, unification) match {
-      case ProofResult.UnificationFailure()                 => ()
+      case ProofResult.UnificationFailure(_)                => ()
       case ProofResult.Success(proof)                       => replace(proof)
       case ProofResult.SubstitutionFailure(substitutedRule) => substitutionFailure(substitutedRule)
     }

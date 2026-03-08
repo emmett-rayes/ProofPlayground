@@ -27,33 +27,39 @@ object Assistant {
     auxUnification: MapUnification[Fix[F]] = Map.empty[MetaVariable, Fix[F]],
   ): ProofResult[J, F] = {
 
-    val conclusionUnificationResult =
+    val unificationResult =
       for
-        unification      <- rule.conclusion.unifier(judgement)
-        totalUnification <- unification.merge(auxUnification)
+        conclusionUnification <- rule.conclusion.unifier(judgement)
+        totalUnification      <- conclusionUnification.merge(auxUnification)
       yield totalUnification
-    
-    val conclusionUnification = conclusionUnificationResult.get
-    val proofOrFailure        =
+
+    val unification = unificationResult.get
+
+    val result =
       for
-        conclusion <- rule.conclusion.substitute(conclusionUnification)
-        premises   <- rule.premises.traverse { premise => premise.substitute(conclusionUnification) }
-      yield
+        conclusion <- rule.conclusion.substitute(unification)
+        premises   <- rule.premises.traverse { premise => premise.substitute(unification) }
+      yield {
         if conclusion == judgement then
-          // it is important to return judgement here, not the substituted conclusion, because the judgement may contain
-          // further judgement specific information internally.
-          Right(Proof(judgement, premises.reverse.map(Proof(_, List.empty)).toList))
+          // it is important to return the judgement here, not the substituted conclusion, because the judgement may
+          // contain further judgement specific information internally.
+          val proof = Proof(judgement, premises.reverse.map(Proof(_, List.empty)).toList)
+          ProofResult.Success(proof)
         else
-          Left(Inference(rule.label, premises, conclusion).map(j => j.map(_.asPattern)))
-    if proofOrFailure.isDefined then
-      return proofOrFailure.get match {
-        case Right(proof) => ProofResult.Success(proof)
-        case Left(rule)   =>
-          ProofResult.SubstitutionFailure(rule)
+          val substitutedRule = Inference(rule.label, premises, conclusion)
+          ProofResult.SubstitutionFailure(substitutedRule.map(j => j.map(_.asPattern)))
       }
 
-    val substitutedRule = rule.map(_.substitutePartial(conclusionUnification))
-    ProofResult.SubstitutionFailure(substitutedRule)
+    def ProofError(rule: InferenceRule[J, F]): ProofResult[J, F] = {
+      val substitutedRule = rule.map(_.substitutePartial(unification))
+
+      if unificationResult.isFailure then
+        ProofResult.UnificationFailure(substitutedRule)
+      else
+        ProofResult.SubstitutionFailure(substitutedRule)
+    }
+
+    result.getOrElse(ProofError(rule))
   }
 
   /** Result of attempting to construct a proof. */
@@ -65,12 +71,15 @@ object Assistant {
       */
     case Success(proof: Proof[J[Fix[F]]])
 
-    /** Unification failure during proof construction. */
-    case UnificationFailure()
+    /** Unification failure during proof construction.
+      *
+      * @param partiallySubstitutedRule the inference rule that could not be fully substituted due to unification failure.
+      */
+    case UnificationFailure(partiallySubstitutedRule: InferenceRule[J, F])
 
     /** Substitution failure during proof construction.
       *
-      * @param partiallySubstitutedRule the inference rule that could not be fully substituted.
+      * @param partiallySubstitutedRule the inference rule that could not be fully substituted due to substitution failure.
       */
     case SubstitutionFailure(partiallySubstitutedRule: InferenceRule[J, F])
   }
