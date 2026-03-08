@@ -148,36 +148,43 @@ class ProofTreeModel[
       idx  <- index
       rule <- inferenceRules.lift(idx)
     yield applyRule(rule) { substitutedRule =>
-      handleMissingMetaVariables(substitutedRule, substitutedRule.metavariables.toSeq)(Map.empty) { unification =>
+      handleMissingMetaVariables(substitutedRule, substitutedRule.metavariables.toSeq) { unification =>
         applyRule(substitutedRule, unification) { _ =>
           navigation.showPopup(Navigation.Popup.Confirm(
-            "The supplied meta-variable substitutions do not match the selected rule.",
-            Some("Substitution Error"),
-          ))(None)
+            "The supplied meta-variable substitutions are not sufficient for applying the rule.",
+            title = Some("Substitution Error"),
+            hasConfirm = true,
+          )) { () => () }
         }
       }
     }
   }
 
   override def quit(): Unit =
-    navigation.showPopup(Navigation.Popup.Confirm("Do you want to quit the proof mode?", Some("Quit")))(Some(() =>
+    navigation.showPopup(Navigation.Popup.Confirm("Do you want to quit the proof mode?", Some("Quit"))) { () =>
       navigation.navigateTo(Navigation.Screen.FormulaInput)
-    ))
+    }
 
   private def handleMissingMetaVariables(
     rule: InferenceRule[J, FormulaF],
-    metavariables: Seq[MetaVariable]
-  )(unification: MapUnification[Formula])(
-    callback: MapUnification[Formula] => Unit
-  ): Unit =
-    if metavariables.isEmpty then
-      callback(unification)
-    else
-      navigation.showPopup(Navigation.Popup.MissingMetaVariable(metavariables.head, rule)) {
-        formula =>
-          val updated = unification.updated(metavariables.head, formula)
-          handleMissingMetaVariables(rule, metavariables.tail)(updated)(callback)
-      }
+    metavariables: Seq[MetaVariable],
+    unification: MapUnification[Formula] = Map.empty
+  )(
+    callback: J.Uni[Formula] => Unit
+  ): Unit = {
+    recur(metavariables, unification)
+
+    def recur(metavariables: Seq[MetaVariable], unification: J.Uni[Formula]): Unit = {
+      if metavariables.isEmpty then
+        callback(unification)
+      else
+        navigation.showPopup(Navigation.Popup.MissingMetaVariable(metavariables.head, rule)) {
+          formula =>
+            val updated = unification.update(Map(metavariables.head -> formula))
+            recur(metavariables.tail, updated.get)
+        }
+    }
+  }
 
   private def applyRule(
     rule: InferenceRule[J, FormulaF],

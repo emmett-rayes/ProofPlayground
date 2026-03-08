@@ -52,8 +52,8 @@ class Coordinator extends Navigation {
     // we can later dismiss by screen reference to allow for stacked popups with z-index offset
     val dismiss = { () => screens = screens.tail }
     val screen  = popup match {
-      case p @ Navigation.Popup.Confirm(message, title) =>
-        ConfirmPopup(message, title)(callback.asInstanceOf[p.Callback], dismiss)
+      case p @ Navigation.Popup.Confirm(message, title, hasConfirm) =>
+        ConfirmPopup(message, title, hasConfirm)(callback.asInstanceOf[p.Callback], dismiss)
       case p: Navigation.Popup.MissingMetaVariable[?] =>
         MissingMetaVariable(p.metavariable, p.rule)(callback.asInstanceOf[p.Callback], dismiss)(using p.show)
     }

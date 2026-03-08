@@ -8,8 +8,10 @@ import tui.widgets.{BlockWidget, ClearWidget, ParagraphWidget}
 import frontend.tui.Screen.EventResult
 import frontend.tui.{Rectangle, Renderer, Screen}
 
-class ConfirmPopup(message: String, title: Option[String] = None)(confirm: Option[() => Unit], dismiss: () => Unit)
-    extends Screen {
+class ConfirmPopup(message: String, title: Option[String] = None, hasConfirm: Boolean = true)(
+  confirm: () => Unit,
+  dismiss: () => Unit,
+) extends Screen {
   private val ySize = 40
   private val xSize = 30
 
@@ -33,7 +35,7 @@ class ConfirmPopup(message: String, title: Option[String] = None)(confirm: Optio
       case key: Event.Key =>
         key.keyEvent().code() match {
           case c: KeyCode.Esc   => dismiss()
-          case c: KeyCode.Enter => dismiss(); if confirming then confirm.foreach(_.apply())
+          case c: KeyCode.Enter => dismiss(); if confirming then confirm()
           case c: KeyCode.Left  => confirming = false
           case c: KeyCode.Right => confirming = true
           case _                => EventResult.NotHandled
@@ -67,7 +69,7 @@ class ConfirmPopup(message: String, title: Option[String] = None)(confirm: Optio
     ).split(contentLayout(2))
 
     val buttonsLayout =
-      if confirm.isDefined then
+      if hasConfirm then
         Layout(
           direction = Direction.Horizontal,
           constraints = Array(
@@ -84,7 +86,7 @@ class ConfirmPopup(message: String, title: Option[String] = None)(confirm: Optio
           )
         ).split(buttonsBarLayout(1))
 
-    val cancelButton  = ButtonWidget(if confirm.isDefined then "Cancel" else "Ok", !confirming)
+    val cancelButton  = ButtonWidget(if hasConfirm then "Cancel" else "Ok", !confirming)
     val confirmButton = ButtonWidget("Confirm", confirming)
     val content       = ParagraphWidget(
       text = Text.nostyle(message),
@@ -99,7 +101,7 @@ class ConfirmPopup(message: String, title: Option[String] = None)(confirm: Optio
     renderer.render(border, contentArea)
     renderer.render(content, contentLayout(1))
     renderer.render(cancelButton, buttonsLayout(0))
-    if confirm.isDefined then
+    if hasConfirm then
       renderer.render(confirmButton, buttonsLayout(2))
   }
 

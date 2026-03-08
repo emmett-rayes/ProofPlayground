@@ -18,8 +18,8 @@ object Navigation {
   }
 
   object Popup {
-    case class Confirm(message: String, title: Option[String] = None) extends Popup {
-      override type Callback = Option[() => Unit]
+    case class Confirm(message: String, title: Option[String] = None, hasConfirm: Boolean = true) extends Popup {
+      override type Callback = () => Unit
     }
 
     case class MissingMetaVariable[J[_]](metavariable: MetaVariable, rule: InferenceRule[J, FormulaF])(using
