@@ -2,7 +2,8 @@ package proofPlayground
 package core.proof
 
 import core.{Fix, Functor, traverse}
-import core.meta.{AsPattern, MapUnification, MetaVariable, Substitute}
+import core.meta.{AsPattern, MapUnification, MetaVariable, MetaVars, Pattern, Substitute}
+import core.proof.Inference.given
 
 object Assistant {
 
@@ -20,7 +21,8 @@ object Assistant {
     * @return A result indicating whether the proof was constructible, or if there was a failure.
     */
   def proof[F[_]: Functor, J[_]: {Functor, Substitute[Fix[F], F]}](using
-    Fix[F] is AsPattern[F]
+    Fix[F] is AsPattern[F],
+    J[Pattern[F]] is MetaVars,
   )(
     judgement: J[Fix[F]],
     rule: InferenceRule[J, F],
@@ -52,8 +54,16 @@ object Assistant {
 
     def ProofError(rule: InferenceRule[J, F]): ProofResult[J, F] = {
       val substitutedRule = rule.map(_.substitutePartial(unification))
+      // ugly hack because we do not differentiate between sequence meta-variables and formula meta-variables.
+      val probablyMultiplicative =
+        def condition = { (j: J[Pattern[F]]) =>
+          val metavariables = j.metavariables
+          metavariables.nonEmpty && metavariables.forall(v => v.name.nonEmpty && v.name.head.isUpper)
+        }
+        (substitutedRule.conclusion +: substitutedRule.premises).exists(condition)
 
-      if unificationResult.isFailure then
+      if unificationResult.isFailure && !probablyMultiplicative
+      then
         ProofResult.UnificationFailure(substitutedRule)
       else
         ProofResult.SubstitutionFailure(substitutedRule)
