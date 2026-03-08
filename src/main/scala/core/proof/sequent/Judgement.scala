@@ -152,7 +152,7 @@ object Judgement {
   extension [F](judgement: Judgement[F]) {
 
     /** Add a side-condition to the judgement. */
-    def -(variable: F, nonfree: F*): Judgement[F] =
+    def %(variable: F, nonfree: F*): Judgement[F] =
       Judgement(judgement.antecedents, judgement.succedents)(Some((variable, nonfree)))
   }
 

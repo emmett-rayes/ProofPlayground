@@ -64,13 +64,7 @@ object Show {
       override def show: String = {
         val assertion   = judgement.assertion.show
         val assumptions = judgement.assumptions.toSet.map(_.show).mkString(", ")
-        val free        = judgement.nonfree.toSet.filter { nonfree =>
-          judgement.sidecondition.collect { case natural.Judgement.NonFreeSideCondition.OpenLeaves(nf) => nf }
-            .map(nonfree != _).getOrElse(true)
-        }.map(_.show).mkString(", ")
-
-        val lhs = if free.isEmpty then assumptions else s"$free ; $assumptions"
-        s"$lhs ⊢ $assertion"
+        s"$assumptions ⊢ $assertion"
       }
     }
   }

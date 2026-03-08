@@ -34,34 +34,31 @@ import core.proof.SideCondition
   * @tparam F the type of formulas.
   * @param assertion     the formula that is asserted.
   * @param assumptions   the collection of formulas assumed to be true.
-  * @param sidecondition a variable that is not allowed to appear free in the open leaves
-  *                       of the derivation of this judgement, or in one of the assumptions,
-  *                       depending on the rule that introduced the side condition.
+  * @param sidecondition an optional side-condition, which is a pair of a variable and a collection of formulas
+  *                       in which that variable cannot appear free.
   */
-case class Judgement[F](assertion: F, assumptions: Seq[F], nonfree: Seq[F])(
-  val sidecondition: Option[Judgement.NonFreeSideCondition[F]]
-)
+case class Judgement[F](assertion: F, assumptions: Seq[F])(val sidecondition: Option[Judgement.NonFreeSideCondition[F]])
 
-type JudgementUnification[X] = (MapUnification[X], SeqUnification[X], SeqUnification[X])
+type JudgementUnification[T] = (MapUnification[T], SeqUnification[T])
 
 object JudgementUnification {
+
+  /** [[Unification]] instance for [[JudgementUnification]]. */
   given JudgementUnification is Unification {
-    override def empty[T]: JudgementUnification[T] = (Map.empty, Map.empty, Map.empty)
+    override def empty[T]: JudgementUnification[T] = (Map.empty, Map.empty)
 
     extension [T](unification: JudgementUnification[T]) {
       override def update(aux: MapUnification[T]): UnificationResult[JudgementUnification[T]] =
         for
           assertionUnification   <- unification._1.merge(aux)
           assumptionsUnification <- unification._2.update(assertionUnification)
-          nonfreeUnification     <- unification._3.update(assertionUnification)
-        yield (assertionUnification, assumptionsUnification, nonfreeUnification)
+        yield (assertionUnification, assumptionsUnification)
 
       override def merge(other: JudgementUnification[T]): UnificationResult[JudgementUnification[T]] =
         for
           assertionUnification   <- unification._1.merge(other._1)
           assumptionsUnification <- unification._2.merge(other._2)
-          nonfreeUnification     <- unification._3.merge(other._3)
-        yield (assertionUnification, assumptionsUnification, nonfreeUnification)
+        yield (assertionUnification, assumptionsUnification)
     }
   }
 }
@@ -69,18 +66,20 @@ object JudgementUnification {
 object Judgement {
   import JudgementUnification.given
 
+  type NonFreeSideCondition[F] = (variable: F, nonfree: Seq[F])
+
   def apply[F](assertion: F, assumptions: Seq[F], nonfree: Seq[F]): Judgement[F] =
-    new Judgement(assertion, assumptions, nonfree)(None)
+    new Judgement(assertion, assumptions)(None)
 
   /** [[Functor]] instance for [[Judgement]]. */
   given Functor[Judgement] {
     extension [A](judgement: Judgement[A]) {
       override def map[B](f: A => B): Judgement[B] =
-        Judgement(
-          f(judgement.assertion),
-          judgement.assumptions.map(f),
-          judgement.nonfree.map(f),
-        )(judgement.sidecondition.map(_.map(f)))
+        Judgement(f(judgement.assertion), judgement.assumptions.map(f))(
+          judgement.sidecondition.map { sc =>
+            (f(sc.variable), sc.nonfree.map(f))
+          }
+        )
     }
   }
 
@@ -99,24 +98,9 @@ object Judgement {
         !judgement.assumptions.contains(judgement.assertion)
 
       override def violations: Seq[F] =
-        // if the judgement is closed, the side condition trivially holds, therefore we exclude all nonfree variables,
-        // if the judgement is open exclude any nonfree variables that were introduced in this judgement,
-        // since the side condition applies to free variables in the derivation of the judgement
-        // we only remove the first ocurrence of the nonfree variable, in case it was already introduced before
-        val exclude = if !judgement.open then judgement.nonfree
-        else
-          judgement.sidecondition.toSeq.collect {
-            case NonFreeSideCondition.OpenLeaves(nf) => Seq(nf)
-          }.flatten
-
-        // if the side condition refers to the assertion,
-        // include any nonfree variables that were introduced in this judgement
-        val include = judgement.sidecondition.toSeq.collect {
-          case NonFreeSideCondition.Assertion(nf) => Seq(nf)
-        }.flatten
-
-        val nonfree = judgement.nonfree.diff(exclude).union(include)
-        judgement.assertion.freevariables.filter(nonfree.contains(_)).toSeq
+        judgement.sidecondition.map { sc =>
+          sc.nonfree.filter(_.freevariables.contains(sc.variable))
+        }.getOrElse(Seq.empty)
     }
   }
 
@@ -130,10 +114,8 @@ object Judgement {
           for {
             assertionUnification        <- judgement.assertion.unifier(scrutinee.assertion)
             assumptionsUnification      <- judgement.assumptions.unifier(scrutinee.assumptions)
-            nonfreeUnification          <- judgement.nonfree.unifier(scrutinee.nonfree)
             mergedAssumptionUnification <- assumptionsUnification.update(assertionUnification)
-            mergedNonfreeUnification    <- nonfreeUnification.update(assertionUnification)
-          } yield (assertionUnification, mergedAssumptionUnification, mergedNonfreeUnification)
+          } yield (assertionUnification, mergedAssumptionUnification)
       }
   }
 
@@ -151,9 +133,10 @@ object Judgement {
       override def substitutePartial(unification: Uni[T]): Judgement[Pattern[F]] =
         val assertion     = judgement.assertion.substitutePartial(unification._1)
         val assumptions   = judgement.assumptions.toSeq.substitutePartial(unification._2)
-        val nonfree       = judgement.nonfree.toSeq.substitutePartial(unification._3)
-        val sidecondition = judgement.sidecondition.map(_.map(_.substitutePartial(unification._1)))
-        Judgement(assertion, assumptions, nonfree)(sidecondition)
+        val sidecondition = judgement.sidecondition.map { sc =>
+          (sc.variable.substitutePartial(unification._1), sc.nonfree.substitutePartial(unification._2))
+        }
+        Judgement(assertion, assumptions)(sidecondition)
   }
 
   /** [[Substitute]] instance for [[Judgement]]. */
@@ -179,67 +162,26 @@ object Judgement {
         for
           assertion     <- judgement.assertion.substitute(unification._1)
           assumptions   <- judgement.assumptions.toSeq.substitute(unification._2)
-          nonfree       <- judgement.nonfree.toSeq.substitute(unification._3)
           sidecondition <- judgement.sidecondition match
             case None     => Some(None)
-            case Some(sc) => sc.traverse(_.substitute(unification._1)).map(Some(_))
-        yield Judgement(assertion, assumptions, nonfree)(sidecondition)
+            case Some(sc) =>
+              for
+                variable <- sc.variable.substitute(unification._1)
+                nonfree  <- sc.nonfree.substitute(unification._2)
+              yield Some((variable, nonfree))
+        yield Judgement(assertion, assumptions)(sidecondition)
   }
-
-  /** Used as an intermediate type while constructing [[Judgement]] using DSL methods. */
-  opaque type DSLContext[F] = (nonfreeHead: Option[NonFreeSideCondition[F]], nonfree: Seq[F], assumptions: Seq[F])
-
-  enum NonFreeSideCondition[F] {
-    case OpenLeaves(nf: F)
-    case Assertion(nf: F)
-
-    def nonfree: F = this match {
-      case OpenLeaves(nf) => nf
-      case Assertion(nf)  => nf
-    }
-
-    def map[F2](f: F => F2): NonFreeSideCondition[F2] = this match {
-      case OpenLeaves(nf) => OpenLeaves(f(nf))
-      case Assertion(nf)  => Assertion(f(nf))
-    }
-
-    def traverse[F2](f: F => Option[F2]): Option[NonFreeSideCondition[F2]] = this match {
-      case OpenLeaves(nf) => f(nf).map(OpenLeaves(_))
-      case Assertion(nf)  => f(nf).map(Assertion(_))
-    }
-  }
-
-  opaque type DSLContextNonFree[F] = (Option[NonFreeSideCondition[F]], Seq[F])
 
   extension [F](assumptions: Seq[F]) {
 
     /** Judgement infix constructor. */
-    def |-(assertion: F): Judgement[F] = Judgement(assertion, assumptions, Seq.empty)(None)
+    def |-(assertion: F): Judgement[F] = Judgement(assertion, assumptions)(None)
   }
 
-  extension [F](nonfree: Seq[F]) {
+  extension [F](judgement: Judgement[F]) {
 
-    /** Infix operator for combining assumptions and nonfree sequences */
-    def %(assumptions: Seq[F]): DSLContext[F] = (None, nonfree, assumptions)
-
-    /** Infix operator for constructing nonfree sequences while keeping track of the new element */
-    def ++(head: F): DSLContextNonFree[F] = (Some(NonFreeSideCondition.OpenLeaves(head)), nonfree)
-
-    /** Infix operator for constructing nonfree sequences while keeping track of the new element */
-    def ##(head: F): DSLContextNonFree[F] = (Some(NonFreeSideCondition.Assertion(head)), nonfree)
-  }
-
-  extension [F](nonfree: DSLContextNonFree[F]) {
-
-    /** Infix operator for combining assumptions and nonfree sequences */
-    def %(assumptions: Seq[F]): DSLContext[F] = (nonfree._1, nonfree._2, assumptions)
-  }
-
-  extension [F](context: DSLContext[F]) {
-
-    /** Judgement infix constructor. */
-    def |-(assertion: F): Judgement[F] =
-      val nonfree = (context.nonfree ++ context.nonfreeHead.map(_.nonfree).toSeq)
-      Judgement(assertion, context.assumptions, nonfree)(context.nonfreeHead)
+    /** Add a side-condition to the judgement. */
+    def %(variable: F, nonfree: F*): Judgement[F] =
+      Judgement(judgement.assertion, judgement.assumptions)(Some((variable, nonfree)))
   }
 }

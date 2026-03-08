@@ -132,7 +132,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
 
   private def renderRules(renderer: Renderer, rules: Vector[ProofTreeModel.ProofRule], area: Rect): Unit = {
     val items = data.rules.toArray.map { rule =>
-      val label = Text.nostyle(rule.rule)
+      val label = Text.nostyle(rule.label)
       ListWidget.Item(label, Style(bg = Some(Color.Reset), fg = Some(if rule.active then Color.Green else Color.Gray)))
     }
 
@@ -181,7 +181,7 @@ class ProofTree(data: ProofTreeModel.Data)(signals: ProofTreeModel.Signals) exte
       block =
         Some(BlockWidget(
           borders = Borders.TOP,
-          title = Some(Spans.nostyle(s"[${tree.value.rule}]")),
+          title = Some(Spans.nostyle(tree.value.labels.map(l => s"[$l]").mkString(""))),
           titleAlignment = Alignment.Right,
         )),
     )

@@ -290,7 +290,7 @@ object InferenceRules {
       Inference(
         "∀R",
         Seq(
-          (gamma |- phi :: delta) - (nu, gamma, delta),
+          (gamma |- phi :: delta) % (nu, gamma, delta),
         ),
         gamma |- forall(nu, phi) :: delta,
       )
@@ -349,7 +349,7 @@ object InferenceRules {
       Inference(
         "∃L",
         Seq(
-          (gamma :: phi |- delta) - (nu, gamma, delta),
+          (gamma :: phi |- delta) % (nu, gamma, delta),
         ),
         gamma :: exists(nu, phi) |- delta,
       )

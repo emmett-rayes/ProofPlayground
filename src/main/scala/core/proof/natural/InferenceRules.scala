@@ -22,7 +22,6 @@ case object InferenceRules {
       * If Γ ⊢ A and Γ ⊢ B, then Γ ⊢ A ∧ B.
       */
     val ConjunctionIntroduction: InferenceRule[Judgement, FormulaF] = {
-      val omega = Pattern[FormulaF]("Omega")
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
@@ -30,10 +29,10 @@ case object InferenceRules {
       Inference(
         "∧I",
         Seq(
-          omega % gamma |- phi,
-          omega % gamma |- psi,
+          gamma |- phi,
+          gamma |- psi,
         ),
-        omega % gamma |- phi /\ psi,
+        gamma |- phi /\ psi,
       )
     }
 
@@ -42,7 +41,6 @@ case object InferenceRules {
       * If Γ ⊢ A ∧ B, then Γ ⊢ A.
       */
     val ConjunctionElimination1: InferenceRule[Judgement, FormulaF] = {
-      val omega = Pattern[FormulaF]("Omega")
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
@@ -50,9 +48,9 @@ case object InferenceRules {
       Inference(
         "∧E₁",
         Seq(
-          omega % gamma |- phi /\ psi,
+          gamma |- phi /\ psi,
         ),
-        omega % gamma |- phi,
+        gamma |- phi,
       )
     }
 
@@ -61,7 +59,6 @@ case object InferenceRules {
       * If Γ ⊢ A ∧ B, then Γ ⊢ B.
       */
     val ConjunctionElimination2: InferenceRule[Judgement, FormulaF] = {
-      val omega = Pattern[FormulaF]("Omega")
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
@@ -69,9 +66,9 @@ case object InferenceRules {
       Inference(
         "∧E₂",
         Seq(
-          omega % gamma |- phi /\ psi,
+          gamma |- phi /\ psi,
         ),
-        omega % gamma |- psi,
+        gamma |- psi,
       )
     }
 
@@ -80,7 +77,6 @@ case object InferenceRules {
       * If Γ ⊢ A, then Γ ⊢ A ∨ B.
       */
     val DisjunctionIntroduction1: InferenceRule[Judgement, FormulaF] = {
-      val omega = Pattern[FormulaF]("Omega")
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
@@ -88,9 +84,9 @@ case object InferenceRules {
       Inference(
         "∨I₁",
         Seq(
-          omega % gamma |- phi,
+          gamma |- phi,
         ),
-        omega % gamma |- phi \/ psi,
+        gamma |- phi \/ psi,
       )
     }
 
@@ -99,7 +95,6 @@ case object InferenceRules {
       * If Γ ⊢ B, then Γ ⊢ A ∨ B.
       */
     val DisjunctionIntroduction2: InferenceRule[Judgement, FormulaF] = {
-      val omega = Pattern[FormulaF]("Omega")
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
@@ -107,9 +102,9 @@ case object InferenceRules {
       Inference(
         "∨I₂",
         Seq(
-          omega % gamma |- psi,
+          gamma |- psi,
         ),
-        omega % gamma |- phi \/ psi,
+        gamma |- phi \/ psi,
       )
     }
 
@@ -118,7 +113,6 @@ case object InferenceRules {
       * If Γ ⊢ A ∨ B, Γ,A ⊢ C and Γ,B ⊢ C, then Γ ⊢ C.
       */
     val DisjunctionElimination: InferenceRule[Judgement, FormulaF] = {
-      val omega = Pattern[FormulaF]("Omega")
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
@@ -127,11 +121,11 @@ case object InferenceRules {
       Inference(
         "∨E",
         Seq(
-          omega % gamma |- phi \/ psi,
-          omega % (gamma :: phi) |- rho,
-          omega % (gamma :: psi) |- rho,
+          gamma |- phi \/ psi,
+          (gamma :: phi) |- rho,
+          (gamma :: psi) |- rho,
         ),
-        omega % gamma |- rho,
+        gamma |- rho,
       )
     }
 
@@ -140,7 +134,6 @@ case object InferenceRules {
       * If Γ,A ⊢ B, then Γ ⊢ A → B.
       */
     val ImplicationIntroduction: InferenceRule[Judgement, FormulaF] = {
-      val omega = Pattern[FormulaF]("Omega")
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
@@ -148,9 +141,9 @@ case object InferenceRules {
       Inference(
         "→I",
         Seq(
-          omega % (gamma :: phi) |- psi,
+          (gamma :: phi) |- psi,
         ),
-        omega % gamma |- phi --> psi,
+        gamma |- phi --> psi,
       )
     }
 
@@ -159,7 +152,6 @@ case object InferenceRules {
       * If Γ ⊢ A → B and Γ ⊢ A, then Γ ⊢ B.
       */
     val ImplicationElimination: InferenceRule[Judgement, FormulaF] = {
-      val omega = Pattern[FormulaF]("Omega")
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
       val psi   = Pattern[FormulaF]("psi")
@@ -167,10 +159,10 @@ case object InferenceRules {
       Inference(
         "→E",
         Seq(
-          omega % gamma |- phi --> psi,
-          omega % gamma |- phi,
+          gamma |- phi --> psi,
+          gamma |- phi,
         ),
-        omega % gamma |- psi,
+        gamma |- psi,
       )
     }
 
@@ -179,16 +171,15 @@ case object InferenceRules {
       * If Γ,A ⊢ ⊥, then Γ ⊢ ¬A.
       */
     val NegationIntroduction: InferenceRule[Judgement, FormulaF] = {
-      val omega = Pattern[FormulaF]("Omega")
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
 
       Inference(
         "¬I",
         Seq(
-          omega % (gamma :: phi) |- fls,
+          (gamma :: phi) |- fls,
         ),
-        omega % gamma |- ~phi,
+        gamma |- ~phi,
       )
     }
 
@@ -197,17 +188,16 @@ case object InferenceRules {
       * If Γ ⊢ ¬A and Γ ⊢ A, then Γ ⊢ ⊥.
       */
     val NegationElimination: InferenceRule[Judgement, FormulaF] = {
-      val omega = Pattern[FormulaF]("Omega")
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
 
       Inference(
         "¬E",
         Seq(
-          omega % gamma |- ~phi,
-          omega % gamma |- phi,
+          gamma |- ~phi,
+          gamma |- phi,
         ),
-        omega % gamma |- fls,
+        gamma |- fls,
       )
     }
 
@@ -218,13 +208,12 @@ case object InferenceRules {
       * Γ ⊢ ⊤.
       */
     val TrueIntroduction: InferenceRule[Judgement, FormulaF] = {
-      val omega = Pattern[FormulaF]("Omega")
       val gamma = Pattern[FormulaF]("Gamma")
 
       Inference(
         "⊤I",
         Seq.empty,
-        omega % gamma |- tru,
+        gamma |- tru,
       )
     }
 
@@ -235,16 +224,15 @@ case object InferenceRules {
       * If Γ ⊢ ⊥, then Γ ⊢ A.
       */
     val FalseElimination: InferenceRule[Judgement, FormulaF] = {
-      val omega = Pattern[FormulaF]("Omega")
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
 
       Inference(
         "⊥E",
         Seq(
-          omega % gamma |- fls,
+          gamma |- fls,
         ),
-        omega % gamma |- phi,
+        gamma |- phi,
       )
     }
 
@@ -253,19 +241,16 @@ case object InferenceRules {
       * If Γ ⊢ A, then Γ ⊢ ∀X.A, where X is not free in Γ.
       */
     val UniversalIntroduction: InferenceRule[Judgement, FormulaF] = {
-      val omega = Pattern[FormulaF]("Omega")
       val nu    = Pattern[FormulaF]("nu")
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
 
-      // we use `++` instead of `::` to denote that `nu` may not appear in the free variables of the open leaves
-      // above the premise, but it can appear in the free variables of `rho`.
       Inference(
         "∀I",
         Seq(
-          (omega ++ nu) % gamma |- phi,
+          (gamma |- phi) % (nu, gamma),
         ),
-        omega % gamma |- forall(nu, phi),
+        gamma |- forall(nu, phi),
       )
     }
 
@@ -274,7 +259,6 @@ case object InferenceRules {
       * If Γ ⊢ ∀X.A, then Γ ⊢ A[B/X].
       */
     val UniversalElimination: InferenceRule[Judgement, FormulaF] = {
-      val omega = Pattern[FormulaF]("Omega")
       val nu    = Pattern[FormulaF]("nu")
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
@@ -283,9 +267,9 @@ case object InferenceRules {
       Inference(
         "∀E",
         Seq(
-          omega % gamma |- forall(nu, phi),
+          gamma |- forall(nu, phi),
         ),
-        omega % gamma |- phi(psi / nu),
+        gamma |- phi(psi / nu),
       )
     }
 
@@ -294,7 +278,6 @@ case object InferenceRules {
       * If Γ ⊢ A[B/X], then Γ ⊢ ∃X.A.
       */
     val ExistentialIntroduction: InferenceRule[Judgement, FormulaF] = {
-      val omega = Pattern[FormulaF]("Omega")
       val nu    = Pattern[FormulaF]("nu")
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
@@ -303,9 +286,9 @@ case object InferenceRules {
       Inference(
         "∃I",
         Seq(
-          omega % gamma |- phi(psi / nu),
+          gamma |- phi(psi / nu),
         ),
-        omega % gamma |- exists(nu, phi),
+        gamma |- exists(nu, phi),
       )
     }
 
@@ -313,21 +296,18 @@ case object InferenceRules {
       * If Γ ⊢ ∃X.A and Γ,A ⊢ B, then Γ ⊢ B, where X is not free in Γ or B.
       */
     val ExistentialElimination: InferenceRule[Judgement, FormulaF] = {
-      val omega = Pattern[FormulaF]("Omega")
       val nu    = Pattern[FormulaF]("nu")
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
       val rho   = Pattern[FormulaF]("rho")
 
-      // we use `##` instead of `++` to denote that `nu` may not appear in the free variables of the open leaves
-      // above the premise, as well as in the free variables of `rho`.
       Inference(
         "∃E",
         Seq(
-          omega % gamma |- exists(nu, phi),
-          (omega ## nu) % (gamma :: phi) |- rho,
+          gamma |- exists(nu, phi),
+          (gamma :: phi |- rho) % (nu, gamma, rho),
         ),
-        (omega % gamma |- rho),
+        (gamma |- rho),
       )
     }
   }

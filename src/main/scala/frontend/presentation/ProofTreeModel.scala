@@ -35,8 +35,8 @@ object ProofTreeModel {
     def selectRule(index: Option[Int]): Unit
   }
 
-  case class ProofStep(formula: String, rule: String)
-  case class ProofRule(active: Boolean, rule: String)
+  case class ProofStep(formula: String, labels: Seq[String])
+  case class ProofRule(active: Boolean, label: String)
 
   def apply(navigation: Navigation)(
     formula: Formula,
@@ -110,11 +110,15 @@ class ProofTreeModel[
     val tree   = zipper.root.get.asTree
     val leaves = tree.leaves.map(_.value).toSet
     tree.map { judgement =>
-      val label =
-        if judgement.violations.nonEmpty then "!"
-        else if !judgement.open then " "
-        else proofStepLabels.getOrDefault(judgement, "?")
-      val result = ProofTreeModel.ProofStep(judgement.show, label)
+      var labels = Seq.empty[String]
+      if judgement.open then
+        labels :+= proofStepLabels.getOrDefault(judgement, "?")
+      if judgement.violations.nonEmpty then
+        labels :+= "!"
+      if labels.isEmpty then
+        labels :+= " "
+
+      val result = ProofTreeModel.ProofStep(judgement.show, labels)
       // remember the current position for `isNodeSelected`
       if judgement eq zipper.get.conclusion then selected = result
       result
@@ -153,7 +157,7 @@ class ProofTreeModel[
           navigation.showPopup(Navigation.Popup.Confirm(
             "The supplied meta-variable substitutions are not sufficient for applying the rule.",
             title = Some("Substitution Error"),
-            hasConfirm = true,
+            hasConfirm = false,
           )) { () => () }
         }
       }
