@@ -15,6 +15,7 @@ import core.meta.Unification
 import core.meta.Unify.given
 import core.proof.Assistant
 import core.proof.Assistant.ProofResult
+import core.proof.ProofRequirements.given
 import core.proof.natural.Judgement
 import core.proof.sequent.Judgement
 
@@ -50,7 +51,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = Seq.empty |- (A /\ B)
     val rule      = ConjunctionIntroduction
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, natural.Judgement](judgement, rule)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -69,7 +70,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = Seq.empty |- (A /\ B)
     val rule      = DisjunctionElimination
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, natural.Judgement](judgement, rule)
     assert(!result.isInstanceOf[ProofResult.Success[?, ?]])
   }
 
@@ -82,7 +83,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = Seq.empty |- (A \/ B)
     val rule      = DisjunctionIntroduction1
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, natural.Judgement](judgement, rule)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -101,7 +102,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = Seq.empty |- (A \/ B)
     val rule      = DisjunctionIntroduction2
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, natural.Judgement](judgement, rule)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -114,7 +115,6 @@ class TestAssistant extends AnyFunSuite {
   test("disjunction elimination for two propositional variables with meta-variables in premises only") {
     import core.proof.natural.Judgement.*
     import core.proof.natural.Judgement.given
-    import core.proof.natural.JudgementUnification
 
     val A         = variable[Formula]("A")
     val B         = variable[Formula]("B")
@@ -122,10 +122,10 @@ class TestAssistant extends AnyFunSuite {
     val judgement = Seq.empty |- C
     val rule      = DisjunctionElimination
 
-    val unification: JudgementUnification[Formula] =
-      (Map(meta("phi") -> A, meta("psi") -> B), Map(meta("phi") -> A, meta("psi") -> B))
+    given req: ProofRequirements[FormulaF, natural.Judgement] = summon
+    val unification = req.Uni.empty[Formula].update(Map(meta("phi") -> A, meta("psi") -> B)).get
 
-    val result = Assistant.proof(judgement, rule, Some(unification))
+    val result = Assistant.proof[FormulaF, natural.Judgement](judgement, rule, unification)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -145,7 +145,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = Seq.empty |- A
     val rule      = DisjunctionElimination
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, natural.Judgement](judgement, rule)
     result match {
       case ProofResult.SubstitutionFailure(partiallySubstitutedRule) =>
         val expected = Inference(
@@ -170,7 +170,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = Seq(exists[Formula](X, X)) |- forall[Formula](X, X)
     val rule      = UniversalIntroduction
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, natural.Judgement](judgement, rule)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -196,7 +196,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = Seq.empty |- (A --> B)
     val rule      = ImplicationRightIntroduction
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, sequent.Judgement](judgement, rule)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -214,7 +214,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = A |- A
     val rule      = Identity
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, sequent.Judgement](judgement, rule)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -233,7 +233,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = Seq.empty |- (A /\ B)
     val rule      = ConjunctionRightIntroduction
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, sequent.Judgement](judgement, rule)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -253,7 +253,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = (A /\ B) |- C
     val rule      = ConjunctionLeftIntroduction1
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, sequent.Judgement](judgement, rule)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -273,7 +273,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = (A /\ B) |- C
     val rule      = ConjunctionLeftIntroduction2
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, sequent.Judgement](judgement, rule)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -292,7 +292,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = Seq.empty |- (A \/ B)
     val rule      = DisjunctionRightIntroduction1
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, sequent.Judgement](judgement, rule)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -311,7 +311,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = Seq.empty |- (A \/ B)
     val rule      = DisjunctionRightIntroduction2
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, sequent.Judgement](judgement, rule)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -331,7 +331,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = (A \/ B) |- C
     val rule      = DisjunctionLeftIntroduction
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, sequent.Judgement](judgement, rule)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -352,10 +352,10 @@ class TestAssistant extends AnyFunSuite {
     val rule      = ImplicationLeftIntroduction
 
     // This rule has multiple context variables that need to be specified
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, sequent.Judgement](judgement, rule)
     result match {
       case ProofResult.SubstitutionFailure(_) =>
-        // Expected: the assistant can't determine how to split contexts without additional hints
+        // Expected: the Assistant can't determine how to split contexts without additional hints
         fail("TODO")
       case _ => fail("Expected substitution failure for this complex rule")
     }
@@ -369,7 +369,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = Seq.empty |- ~A
     val rule      = NegationRightIntroduction
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, sequent.Judgement](judgement, rule)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -388,7 +388,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = ~A |- B
     val rule      = NegationLeftIntroduction
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, sequent.Judgement](judgement, rule)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -405,7 +405,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = Seq.empty |- tru[Formula]
     val rule      = TrueRightIntroduction
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, sequent.Judgement](judgement, rule)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -423,7 +423,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = fls[Formula] |- A
     val rule      = FalseLeftIntroduction
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, sequent.Judgement](judgement, rule)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -443,10 +443,10 @@ class TestAssistant extends AnyFunSuite {
     val rule      = Cut
 
     // This rule has multiple context variables that need to be specified
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, sequent.Judgement](judgement, rule)
     result match {
       case ProofResult.SubstitutionFailure(_) =>
-        // Expected: the assistant can't determine how to split contexts without additional hints
+        // Expected: the Assistant can't determine how to split contexts without additional hints
         fail("TODO")
       case _ => fail("Expected substitution failure for this complex rule")
     }
@@ -460,7 +460,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = Seq.empty |- forall[Formula](X, X)
     val rule      = UniversalRightIntroduction
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, sequent.Judgement](judgement, rule)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -482,7 +482,7 @@ class TestAssistant extends AnyFunSuite {
     val judgement = exists[Formula](X, X) |- A
     val rule      = ExistentialLeftIntroduction
 
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, sequent.Judgement](judgement, rule)
     result match {
       case ProofResult.Success(proof) =>
         val premises = proof.subproofs.map(_.conclusion)
@@ -504,10 +504,10 @@ class TestAssistant extends AnyFunSuite {
     val rule      = ExistentialRightIntroduction
 
     // This rule involves pattern substitution which is complex
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, sequent.Judgement](judgement, rule)
     result match {
       case ProofResult.SubstitutionFailure(_) =>
-        // Expected: the assistant can't fully determine the substitution pattern
+        // Expected: the Assistant can't fully determine the substitution pattern
         fail("TODO")
       case _ => fail("Expected substitution failure for this rule with pattern substitution")
     }
@@ -523,10 +523,10 @@ class TestAssistant extends AnyFunSuite {
     val rule      = UniversalLeftIntroduction
 
     // This rule involves pattern substitution which is complex
-    val result = Assistant.proof(judgement, rule)
+    val result = Assistant.proof[FormulaF, sequent.Judgement](judgement, rule)
     result match {
       case ProofResult.SubstitutionFailure(_) =>
-        // Expected: the assistant can't fully determine the substitution pattern
+        // Expected: the Assistant can't fully determine the substitution pattern
         fail("TODO")
       case _ => fail("Expected substitution failure for this rule with pattern substitution")
     }

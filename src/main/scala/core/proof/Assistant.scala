@@ -5,6 +5,30 @@ import core.{Fix, Functor, traverse}
 import core.meta.{AsPattern, MapUnification, MetaVariable, MetaVars, Pattern, Substitute}
 import core.proof.Inference.given
 
+/** Required capabilities for a legal formula-judgement combination. */
+trait ProofRequirements[F[_], J[_]](using
+  val functorF: Functor[F],
+  val functorJ: Functor[J],
+  val asPatternF: Fix[F] is AsPattern[F],
+  val metavarsJ: J[Pattern[F]] is MetaVars,
+  val substituteJ: J is Substitute[Fix[F], F],
+) {
+  type Uni = substituteJ.Uni
+  object Uni {
+    def empty[T] = substituteJ.Uni.empty[T]
+  }
+}
+
+object ProofRequirements {
+  given [F[_], J[_]]
+    => (Functor[F])
+    => (Functor[J])
+    => (Fix[F] is AsPattern[F])
+    => (J[Pattern[F]] is MetaVars)
+    => (J is Substitute[Fix[F], F])
+      => ProofRequirements[F, J] {}
+}
+
 object Assistant {
 
   /** Attempts to produce a proof for the given judgement by applying the given inference rule.
@@ -20,18 +44,19 @@ object Assistant {
     * @param auxUnification A unification for the meta-variables appearing in the premises but not in the conclusion.
     * @return A result indicating whether the proof was constructible, or if there was a failure.
     */
-  def proof[F[_]: Functor, J[_]: {Functor, Substitute[Fix[F], F]}](using
-    Fix[F] is AsPattern[F],
-    J[Pattern[F]] is MetaVars,
+  def proof[F[_], J[_]](using
+    req: ProofRequirements[F, J]
   )(
     judgement: J[Fix[F]],
     rule: InferenceRule[J, F],
-    auxUnification: Option[J.Uni[Fix[F]]] = None,
+    auxUnification: req.Uni[Fix[F]] = req.Uni.empty[Fix[F]],
   ): ProofResult[J, F] = {
+    import req.given
+
     val unificationResult =
       for
         conclusionUnification <- rule.conclusion.unifier(judgement)
-        totalUnification <- conclusionUnification.merge(auxUnification.getOrElse(J.Uni.empty))
+        totalUnification      <- conclusionUnification.merge(auxUnification)
       yield totalUnification
 
     val unification = unificationResult.get

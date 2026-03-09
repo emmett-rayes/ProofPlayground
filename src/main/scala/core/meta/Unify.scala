@@ -5,7 +5,6 @@ import scala.annotation.targetName
 
 import core.meta.Pattern.given
 import core.{Algebra, Functor}
-import proofPlayground.core.meta.PatternF.Meta
 
 /** Result of a unification attempt.
   *
@@ -59,6 +58,7 @@ trait Unification {
 
     /** Update this unification with additional meta-variable bindings. */
     def update(aux: MapUnification[T]): UnificationResult[Self[T]]
+
     /** Merge this unification with additional unification of the same type. */
     def merge(other: Self[T]): UnificationResult[Self[T]]
   }

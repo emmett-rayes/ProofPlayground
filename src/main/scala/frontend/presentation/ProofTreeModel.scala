@@ -9,8 +9,9 @@ import core.logic.propositional.Formula.given
 import core.logic.propositional.{Formula, FormulaF}
 import core.meta.{MetaVariable, MetaVars, MapUnification, Pattern, Substitute}
 import core.proof.Assistant.ProofResult
+import core.proof.ProofRequirements.given
 import core.proof.ProofZipper.given
-import core.proof.{Assistant, InferenceRule, Proof, ProofSystem, SideCondition}
+import core.proof.{Assistant, InferenceRule, Proof, ProofSystem, ProofRequirements, SideCondition}
 import frontend.Show
 import frontend.presentation.FormulaInputModel.ProofSystemChoice
 import frontend.tui.Navigation
@@ -72,6 +73,8 @@ class ProofTreeModel[
   J[Pattern[FormulaF]] is MetaVars,
   J[Formula] is SideCondition[Formula],
 ) extends ProofTreeModel.Data, ProofTreeModel.Signals {
+
+  private given req: ProofRequirements[FormulaF, J] = summon
 
   private val inferenceRules = system.rules.toVector.sortBy(_.label)
 
@@ -172,13 +175,13 @@ class ProofTreeModel[
   private def handleMissingMetaVariables(
     rule: InferenceRule[J, FormulaF],
     metavariables: Seq[MetaVariable],
-    unification: J.Uni[Formula] = J.Uni.empty
+    unification: req.Uni[Formula] = req.Uni.empty
   )(
-    callback: J.Uni[Formula] => Unit
+    callback: req.Uni[Formula] => Unit
   ): Unit = {
     recur(metavariables, unification)
 
-    def recur(metavariables: Seq[MetaVariable], unification: J.Uni[Formula]): Unit = {
+    def recur(metavariables: Seq[MetaVariable], unification: req.Uni[Formula]): Unit = {
       if metavariables.isEmpty then
         callback(unification)
       else
@@ -192,7 +195,7 @@ class ProofTreeModel[
 
   private def applyRule(
     rule: InferenceRule[J, FormulaF],
-    unification: J.Uni[Formula] = J.Uni.empty,
+    unification: req.Uni[Formula] = req.Uni.empty,
   )(substitutionFailure: InferenceRule[J, FormulaF] => Unit): Unit = {
     def replace(replacement: Proof[J[Formula]]): Unit = {
       rulesInFocus = false
@@ -202,7 +205,7 @@ class ProofTreeModel[
       invalidateRuleCache()
     }
 
-    Assistant.proof(zipper.get.conclusion, rule, Some(unification)) match {
+    Assistant.proof(zipper.get.conclusion, rule, unification) match {
       case ProofResult.UnificationFailure(_)                => ()
       case ProofResult.Success(proof)                       => replace(proof)
       case ProofResult.SubstitutionFailure(substitutedRule) => substitutionFailure(substitutedRule)
