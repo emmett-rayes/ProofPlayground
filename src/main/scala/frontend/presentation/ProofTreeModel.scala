@@ -1,7 +1,6 @@
 package proofPlayground
 package frontend.presentation
 
-import java.util
 import scala.compiletime.uninitialized
 
 import core.Functor
@@ -80,10 +79,6 @@ class ProofTreeModel[
 
   private val inferenceRules = system.rules.toVector.sortBy(_.label)
 
-  // hack to remember the label of the proof step for each judgement
-  // uses `IdentityHashMap` which compares keys by reference equality (eq) instead of structural equality
-  private val proofStepLabels = util.IdentityHashMap[J[Formula], String]()
-
   private var selected: ProofTreeModel.ProofStep = uninitialized
 
   private var rulesInFocus = false
@@ -113,12 +108,10 @@ class ProofTreeModel[
 
   override def proofTree: Tree[ProofTreeModel.ProofStep] =
     val tree   = zipper.root.get.asTree
-    val leaves = tree.leaves.map(_.value).toSet
     tree.map { node =>
       val judgement = node.judgement
       var labels    = Seq.empty[String]
-      if judgement.open then
-        labels :+= proofStepLabels.getOrDefault(judgement, "?")
+      labels :+= node.rule.map(_.label).getOrElse("?")
       if judgement.violations.nonEmpty then
         labels :+= "!"
       if labels.isEmpty then
@@ -203,7 +196,6 @@ class ProofTreeModel[
     def replace(replacement: Proof[FormulaF, J]): Unit = {
       rulesInFocus = false
       zipper = zipper.replace(replacement)
-      proofStepLabels.put(zipper.get.conclusion, rule.label)
       zipper = zipper.down.getOrElse(zipper)
       invalidateRuleCache()
     }
