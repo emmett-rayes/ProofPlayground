@@ -10,7 +10,7 @@ import core.meta.{MetaVariable, MetaVars, MapUnification, Pattern, Substitute}
 import core.proof.Assistant.ProofResult
 import core.proof.ProofRequirements.given
 import core.proof.ProofZipper.given
-import core.proof.{Assistant, InferenceRule, Proof, ProofSystem, ProofRequirements, ProofZipper, SideCondition}
+import core.proof.{InferenceRule, Proof, ProofSystem, ProofRequirements, ProofZipper, SideCondition}
 import frontend.Show
 import frontend.presentation.FormulaInputModel.ProofSystemChoice
 import frontend.tui.Navigation
@@ -84,7 +84,7 @@ class ProofTreeModel[
   private var rulesInFocus = false
   private var zipper       = Proof(judgement).zipper
 
-  private var cachedRuleActive: Map[InferenceRule[J, FormulaF], Boolean] = Map.empty
+  private var cachedRuleActive: Map[InferenceRule[J, FormulaF], Boolean] = Map.empty  // helps spam the debugger less
 
   private def invalidateRuleCache(): Unit =
     cachedRuleActive = Map.empty
@@ -94,7 +94,7 @@ class ProofTreeModel[
   override def rules: Vector[ProofTreeModel.ProofRule] = inferenceRules.map { rule =>
     val active = cachedRuleActive.getOrElse(
       rule, {
-        val computed = Assistant.proof(zipper.get.conclusion, rule) match {
+        val computed = zipper.get.apply(rule) match {
           case ProofResult.UnificationFailure(_)  => false
           case ProofResult.Success(_)             => true
           case ProofResult.SubstitutionFailure(_) => true // substitution failures can be fixed by user input
@@ -200,7 +200,7 @@ class ProofTreeModel[
       invalidateRuleCache()
     }
 
-    Assistant.proof(zipper.get.conclusion, rule, unification) match {
+    zipper.get.apply(rule, unification) match {
       case ProofResult.UnificationFailure(_)                => ()
       case ProofResult.Success(proof)                       => replace(proof)
       case ProofResult.SubstitutionFailure(substitutedRule) => substitutionFailure(substitutedRule)

@@ -2,6 +2,8 @@ package proofPlayground
 package core.proof
 
 import core.Fix
+import core.proof.{Assistant, ProofRequirements}
+import core.proof.Assistant.ProofResult
 import zipper.TreeZipper.given
 import zipper.{Tree, TreeZipper, Zipper}
 
@@ -45,6 +47,12 @@ object Proof {
 
     /** Returns a zipper over the proof tree. */
     def zipper: ProofZipper[F, J] = ProofZipper(proof)
+
+    /** Attempts to apply an inference rule to the proof */
+    def apply(using
+      req: ProofRequirements[F, J]
+    )(rule: InferenceRule[J, F], unification: req.Uni[Fix[F]] = req.Uni.empty[Fix[F]]): ProofResult[F, J] =
+      Assistant.proof(proof.conclusion, rule, unification)
   }
 }
 
