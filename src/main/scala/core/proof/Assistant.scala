@@ -50,7 +50,7 @@ object Assistant {
     judgement: J[Fix[F]],
     rule: InferenceRule[J, F],
     auxUnification: req.Uni[Fix[F]] = req.Uni.empty[Fix[F]],
-  ): ProofResult[J, F] = {
+  ): ProofResult[F, J] = {
     import req.given
 
     val unificationResult =
@@ -69,14 +69,14 @@ object Assistant {
         if conclusion == judgement then
           // it is important to return the judgement here, not the substituted conclusion, because the judgement may
           // contain further judgement specific information internally.
-          val proof = Proof(judgement, premises.reverse.map(Proof(_, List.empty)).toList)
+          val proof = Proof(judgement, rule, premises.map(Proof.apply).toList)
           ProofResult.Success(proof)
         else
           val substitutedRule = Inference(rule.label, premises, conclusion)
           ProofResult.SubstitutionFailure(substitutedRule.map(j => j.map(_.asPattern)))
       }
 
-    def ProofError(rule: InferenceRule[J, F]): ProofResult[J, F] = {
+    def ProofError(rule: InferenceRule[J, F]): ProofResult[F, J] = {
       val substitutedRule = rule.map(_.substitutePartial(unification))
       // ugly hack because we do not differentiate between sequence meta-variables and formula meta-variables.
       val probablyMultiplicative =
@@ -97,13 +97,13 @@ object Assistant {
   }
 
   /** Result of attempting to construct a proof. */
-  enum ProofResult[J[_], F[_]] {
+  enum ProofResult[F[_], J[_]] {
 
     /** Successful proof construction.
       *
       * @param proof the constructed proof.
       */
-    case Success(proof: Proof[J[Fix[F]]])
+    case Success(proof: Proof[F, J])
 
     /** Unification failure during proof construction.
       *

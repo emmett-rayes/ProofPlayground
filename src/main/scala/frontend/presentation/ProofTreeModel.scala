@@ -11,12 +11,14 @@ import core.meta.{MetaVariable, MetaVars, MapUnification, Pattern, Substitute}
 import core.proof.Assistant.ProofResult
 import core.proof.ProofRequirements.given
 import core.proof.ProofZipper.given
-import core.proof.{Assistant, InferenceRule, Proof, ProofSystem, ProofRequirements, SideCondition}
+import core.proof.{Assistant, InferenceRule, Proof, ProofSystem, ProofRequirements, ProofZipper, SideCondition}
 import frontend.Show
 import frontend.presentation.FormulaInputModel.ProofSystemChoice
 import frontend.tui.Navigation
 import zipper.Tree
+import zipper.TreeZipper.given
 import zipper.Zipper.root
+import core.proof.Proof.*
 
 object ProofTreeModel {
   trait Data {
@@ -85,7 +87,7 @@ class ProofTreeModel[
   private var selected: ProofTreeModel.ProofStep = uninitialized
 
   private var rulesInFocus = false
-  private var zipper       = Proof(judgement, List.empty).zipper
+  private var zipper       = Proof(judgement).zipper
 
   private var cachedRuleActive: Map[InferenceRule[J, FormulaF], Boolean] = Map.empty
 
@@ -112,8 +114,9 @@ class ProofTreeModel[
   override def proofTree: Tree[ProofTreeModel.ProofStep] =
     val tree   = zipper.root.get.asTree
     val leaves = tree.leaves.map(_.value).toSet
-    tree.map { judgement =>
-      var labels = Seq.empty[String]
+    tree.map { node =>
+      val judgement = node.judgement
+      var labels    = Seq.empty[String]
       if judgement.open then
         labels :+= proofStepLabels.getOrDefault(judgement, "?")
       if judgement.violations.nonEmpty then
@@ -197,7 +200,7 @@ class ProofTreeModel[
     rule: InferenceRule[J, FormulaF],
     unification: req.Uni[Formula] = req.Uni.empty,
   )(substitutionFailure: InferenceRule[J, FormulaF] => Unit): Unit = {
-    def replace(replacement: Proof[J[Formula]]): Unit = {
+    def replace(replacement: Proof[FormulaF, J]): Unit = {
       rulesInFocus = false
       zipper = zipper.replace(replacement)
       proofStepLabels.put(zipper.get.conclusion, rule.label)

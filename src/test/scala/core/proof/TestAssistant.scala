@@ -15,6 +15,7 @@ import core.meta.Unification
 import core.meta.Unify.given
 import core.proof.Assistant
 import core.proof.Assistant.ProofResult
+import core.proof.Proof.*
 import core.proof.ProofRequirements.given
 import core.proof.natural.Judgement
 import core.proof.sequent.Judgement
