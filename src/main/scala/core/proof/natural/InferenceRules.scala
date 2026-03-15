@@ -3,10 +3,18 @@ package core.proof.natural
 
 import scala.language.implicitConversions
 
-import core.meta.Pattern
+import core.Fix
+import core.meta.{MetaVariable, Pattern}
 import core.proof.natural.Judgement.*
-import core.proof.{Inference, InferenceRule}
+import core.proof.{Inference, InferenceRule, SideConditionFunc}
 import core.proof.InferenceDsl.{*, given}
+
+// hack: using judgement as a pattern container to allow easy substitution
+type QuantifiedVar[F] = Judgement[F]
+
+object QuantifiedVar {
+  def apply[F[_]](pattern: Pattern[F]): QuantifiedVar[Pattern[F]] = Judgement(pattern, Seq.empty, Seq.empty)
+}
 
 /** Collection of inference rules for natural deduction. */
 case object InferenceRules {
@@ -245,13 +253,22 @@ case object InferenceRules {
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
 
+      val sidecondition =
+        SideConditionFunc(QuantifiedVar(nu)) { [f[_]] => (_) ?=> (quantified, proof) =>
+          proof.leaves.map(_.value.judgement).forall { judgement =>
+            val closed = judgement.assumptions.contains(judgement.assertion)
+            if closed then true
+            else !judgement.assertion.freevariables.contains(quantified.assertion)
+          }
+        }
+
       Inference(
         "∀I",
         Seq(
           (gamma |- phi) % (nu, gamma),
         ),
         gamma |- forall(nu, phi),
-      )
+      )(sidecondition)
     }
 
     /** Universal elimination (∀E).
@@ -301,6 +318,17 @@ case object InferenceRules {
       val phi   = Pattern[FormulaF]("phi")
       val rho   = Pattern[FormulaF]("rho")
 
+      // hack: using judgement as a pattern container to allow easy substitution
+      val sidecondition =
+        SideConditionFunc(QuantifiedVar(nu)) { [f[_]] => (_) ?=> (quantified, proof) =>
+          !proof.value.judgement.assertion.freevariables.contains(quantified.assertion)
+          && proof.leaves.map(_.value.judgement).forall { judgement =>
+            val closed = judgement.assumptions.contains(judgement.assertion)
+            if closed then true
+            else !judgement.assertion.freevariables.contains(quantified.assertion)
+          }
+        }
+
       Inference(
         "∃E",
         Seq(
@@ -308,7 +336,7 @@ case object InferenceRules {
           (gamma :: phi |- rho) % (nu, gamma, rho),
         ),
         (gamma |- rho),
-      )
+      )(sidecondition)
     }
   }
 }

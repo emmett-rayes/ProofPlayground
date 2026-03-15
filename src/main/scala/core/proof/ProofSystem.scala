@@ -12,7 +12,7 @@ import core.proof.ObjectSeq.objectSeq
   * @tparam J The judgement type used in the proof system.
   * @tparam F The formula functor used in the judgements.
   */
-type InferenceRule[J[_], F[_]] = Inference[J[Pattern[F]]]
+type InferenceRule[J[_], F[_]] = Inference[Pattern[F], J]
 
 /** Representation of a proof system.
   *

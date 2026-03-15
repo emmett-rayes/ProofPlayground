@@ -2,7 +2,7 @@ package proofPlayground
 package core.proof
 
 import core.{Fix, Functor, traverse}
-import core.meta.{AsPattern, MapUnification, MetaVariable, MetaVars, Pattern, Substitute}
+import core.meta.{AsPattern, FreeVars, MapUnification, MetaVariable, MetaVars, Pattern, Substitute}
 import core.proof.Inference.given
 
 /** Required capabilities for a legal formula-judgement combination. */
@@ -69,15 +69,18 @@ object Assistant {
         if conclusion == judgement then
           // it is important to return the judgement here, not the substituted conclusion, because the judgement may
           // contain further judgement specific information internally.
-          val proof = Proof(judgement, rule, premises.map(Proof.apply).toList)
+          val proof =
+            Proof(using req)(rule, unification, judgement, premises.map(Proof.apply))
           ProofResult.Success(proof)
         else
-          val substitutedRule = Inference(rule.label, premises, conclusion)
-          ProofResult.SubstitutionFailure(substitutedRule.map(j => j.map(_.asPattern)))
+          val substitutedRule: Inference[Fix[F], J] = Inference(rule.label, premises, conclusion)
+          ProofResult.SubstitutionFailure(substitutedRule.map(_.asPattern))
       }
 
     def ProofError(rule: InferenceRule[J, F]): ProofResult[F, J] = {
-      val substitutedRule = rule.map(_.substitutePartial(unification))
+      val conclusion      = rule.conclusion.substitutePartial(unification)
+      val premises        = rule.premises.map(_.substitutePartial(unification))
+      val substitutedRule = Inference(rule.label, premises, conclusion)
       // ugly hack because we do not differentiate between sequence meta-variables and formula meta-variables.
       val probablyMultiplicative =
         def condition = { (j: J[Pattern[F]]) =>

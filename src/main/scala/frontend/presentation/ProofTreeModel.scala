@@ -4,15 +4,16 @@ package frontend.presentation
 import scala.compiletime.uninitialized
 
 import core.Functor
-import core.logic.propositional.Formula.given
 import core.logic.propositional.{Formula, FormulaF}
-import core.meta.{MetaVariable, MetaVars, MapUnification, Pattern, Substitute}
+import core.logic.propositional.Formula.given
+import core.meta.{MetaVariable, MetaVars, MapUnification, Pattern, Substitute, Unify}
+import core.proof.{InferenceRule, Proof, ProofSystem, ProofRequirements, ProofZipper, SideCondition}
 import core.proof.Assistant.ProofResult
 import core.proof.ProofRequirements.given
+import core.proof.ProofZipper.*
 import core.proof.ProofZipper.given
-import core.proof.{InferenceRule, Proof, ProofSystem, ProofRequirements, ProofZipper, SideCondition}
-import frontend.Show
 import frontend.presentation.FormulaInputModel.ProofSystemChoice
+import frontend.Show
 import frontend.tui.Navigation
 import zipper.Tree
 import zipper.TreeZipper.given
@@ -84,7 +85,7 @@ class ProofTreeModel[
   private var rulesInFocus = false
   private var zipper       = Proof(judgement).zipper
 
-  private var cachedRuleActive: Map[InferenceRule[J, FormulaF], Boolean] = Map.empty  // helps spam the debugger less
+  private var cachedRuleActive: Map[InferenceRule[J, FormulaF], Boolean] = Map.empty // helps spam the debugger less
 
   private def invalidateRuleCache(): Unit =
     cachedRuleActive = Map.empty
@@ -107,12 +108,13 @@ class ProofTreeModel[
   }
 
   override def proofTree: Tree[ProofTreeModel.ProofStep] =
-    val tree   = zipper.root.get.asTree
-    tree.map { node =>
+    val proof = zipper.root.get
+    proof.map { node =>
       val judgement = node.judgement
       var labels    = Seq.empty[String]
-      labels :+= node.rule.map(_.label).getOrElse("?")
-      if judgement.violations.nonEmpty then
+      if judgement.open then
+        labels :+= node.rule.map(_.label).getOrElse("?")
+      if !node.sidecondition then
         labels :+= "!"
       if labels.isEmpty then
         labels :+= " "

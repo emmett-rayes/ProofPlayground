@@ -213,9 +213,9 @@ object PatternF {
 
   /** [[Functor]] instance for [[PatternF]]. */
   given [F[_]: Functor as F] => Functor[[T] =>> PatternF[F, T]] {
-    extension [A](fa: PatternF[F, A]) {
+    extension [A](pattern: PatternF[F, A]) {
       override def map[B](f: A => B): PatternF[F, B] =
-        fa match {
+        pattern match {
           case Meta(name)                                   => meta(name)
           case Substitution(variable, replacement, formula) => Substitution(f(variable), f(replacement), f(formula))
           case Formula(formula)                             => concrete(F.map(formula)(f))

@@ -2,13 +2,28 @@ package proofPlayground
 package core.proof
 
 import core.Fix
+import core.meta.{FreeVars, MapUnification, Unify}
 import core.proof.{Assistant, ProofRequirements}
 import core.proof.Assistant.ProofResult
 import zipper.TreeZipper.given
 import zipper.{Tree, TreeZipper, Zipper}
 
 /** A node in a proof tree, containing a judgement and its subderivation. */
-case class ProofNode[F[_], J[_]](judgement: J[Fix[F]], rule: Option[InferenceRule[J, F]])
+case class ProofNode[F[_], J[_]](rule: Option[InferenceRule[J, F]], judgement: J[Fix[F]], subproofs: Seq[Proof[F, J]])(
+  scj: Option[J[Fix[F]]]
+) {
+  def asProof: Proof[F, J] = Tree(this, subproofs.toList)
+
+  def sidecondition(using Fix[F] is FreeVars): Boolean =
+    rule match {
+      case None       => true
+      case Some(rule) =>
+        scj match {
+          case None    => true
+          case Some(j) => rule.sidecondition.condition(j, this.asProof)
+        }
+    }
+}
 
 /** Representation of a proof.
   *
@@ -26,10 +41,20 @@ type Proof[F[_], J[_]] = Tree[ProofNode[F, J]]
 
 object Proof {
   def apply[F[_], J[_]](judgement: J[Fix[F]]): Proof[F, J] =
-    Tree(ProofNode(judgement, None), List.empty)
+    ProofNode(None, judgement, List.empty)(None).asProof
 
-  def apply[F[_], J[_]](judgement: J[Fix[F]], rule: InferenceRule[J, F], subproofs: List[Proof[F, J]]): Proof[F, J] =
-    Tree(ProofNode(judgement, Some(rule)), subproofs)
+  def apply[F[_], J[_]](using
+    req: ProofRequirements[F, J]
+  )(
+    rule: InferenceRule[J, F],
+    unification: req.Uni[Fix[F]],
+    judgement: J[Fix[F]],
+    subproofs: Seq[Proof[F, J]],
+  ): Proof[F, J] = {
+    import req.given
+    val substituted = rule.sidecondition.metajudgement.map(_.substitute(unification)).flatten
+    ProofNode(Some(rule), judgement, subproofs)(substituted).asProof
+  }
 
   extension [F[_], J[_]](proof: Proof[F, J]) {
 
