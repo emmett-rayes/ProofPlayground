@@ -6,15 +6,8 @@ import scala.language.implicitConversions
 import core.Fix
 import core.meta.{MetaVariable, Pattern}
 import core.proof.natural.Judgement.*
-import core.proof.{Inference, InferenceRule, SideConditionFunc}
+import core.proof.{Inference, InferenceRule, SideCondition}
 import core.proof.InferenceDsl.{*, given}
-
-// hack: using judgement as a pattern container to allow easy substitution
-type QuantifiedVar[F] = Judgement[F]
-
-object QuantifiedVar {
-  def apply[F[_]](pattern: Pattern[F]): QuantifiedVar[Pattern[F]] = Judgement(pattern, Seq.empty, Seq.empty)
-}
 
 /** Collection of inference rules for natural deduction. */
 case object InferenceRules {
@@ -254,18 +247,18 @@ case object InferenceRules {
       val phi   = Pattern[FormulaF]("phi")
 
       val sidecondition =
-        SideConditionFunc(QuantifiedVar(nu)) { [f[_]] => (_) ?=> (quantified, proof) =>
+        Judgement.sidecondition(nu) { [f[_]] => (_) ?=> (quantified, proof) =>
           proof.leaves.map(_.value.judgement).forall { judgement =>
             val closed = judgement.assumptions.contains(judgement.assertion)
             if closed then true
-            else !judgement.assertion.freevariables.contains(quantified.assertion)
+            else !judgement.assertion.freevariables.contains(quantified)
           }
         }
 
       Inference(
         "∀I",
         Seq(
-          (gamma |- phi) % (nu, gamma),
+          gamma |- phi,
         ),
         gamma |- forall(nu, phi),
       )(sidecondition)
@@ -320,12 +313,12 @@ case object InferenceRules {
 
       // hack: using judgement as a pattern container to allow easy substitution
       val sidecondition =
-        SideConditionFunc(QuantifiedVar(nu)) { [f[_]] => (_) ?=> (quantified, proof) =>
-          !proof.value.judgement.assertion.freevariables.contains(quantified.assertion)
+        Judgement.sidecondition(nu) { [f[_]] => (_) ?=> (quantified, proof) =>
+          !proof.value.judgement.assertion.freevariables.contains(quantified)
           && proof.leaves.map(_.value.judgement).forall { judgement =>
             val closed = judgement.assumptions.contains(judgement.assertion)
             if closed then true
-            else !judgement.assertion.freevariables.contains(quantified.assertion)
+            else !judgement.assertion.freevariables.contains(quantified)
           }
         }
 
@@ -333,7 +326,7 @@ case object InferenceRules {
         "∃E",
         Seq(
           gamma |- exists(nu, phi),
-          (gamma :: phi |- rho) % (nu, gamma, rho),
+          gamma :: phi |- rho,
         ),
         (gamma |- rho),
       )(sidecondition)

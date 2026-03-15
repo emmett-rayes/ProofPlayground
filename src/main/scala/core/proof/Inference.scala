@@ -6,25 +6,6 @@ import core.Fix
 import core.meta.{FreeVars, MapUnification, MetaVariable, MetaVars, Unify}
 import zipper.Tree
 
-case class SideConditionFunc[T, J[_]](
-  metajudgement: Option[J[T]],
-  condition: [F[_]] => (Fix[F] is FreeVars) ?=> (J[Fix[F]], Proof[F, J]) => Boolean,
-)
-
-object SideConditionFunc {
-
-  def apply[T, J[_]](metajudgement: J[T])(
-    condition: [F[_]] => (Fix[F] is FreeVars) ?=> (J[Fix[F]], Proof[F, J]) => Boolean
-  ): SideConditionFunc[T, J] = SideConditionFunc(Some(metajudgement), condition)
-
-  given [J[_]: Functor] => Functor[[T] =>> SideConditionFunc[T, J]] {
-    extension [A](sidecondition: SideConditionFunc[A, J]) {
-      override def map[B](f: A => B): SideConditionFunc[B, J] =
-        sidecondition.copy(metajudgement = sidecondition.metajudgement.map(_.map(f)))
-    }
-  }
-}
-
 /** Representation of a syntactical inference line.
   *
   * @tparam F The type of judgments in this inference.
@@ -37,11 +18,11 @@ case class Inference[F, J[_]](
   label: String,
   premises: Seq[J[F]],
   conclusion: J[F]
-)(val sidecondition: SideConditionFunc[F, J])
+)(val sidecondition: SideCondition[F, J])
 
 object Inference {
   def apply[F, J[_]](label: String, premises: Seq[J[F]], conclusion: J[F]): Inference[F, J] = {
-    val trivial = SideConditionFunc[F, J](None, [_[_]] => (_) ?=> (_, _) => true)
+    val trivial = SideCondition[F, J](None, [_[_]] => (_) ?=> (_, _) => true)
     Inference(label, premises, conclusion)(trivial)
   }
 

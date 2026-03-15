@@ -7,7 +7,7 @@ import core.Functor
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.propositional.Formula.given
 import core.meta.{MetaVariable, MetaVars, MapUnification, Pattern, Substitute, Unify}
-import core.proof.{InferenceRule, Proof, ProofSystem, ProofRequirements, ProofZipper, SideCondition}
+import core.proof.{ClosedQuery, InferenceRule, Proof, ProofSystem, ProofRequirements, ProofZipper}
 import core.proof.Assistant.ProofResult
 import core.proof.ProofRequirements.given
 import core.proof.ProofZipper.*
@@ -54,7 +54,7 @@ object ProofTreeModel {
         import core.proof.natural.Judgement.given
         new ProofTreeModel(navigation)(
           ProofSystem.IntuitionisticPropositionalNaturalDeduction,
-          natural.Judgement(formula, Seq.empty, Seq.empty)
+          natural.Judgement(formula, Seq.empty)
         )
       case ProofSystemChoice.ClassicalSequentCalculus =>
         import core.proof.sequent
@@ -71,9 +71,9 @@ class ProofTreeModel[
   J[_] <: AnyRef: {Functor, Substitute[Formula, FormulaF]}
 ](navigation: Navigation)(system: ProofSystem[J, FormulaF], judgement: J[Formula])(using
   J[Formula] is Show,
+  J[Formula] is ClosedQuery,
   J[Pattern[FormulaF]] is Show,
   J[Pattern[FormulaF]] is MetaVars,
-  J[Formula] is SideCondition[Formula],
 ) extends ProofTreeModel.Data, ProofTreeModel.Signals {
 
   private given req: ProofRequirements[FormulaF, J] = summon
@@ -112,7 +112,7 @@ class ProofTreeModel[
     proof.map { node =>
       val judgement = node.judgement
       var labels    = Seq.empty[String]
-      if judgement.open then
+      if !judgement.closed then
         labels :+= node.rule.map(_.label).getOrElse("?")
       if !node.sidecondition then
         labels :+= "!"

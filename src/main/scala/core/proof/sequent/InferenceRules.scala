@@ -287,13 +287,18 @@ object InferenceRules {
       val phi   = Pattern[FormulaF]("phi")
       val nu    = Pattern[FormulaF]("nu")
 
+      val sidecondition = Judgement.sidecondition(nu) { [f[_]] => (_) ?=> (quantified, proof) =>
+        val judgement = proof.value.judgement
+        !(judgement.antecedents.contains(quantified) || judgement.succedents.contains(quantified))
+      }
+
       Inference(
         "∀R",
         Seq(
-          (gamma |- phi :: delta) % (nu, gamma, delta),
+          gamma |- phi :: delta,
         ),
         gamma |- forall(nu, phi) :: delta,
-      )
+      )(sidecondition)
     }
 
     /** Universal left introduction (∀L).
@@ -346,13 +351,18 @@ object InferenceRules {
       val phi   = Pattern[FormulaF]("phi")
       val nu    = Pattern[FormulaF]("nu")
 
+      val sidecondition = Judgement.sidecondition(nu) { [f[_]] => (_) ?=> (quantified, proof) =>
+        val judgement = proof.value.judgement
+        !(judgement.antecedents.contains(quantified) || judgement.succedents.contains(quantified))
+      }
+
       Inference(
         "∃L",
         Seq(
-          (gamma :: phi |- delta) % (nu, gamma, delta),
+          gamma :: phi |- delta,
         ),
         gamma :: exists(nu, phi) |- delta,
-      )
+      )(sidecondition)
     }
   }
 }
