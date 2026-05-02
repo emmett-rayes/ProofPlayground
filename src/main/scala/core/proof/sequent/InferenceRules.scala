@@ -289,7 +289,7 @@ object InferenceRules {
 
       val sidecondition = Judgement.sidecondition(nu) { [f[_]] => (_) ?=> (quantified, proof) =>
         val judgement = proof.value.judgement
-        !(judgement.antecedents.contains(quantified) || judgement.succedents.contains(quantified))
+        !(judgement.antecedents ++ judgement.succedents).flatMap(_.freevariables).contains(quantified)
       }
 
       Inference(
@@ -353,7 +353,7 @@ object InferenceRules {
 
       val sidecondition = Judgement.sidecondition(nu) { [f[_]] => (_) ?=> (quantified, proof) =>
         val judgement = proof.value.judgement
-        !(judgement.antecedents.contains(quantified) || judgement.succedents.contains(quantified))
+        !(judgement.antecedents ++ judgement.succedents).flatMap(_.freevariables).contains(quantified)
       }
 
       Inference(

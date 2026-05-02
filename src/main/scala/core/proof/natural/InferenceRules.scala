@@ -8,6 +8,24 @@ import core.meta.{MetaVariable, Pattern}
 import core.proof.natural.Judgement.*
 import core.proof.{Inference, InferenceRule, SideCondition}
 import core.proof.InferenceDsl.{*, given}
+import core.proof.Proof
+import core.proof.Proof.asTree
+import zipper.Tree
+
+extension [F[_]](proof: Proof[F, Judgement]) {
+  // judgement assumptions are accumulative, so we only consider assumptions that were added after the current judgement.
+  def strippedChildren: List[Proof[F, Judgement]] =
+    proof.asTree.children.map { child =>
+      val carried    = proof.value.judgement.assumptions
+      val introduced = child.value.judgement.assumptions.diff(proof.value.judgement.assumptions)
+      val stripped   = child.map { node =>
+        node.map { judgement =>
+          judgement.copy(assumptions = judgement.assumptions.diff(carried).diff(introduced))
+        }
+      }
+      proof.copy(value = stripped.value, children = stripped.strippedChildren)
+    }
+}
 
 /** Collection of inference rules for natural deduction. */
 case object InferenceRules {
@@ -246,9 +264,10 @@ case object InferenceRules {
       val gamma = Pattern[FormulaF]("Gamma")
       val phi   = Pattern[FormulaF]("phi")
 
+      // hack: using judgement as a pattern container (stored in assertion) to allow easy substitution
       val sidecondition =
         Judgement.sidecondition(nu) { [f[_]] => (_) ?=> (quantified, proof) =>
-          proof.leaves.map(_.value.judgement).forall { judgement =>
+          proof.strippedChildren.head.leaves.map(_.value.judgement).forall { judgement =>
             val closed = judgement.assumptions.contains(judgement.assertion)
             if closed then true
             else !judgement.assertion.freevariables.contains(quantified)
@@ -311,11 +330,11 @@ case object InferenceRules {
       val phi   = Pattern[FormulaF]("phi")
       val rho   = Pattern[FormulaF]("rho")
 
-      // hack: using judgement as a pattern container to allow easy substitution
+      // hack: using judgement as a pattern container (stored in assertion) to allow easy substitution
       val sidecondition =
         Judgement.sidecondition(nu) { [f[_]] => (_) ?=> (quantified, proof) =>
-          !proof.value.judgement.assertion.freevariables.contains(quantified)
-          && proof.leaves.map(_.value.judgement).forall { judgement =>
+          !proof.strippedChildren.head.value.judgement.assertion.freevariables.contains(quantified) &&
+          proof.strippedChildren.head.leaves.map(_.value.judgement).forall { judgement =>
             val closed = judgement.assumptions.contains(judgement.assertion)
             if closed then true
             else !judgement.assertion.freevariables.contains(quantified)

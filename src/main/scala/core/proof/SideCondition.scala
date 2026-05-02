@@ -6,16 +6,14 @@ import core.Fix
 import core.meta.{FreeVars, MapUnification, MetaVariable, MetaVars, Unify}
 import zipper.Tree
 
-case class SideCondition[T, J[_]](
-  metajudgement: Option[J[T]],
-  condition: [F[_]] => (Fix[F] is FreeVars) ?=> (J[Fix[F]], Proof[F, J]) => Boolean,
-)
+type Condition[T, J[_]] = [F[_]] => (Fix[F] is FreeVars) ?=> (J[Fix[F]], Proof[F, J]) => Boolean
+
+case class SideCondition[T, J[_]](metajudgement: Option[J[T]], condition: Condition[T, J])
 
 object SideCondition {
 
-  def apply[T, J[_]](metajudgement: J[T])(
-    condition: [F[_]] => (Fix[F] is FreeVars) ?=> (J[Fix[F]], Proof[F, J]) => Boolean
-  ): SideCondition[T, J] = SideCondition(Some(metajudgement), condition)
+  def apply[T, J[_]](metajudgement: J[T])(condition: Condition[T, J]): SideCondition[T, J] =
+    SideCondition(Some(metajudgement), condition)
 
   given [J[_]: Functor] => Functor[[T] =>> SideCondition[T, J]] {
     extension [A](sidecondition: SideCondition[A, J]) {

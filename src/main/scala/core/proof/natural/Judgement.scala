@@ -153,7 +153,7 @@ object Judgement {
     def |-(assertion: F): Judgement[F] = Judgement(assertion, assumptions)
   }
 
-  // hack: using judgement as a pattern container to allow easy substitution
+  // hack: using judgement as a pattern container (stored in assertion) to allow easy substitution
   def sidecondition[T](variable: T)(
     condition: [F[_]] => (Fix[F] is FreeVars) ?=> (Fix[F], Proof[F, Judgement]) => Boolean
   ) =

@@ -7,7 +7,7 @@ import core.Functor
 import core.logic.propositional.{Formula, FormulaF}
 import core.logic.propositional.Formula.given
 import core.meta.{MetaVariable, MetaVars, MapUnification, Pattern, Substitute, Unify}
-import core.proof.{ClosedQuery, InferenceRule, Proof, ProofSystem, ProofRequirements, ProofZipper}
+import core.proof.{ClosedQuery, InferenceRule, Proof, ProofNode, ProofSystem, ProofRequirements, ProofZipper}
 import core.proof.Assistant.ProofResult
 import core.proof.ProofRequirements.given
 import core.proof.ProofZipper.*
@@ -109,12 +109,13 @@ class ProofTreeModel[
 
   override def proofTree: Tree[ProofTreeModel.ProofStep] =
     val proof = zipper.root.get
-    proof.map { node =>
+    def recur(p: Tree[ProofNode[FormulaF, J]]): Tree[ProofTreeModel.ProofStep] = {
+      val node      = p.value
       val judgement = node.judgement
       var labels    = Seq.empty[String]
       if !judgement.closed then
         labels :+= node.rule.map(_.label).getOrElse("?")
-      if !node.sidecondition then
+      if !node.sidecondition(p) then
         labels :+= "!"
       if labels.isEmpty then
         labels :+= " "
@@ -122,8 +123,9 @@ class ProofTreeModel[
       val result = ProofTreeModel.ProofStep(judgement.show, labels)
       // remember the current position for `isNodeSelected`
       if judgement eq zipper.get.conclusion then selected = result
-      result
+      Tree(result, p.children.map(recur))
     }
+    recur(proof)
 
   override def isNodeSelected(node: Tree[ProofTreeModel.ProofStep]): Boolean =
     selected eq node.value

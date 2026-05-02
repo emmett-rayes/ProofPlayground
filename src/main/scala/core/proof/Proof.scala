@@ -9,18 +9,19 @@ import zipper.TreeZipper.given
 import zipper.{Tree, TreeZipper, Zipper}
 
 /** A node in a proof tree, containing a judgement and its subderivation. */
-case class ProofNode[F[_], J[_]](rule: Option[InferenceRule[J, F]], judgement: J[Fix[F]], subproofs: Seq[Proof[F, J]])(
+case class ProofNode[F[_], J[_]](rule: Option[InferenceRule[J, F]], judgement: J[Fix[F]])(
   scj: Option[J[Fix[F]]]
 ) {
-  def asProof: Proof[F, J] = Tree(this, subproofs.toList)
+  def map[B](f: J[Fix[F]] => J[Fix[F]]): ProofNode[F, J] =
+    this.copy(judgement = f(judgement))(scj = scj)
 
-  def sidecondition(using Fix[F] is FreeVars): Boolean =
+  def sidecondition(proof: Proof[F, J])(using Fix[F] is FreeVars): Boolean =
     rule match {
       case None       => true
       case Some(rule) =>
         scj match {
           case None    => true
-          case Some(j) => rule.sidecondition.condition(j, this.asProof)
+          case Some(j) => rule.sidecondition.condition(j, proof)
         }
     }
 }
@@ -41,7 +42,7 @@ type Proof[F[_], J[_]] = Tree[ProofNode[F, J]]
 
 object Proof {
   def apply[F[_], J[_]](judgement: J[Fix[F]]): Proof[F, J] =
-    ProofNode(None, judgement, List.empty)(None).asProof
+    Tree(ProofNode(None, judgement)(None))
 
   def apply[F[_], J[_]](using
     req: ProofRequirements[F, J]
@@ -53,7 +54,7 @@ object Proof {
   ): Proof[F, J] = {
     import req.given
     val substituted = rule.sidecondition.metajudgement.map(_.substitute(unification)).flatten
-    ProofNode(Some(rule), judgement, subproofs)(substituted).asProof
+    Tree(ProofNode(Some(rule), judgement)(substituted), subproofs.toList)
   }
 
   extension [F[_], J[_]](proof: Proof[F, J]) {
